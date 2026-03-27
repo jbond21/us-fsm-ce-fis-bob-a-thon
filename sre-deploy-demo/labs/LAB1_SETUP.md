@@ -1,90 +1,12 @@
-# Lab 1: Environment Setup
+# Lab 1: Verify Your Environment
 
-In this lab you will deploy the order-service application, Bob CLI, and Jenkins to an OpenShift cluster. By the end you will have a working pipeline that you can extend with Bob AI in Lab 2.
+**Prerequisite:** Complete [SETUP.md](../../SETUP.md) first — you should have the app, Bob CLI, and Jenkins deployed before starting this lab.
 
-**Time:** ~30 minutes
-**Prerequisites:** OpenShift cluster (TechZone), `oc` CLI, `podman`, a GitHub Enterprise PAT, and a Bob Shell API key.
-
----
-
-## 1.1 — Log in to the cluster
-
-Get your credentials from the TechZone reservation page, then:
-
-```bash
-oc login --username=<user> --password=<pass> --server=<api-url>
-```
-
-Accept the certificate warning if prompted. Verify you're connected:
-
-```bash
-oc whoami
-oc get nodes
-```
+**Time:** ~10 minutes
 
 ---
 
-## 1.2 — Create a project
-
-```bash
-oc new-project sre-deploy-lab
-```
-
----
-
-## 1.3 — Enable the internal image registry
-
-OpenShift has a built-in container registry. On TechZone clusters it starts disabled.
-
-```bash
-# Check current state
-oc get configs.imageregistry.operator.openshift.io/cluster \
-  -o jsonpath='{.spec.managementState}'
-```
-
-If the output is `Removed`, enable it:
-
-```bash
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
-  --patch '{"spec":{"managementState":"Managed","storage":{"emptyDir":{}}}}'
-```
-
-Wait for the registry pod to start (press Ctrl+C once it shows `1/1 Running`):
-
-```bash
-oc get pods -n openshift-image-registry -w
-```
-
-Then expose the registry route:
-
-```bash
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
-  --patch '{"spec":{"defaultRoute":true}}'
-```
-
----
-
-## 1.4 — Create your .env file
-
-Create a `.env` file in the project root with your Bob Shell API key:
-
-```bash
-echo "BOBSHELL_API_KEY=your-key-here" > .env
-```
-
-> The deploy scripts read this file on your machine and create a Kubernetes Secret on the cluster. The `.env` file never leaves your machine.
-
----
-
-## 1.5 — Deploy the application
-
-```bash
-make oc-deploy
-```
-
-This builds the order-service container image, deploys PostgreSQL and the Spring Boot app, and creates a route.
-
-**Verify it worked:**
+## 1.1 — Verify the application
 
 ```bash
 # Pods are running
@@ -106,15 +28,7 @@ curl -X POST http://$(oc get route order-service -o jsonpath='{.spec.host}')/api
 
 ---
 
-## 1.6 — Deploy Bob CLI
-
-```bash
-make oc-deploy-bob
-```
-
-This builds a container image with the Bob CLI tool, pushes it to the cluster registry, creates a Secret with your API key, and starts the pod.
-
-**Verify it worked:**
+## 1.2 — Verify Bob CLI
 
 ```bash
 # Pod is running
@@ -130,17 +44,7 @@ make oc-bob PROMPT="Say hello in one sentence"
 
 ---
 
-## 1.7 — Deploy Jenkins
-
-You'll need your GitHub Enterprise PAT. Pass it as an environment variable (or the script will prompt you):
-
-```bash
-GITHUB_PAT=ghp_xxx make oc-deploy-jenkins
-```
-
-This deploys Jenkins, builds a custom agent image (with Maven, Trivy, oc), installs plugins, creates credentials, and creates the `sre-pipeline` job.
-
-**Verify it worked:**
+## 1.3 — Verify Jenkins
 
 ```bash
 # Jenkins pod is running
@@ -154,13 +58,13 @@ echo "Open in browser: https://$JENKINS_URL"
 
 Open the Jenkins URL in your browser. OpenShift will show a permissions consent screen — click **"Allow selected permissions"**.
 
-Navigate to **sre-pipeline** and click **Build with Parameters**. Set BRANCH to `main` and click **Build**. The build will run but some stages may fail (no demo branches yet) — that's OK. The point is to verify Jenkins can start a build.
+Navigate to **sre-pipeline** and click **Build with Parameters**. Set BRANCH to `main` and click **Build**. The build will run but some stages may fail (no lab branches yet) — that's OK. The point is to verify Jenkins can start a build.
 
 > **Checkpoint:** Jenkins UI is accessible and a build starts.
 
 ---
 
-## 1.8 — Install the starter pipeline
+## 1.4 — Install the starter pipeline
 
 For Lab 2 you will start from a pipeline that has **no Bob integration**. Copy the starter Jenkinsfile into place:
 

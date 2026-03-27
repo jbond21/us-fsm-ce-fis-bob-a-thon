@@ -106,16 +106,14 @@ oc new-project sre-deploy-lab
 
 ## Step 5: Enable the Internal Image Registry
 
-OpenShift has a built-in container image registry. On TechZone UPI clusters, it starts disabled. You need to turn it on so the deploy script can push your images.
-
-### 5a: Deploy the Registry
+OpenShift has a built-in container image registry. On TechZone UPI clusters, it starts disabled. You need to turn it on so the deploy scripts can build images on the cluster.
 
 Check if the registry is already running:
 ```bash
 oc get configs.imageregistry.operator.openshift.io/cluster -o jsonpath='{.spec.managementState}'
 ```
 
-- If the output is **`Managed`** — skip to Step 5b.
+- If the output is **`Managed`** — skip to Step 6.
 - If the output is **`Removed`** — deploy it:
 
 ```bash
@@ -131,22 +129,6 @@ oc get pods -n openshift-image-registry -w
 Press `Ctrl+C` once you see `image-registry-xxxxx` at `1/1 Running`.
 
 > **Note:** `emptyDir` storage means images are lost if the registry pod restarts. This is fine for labs — just re-run `make oc-deploy` if it happens.
-
-### 5b: Expose the Registry Route
-
-This creates a public hostname so you can push images from your laptop:
-
-```bash
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
-  --patch '{"spec":{"defaultRoute":true}}'
-```
-
-Verify the route was created:
-```bash
-oc get route default-route -n openshift-image-registry
-```
-
-You should see a hostname like `default-route-openshift-image-registry.apps.your-cluster.cloud.ibm.com`.
 
 ---
 
@@ -415,12 +397,10 @@ When your TechZone reservation expires and you get a new one, just repeat Steps 
 oc login --username=<new-user> --password=<new-password> --server=<new-api-url>
 oc new-project sre-deploy-lab
 
-# Enable registry (Steps 5a and 5b)
+# Enable registry (Step 5)
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
   --patch '{"spec":{"managementState":"Managed","storage":{"emptyDir":{}}}}'
 # Wait for registry pod...
-oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
-  --patch '{"spec":{"defaultRoute":true}}'
 
 # Deploy
 make oc-deploy

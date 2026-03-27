@@ -52,40 +52,20 @@ if [ -z "$BOBSHELL_API_KEY" ]; then
     fi
 fi
 
-# ── Get registry hostname ────────────────────────────────────────────────────
+# ── Build Bob CLI image on cluster ────────────────────────────────────────────
 
-REGISTRY_HOST=$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}' 2>/dev/null)
-if [ -z "$REGISTRY_HOST" ]; then
-    echo "Error: Internal registry route not found. Run 'make oc-deploy' first to set up the registry."
-    exit 1
+echo ""
+echo "=== Building Bob CLI image (on-cluster BuildConfig) ==="
+
+if ! oc get bc/sre-bob-cli-build &>/dev/null 2>&1; then
+    oc new-build --binary --name=sre-bob-cli-build \
+        --docker-image=registry.access.redhat.com/ubi8/ubi-minimal:latest \
+        --strategy=docker
 fi
 
-# ── Authenticate to registry ────────────────────────────────────────────────
-
-echo ""
-echo "=== Authenticating to registry ==="
-
-SA_NAME="registry-pusher"
-oc get sa "$SA_NAME" -n "$NAMESPACE" &>/dev/null 2>&1 || \
-    oc create sa "$SA_NAME" -n "$NAMESPACE"
-oc policy add-role-to-user registry-editor "system:serviceaccount:$NAMESPACE:$SA_NAME" 2>/dev/null || true
-
-SA_TOKEN=$(oc create token "$SA_NAME" -n "$NAMESPACE")
-podman login -u serviceaccount -p "$SA_TOKEN" --tls-verify=false "$REGISTRY_HOST"
-
-# ── Build and push Bob CLI image ────────────────────────────────────────────
-
-FULL_TAG="$REGISTRY_HOST/$NAMESPACE/sre-bob-cli:latest"
-
-echo ""
-echo "=== Building Bob CLI image (linux/amd64) ==="
-podman build --platform linux/amd64 \
-    -t "$FULL_TAG" \
-    -f "$SCRIPT_DIR/bob-cli/Dockerfile" \
-    "$PROJECT_DIR"
-
-echo "=== Pushing Bob CLI image ==="
-podman push --tls-verify=false "$FULL_TAG"
+oc start-build sre-bob-cli-build \
+    --from-dir="$SCRIPT_DIR/bob-cli" \
+    --follow --wait
 
 # ── Create Secret for API key ───────────────────────────────────────────────
 
@@ -110,7 +90,7 @@ oc policy add-role-to-user edit "system:serviceaccount:$NAMESPACE:bob-cli" 2>/de
 echo ""
 echo "=== Deploying Bob CLI pod ==="
 sed \
-    "s|sre-bob-cli:latest|$INTERNAL_REGISTRY/$NAMESPACE/sre-bob-cli:latest|g;
+    "s|sre-bob-cli:latest|$INTERNAL_REGISTRY/$NAMESPACE/sre-bob-cli-build:latest|g;
      s|imagePullPolicy: IfNotPresent|imagePullPolicy: Always|g" \
     "$K8S_DIR/bob-cli-deployment.yaml" | oc apply -f -
 
