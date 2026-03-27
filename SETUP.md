@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide walks you through deploying the Dental Claims application to an OpenShift cluster from scratch and optionally adding Jenkins CI/CD. It assumes you have no prior OpenShift experience.
+This guide walks you through deploying the SRE Deploy Lab to an OpenShift cluster. The lab showcases how Bob integrates into a Jenkins CI/CD pipeline for the SRE use case, using a sample Order Service as the application under deployment.
 
 **Time required:** ~20 minutes for the app (plus ~10 minutes for image builds), ~10 more minutes if adding Jenkins
 
@@ -99,7 +99,7 @@ oc get nodes     # Should list the cluster's worker nodes
 A project is a logical space on the cluster that holds all your app's resources.
 
 ```bash
-oc new-project dental-claims
+oc new-project sre-deploy-demo
 ```
 
 ---
@@ -130,7 +130,7 @@ oc get pods -n openshift-image-registry -w
 
 Press `Ctrl+C` once you see `image-registry-xxxxx` at `1/1 Running`.
 
-> **Note:** `emptyDir` storage means images are lost if the registry pod restarts. This is fine for demos — just re-run `make oc-deploy` if it happens.
+> **Note:** `emptyDir` storage means images are lost if the registry pod restarts. This is fine for labs — just re-run `make oc-deploy` if it happens.
 
 ### 5b: Expose the Registry Route
 
@@ -152,7 +152,7 @@ You should see a hostname like `default-route-openshift-image-registry.apps.your
 
 ## Step 6: Add Your Bob Shell API Key
 
-Bob CLI runs inside the cluster and provides AI-assisted operations (diagnosing failures, fixing configurations, recovering deployments). You need a Bob Shell API key before deploying.
+Bob CLI runs inside the cluster and provides AI-assisted SRE operations — analyzing PRs, assessing risk, diagnosing pipeline failures, and recommending fixes. You need a Bob Shell API key before deploying.
 
 Check your Slack history for a welcome message from Ask Bob that includes your key. Then create a `.env` file in the project root:
 
@@ -177,14 +177,12 @@ That's it. The script handles everything automatically:
 1. Verifies you're logged in and in the right project
 2. Gets the registry hostname from the cluster
 3. Creates a service account token and logs into the registry
-4. Builds all 5 container images with `podman build --platform linux/amd64` (safe on Apple Silicon and Intel Macs)
+4. Builds container images with `podman build --platform linux/amd64` (safe on Apple Silicon and Intel Macs)
 5. Pushes the images to the internal registry
 6. Applies security context constraints (so database containers can run)
-7. Creates ConfigMaps for database initialization scripts
-8. Applies all Kubernetes manifests (dynamically rewrites image references)
-9. Applies the frontend Route for public HTTPS access
-10. Builds and deploys the Bob CLI pod with your API key
-11. Prints the app URL
+7. Applies all Kubernetes manifests (dynamically rewrites image references)
+8. Builds and deploys the Bob CLI pod with your API key
+9. Prints the app URL
 
 **Build times:** Expect ~10 minutes on the first run (downloading base images + cross-compilation on Apple Silicon). Subsequent runs are faster thanks to layer caching.
 
@@ -200,13 +198,6 @@ Watch until every pod shows `1/1` under the `READY` column. This may take 1-2 mi
 
 ## Step 8: Verify the Deployment
 
-**Get your app URL:**
-```bash
-oc get route frontend -o jsonpath='{.spec.host}'
-```
-
-Open `https://<that-host>` in your browser. You should see the Dental Claims frontend.
-
 **Check pod status:**
 ```bash
 oc get pods
@@ -216,27 +207,9 @@ All pods should show `Running` with `1/1` ready. It may take 1-2 minutes for all
 
 ---
 
-## Architecture Notes
-
-### Frontend Runs as a Single Replica
-
-The frontend deployment is set to `replicas: 1`. This is intentional — the AI Operations terminal uses Server-Sent Events (SSE) with an in-memory event bus. Multiple replicas would cause events from the bob-cli pod to land on different frontend pods than the user's browser SSE connection, resulting in missing terminal events.
-
-### SSE Route Timeout
-
-The frontend route includes a `haproxy.router.openshift.io/timeout: 300s` annotation. Bob CLI can take 60-90 seconds to analyze and respond to issues. Without this annotation, HAProxy's default 30-second timeout kills the SSE connection mid-operation, causing missed events.
-
-If you manually create the route instead of using `oc apply -f k8s/openshift/frontend-route.yaml`, add the annotation:
-
-```bash
-oc annotate route frontend haproxy.router.openshift.io/timeout=300s
-```
-
----
-
 ## Jenkins CI/CD Setup (Optional)
 
-This section adds Jenkins CI/CD to your OpenShift deployment. It gives the Pipeline page a real Jenkins backend so you can demo AI-augmented pipelines with live builds instead of mock data.
+This section adds Jenkins CI/CD to your OpenShift deployment so you can run the lab scenarios with a live SRE pipeline — PR analysis, PCI compliance checks, risk assessment, and automated change control.
 
 **Prerequisite:** Complete Steps 1-8 above first — all services must be running on the cluster before setting up Jenkins.
 
@@ -269,9 +242,7 @@ GITHUB_PAT=ghp_xxx BOB_API_KEY=sk-xxx make oc-deploy-jenkins
 2. Waits for Jenkins to fully start (2-5 minutes)
 3. Installs required plugins (Pipeline, Git, GitHub, Credentials)
 4. Creates two credentials in Jenkins (`github-pat` and `bobshell-api-key`)
-5. Creates the `dental-pipeline` job pointing to the `Jenkinsfile` in this repo
-6. Patches the frontend to run as the `jenkins` service account — this auto-mounts a fresh, auto-rotating SA token so the Pipeline page can trigger builds without storing a static token
-7. Sets `JENKINS_URL` and `JENKINS_AUTH_MODE` on the frontend deployment
+5. Creates the `sre-pipeline` job pointing to the `Jenkinsfile` in this repo
 
 **First time opening Jenkins UI:** When you visit the Jenkins URL, OpenShift will show a permissions consent screen asking Jenkins to access `user:info` and `user:check-access`. Click **"Allow selected permissions"** — this is standard OpenShift OAuth and lets Jenkins authenticate you as your cluster user. It's a one-time prompt per user.
 
@@ -282,8 +253,8 @@ When the setup script finishes, it prints the Jenkins URL:
   Jenkins setup complete!
 ========================================
 
-Jenkins UI:     https://jenkins-dental-claims.apps.your-cluster.cloud.ibm.com
-Pipeline job:   https://jenkins-dental-claims.apps.your-cluster.cloud.ibm.com/job/dental-pipeline/
+Jenkins UI:     https://jenkins-sre-deploy-demo.apps.your-cluster.cloud.ibm.com
+Pipeline job:   https://jenkins-sre-deploy-demo.apps.your-cluster.cloud.ibm.com/job/sre-pipeline/
 ```
 
 ### Step 10: Test It
@@ -291,33 +262,22 @@ Pipeline job:   https://jenkins-dental-claims.apps.your-cluster.cloud.ibm.com/jo
 #### From Jenkins UI
 
 1. Open the Jenkins URL from Step 9 in your browser
-2. Click on **dental-pipeline**
+2. Click on **sre-pipeline**
 3. Click **"Build with Parameters"** on the left sidebar
-4. Leave BRANCH as `demo/happy-path` (or change to another demo branch)
+4. Leave BRANCH as `lab/happy-path` (or change to another lab branch)
 5. Click **Build**
 
 Watch the build progress in Jenkins. If you have the app's Pipeline page open with the toggle set to **Live**, events will stream in real-time.
 
-#### From the App
-
-1. Open your app (`oc get route frontend -o jsonpath='{.spec.host}'`)
-2. Go to the **Pipeline** page
-3. Flip the toggle in the top-right from **Mock** to **Live**
-4. Select a scenario and click **Run Pipeline**
-5. Watch the stages animate and the terminal fill with real build output
-
-> **Note:** If you haven't created the demo branches yet (Step 11), use Mock mode. The Live toggle triggers real Jenkins builds that need the branches to exist on GitHub.
-
-### Step 11: Create Demo Branches (Optional)
+### Step 11: Create Lab Branches (Optional)
 
 The pipeline uses different Git branches to demonstrate different failure scenarios. Each branch is forked from `main` with one targeted change:
 
 | Branch | What's Different | Pipeline Outcome |
 |---|---|---|
-| `demo/happy-path` | Minor change (comment, version bump) | All stages pass, Bob approves |
-| `demo/test-failure` | Bug in ClaimService.java — missing null check | Test fails, Bob identifies fix |
-| `demo/security-vuln` | Old base image in Dockerfile | Security scan finds CVEs, Bob analyzes |
-| `demo/db-migration` | SQL migration adds column that already exists | Deploy fails, Bob fixes migration |
+| `lab/happy-path` | Minor change (comment, version bump) | All stages pass, Bob approves |
+| `lab/test-failure` | Bug in OrderService — status validation removed | Tests fail, Bob identifies fix |
+| `lab/security-vuln` | PCI violation + old base image in Dockerfile | Security scan finds CVEs, Bob analyzes |
 
 Create them from `main` after merging any pending PRs:
 
@@ -327,34 +287,26 @@ git checkout main
 git pull
 
 # Happy path — minor change so there's a diff for Bob to review
-git checkout -b demo/happy-path
+git checkout -b lab/happy-path
 # Make a small change (add a comment, bump a version, etc.)
 git commit -am "minor: add coverage notes to README"
-git push origin demo/happy-path
+git push origin lab/happy-path
 
-# Test failure — remove null check in ClaimService
+# Test failure — remove status validation in OrderService
 git checkout main
-git checkout -b demo/test-failure
-# Edit claims/service/src/.../service/ClaimService.java
-# Remove the null check in validatePatient() so patient.getId() throws NPE
-git commit -am "refactor: simplify patient validation"
-git push origin demo/test-failure
+git checkout -b lab/test-failure
+# Edit order-service/src/.../service/OrderService.java
+# Remove the status transition validation so unit tests fail
+git commit -am "refactor: simplify order status handling"
+git push origin lab/test-failure
 
-# Security vulnerability — use old base image
+# Security vulnerability — PCI violation + old base image
 git checkout main
-git checkout -b demo/security-vuln
-# Edit claims/service/Dockerfile — change base image to eclipse-temurin:17.0.8-jre-alpine
+git checkout -b lab/security-vuln
+# Edit order-service/Dockerfile — change base image to eclipse-temurin:17.0.8-jre-alpine
+# Add a System.out.println to trip the PCI checkstyle rule
 git commit -am "chore: pin base image version"
-git push origin demo/security-vuln
-
-# DB migration failure — add column that already exists
-git checkout main
-git checkout -b demo/db-migration
-# Create claims/database/V4__add_coverage_type.sql with:
-#   ALTER TABLE claims ADD COLUMN coverage_type VARCHAR(50);
-# (without IF NOT EXISTS — this is the bug)
-git commit -am "feat: add coverage type to claims"
-git push origin demo/db-migration
+git push origin lab/security-vuln
 ```
 
 ---
@@ -370,7 +322,7 @@ make oc-deploy
 ### Database pods stuck in `CrashLoopBackOff`
 The security context constraint (SCC) patch may not have applied. Check:
 ```bash
-oc get clusterrolebinding dental-claims-anyuid
+oc get clusterrolebinding sre-deploy-demo-anyuid
 ```
 If it doesn't exist, the script should have created it. Try re-running `make oc-deploy`.
 
@@ -382,10 +334,10 @@ Images were built for the wrong CPU architecture. The deploy script uses `--plat
 - Make sure you're on a network that can reach IBM Cloud (some corporate VPNs may block it)
 - If your reservation expired, request a new one
 
-### Frontend loads but shows no data
-The backend services or databases may still be starting. Wait a minute and refresh. Check:
+### Order Service not responding
+The service or database may still be starting. Wait a minute and check:
 ```bash
-oc logs deployment/claims-service --tail=20
+oc logs deployment/order-service --tail=20
 ```
 
 ### Jenkins pod stuck in `Pending`
@@ -394,22 +346,6 @@ The cluster may not have enough resources. Check:
 oc describe pod -l name=jenkins
 ```
 Look for "Insufficient cpu" or "Insufficient memory" in the Events section. You may need to scale down other deployments or use a larger TechZone flavor.
-
-### "JENKINS_TOKEN not configured and no SA token mounted" error in the app
-The frontend pod isn't running as the `jenkins` service account. Re-run Jenkins setup to patch it:
-```bash
-make oc-deploy-jenkins
-```
-Or patch it manually:
-```bash
-oc patch deployment/frontend --type=json \
-  -p '[{"op":"add","path":"/spec/template/spec/serviceAccountName","value":"jenkins"}]'
-```
-
-### Pipeline triggers but no events appear in the app
-Jenkins events are sent to `http://frontend:3000/api/ai-ops/events` (cluster-internal). Check:
-1. Jenkins can reach the frontend service: `oc exec dc/jenkins -- curl -s http://frontend:3000/health`
-2. The `FRONTEND_URL` in the Jenkinsfile matches the frontend service name
 
 ### GitHub clone fails with SSL error
 `github.ibm.com` uses IBM's internal CA. In Jenkins UI:
@@ -426,25 +362,23 @@ oc set env dc/jenkins GIT_SSL_NO_VERIFY=true
 ## Day-to-Day Commands
 
 ```bash
-# Redeploy everything (rebuild all images + apply manifests)
+# Deploy everything (app + Jenkins + Bob CLI)
+make setup
+
+# Remove everything from the cluster
+make teardown
+
+# Redeploy the app only
 make oc-deploy
 
-# Redeploy a single service (faster — only rebuilds one image)
-make oc-redeploy-claims
-make oc-redeploy-patients
-make oc-redeploy-providers
-make oc-redeploy-analytics
-make oc-redeploy-frontend
+# Redeploy just the order-service
+make oc-redeploy
 
 # View logs
-oc logs deployment/claims-service -f
-oc logs deployment/frontend -f
+oc logs deployment/order-service -f
 
 # Check pod status
 oc get pods
-
-# Remove everything from the cluster
-make oc-teardown
 
 # Deploy/update Jenkins
 make oc-deploy-jenkins
@@ -458,10 +392,17 @@ oc logs dc/jenkins -f
 # Restart Jenkins
 oc rollout restart dc/jenkins
 
-# Trigger a build from the command line
-oc get route jenkins -o jsonpath='{.spec.host}' | xargs -I{} \
-  curl -sk -X POST "https://{}/job/dental-pipeline/buildWithParameters?BRANCH=demo/happy-path" \
-  -H "Authorization: Basic $(echo -n admin:<your-token> | base64)"
+# Deploy/remove Bob CLI
+make oc-deploy-bob
+make oc-teardown-bob
+
+# Ask Bob a question on the cluster
+make oc-bob PROMPT="check the order-service deployment health"
+
+# Run tests locally
+make test
+make lint
+make pci-check
 ```
 
 ---
@@ -472,7 +413,7 @@ When your TechZone reservation expires and you get a new one, just repeat Steps 
 
 ```bash
 oc login --username=<new-user> --password=<new-password> --server=<new-api-url>
-oc new-project dental-claims
+oc new-project sre-deploy-demo
 
 # Enable registry (Steps 5a and 5b)
 oc patch configs.imageregistry.operator.openshift.io/cluster --type merge \
@@ -488,4 +429,4 @@ make oc-deploy
 make oc-deploy-jenkins
 ```
 
-No code changes needed. The deploy script detects everything from the cluster automatically. Your demo branches on GitHub Enterprise persist across environments — no need to recreate them.
+No code changes needed. The deploy script detects everything from the cluster automatically. Your lab branches on GitHub Enterprise persist across environments — no need to recreate them.
