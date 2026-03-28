@@ -268,13 +268,25 @@ Do you approve this deployment?
                 script {
                     sleep 10
 
-                    def smokeResult = sh(
-                        script: 'bash pipeline/smoke-test.sh 2>&1',
-                        returnStatus: true
-                    )
+                    def smokeOutput = sh(
+                        script: 'bash pipeline/smoke-test.sh 2>&1 | tee ${WORKSPACE}/smoke-output.txt',
+                        returnStdout: true
+                    ).trim()
 
-                    if (smokeResult != 0) {
+                    def smokeResult = sh(
+                        script: 'bash pipeline/smoke-test.sh > /dev/null 2>&1; echo $?',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Smoke Test Results:\n${smokeOutput}"
+
+                    if (smokeResult != '0') {
                         env.DEPLOY_STATUS = 'DEGRADED'
+
+                        // ╔════════════════════════════════════════════════════╗
+                        // ║  LAB 2, EXERCISE 5: Add Bob smoke test analysis   ║
+                        // ╚════════════════════════════════════════════════════╝
+
                         echo "Smoke tests detected issues."
                     } else {
                         env.DEPLOY_STATUS = 'HEALTHY'

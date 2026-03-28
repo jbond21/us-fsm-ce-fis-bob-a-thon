@@ -1,6 +1,6 @@
 # Lab 1: Verify Your Environment
 
-**Prerequisite:** Complete [SETUP.md](../SETUP.md) first — you should have the app, ArgoCD, and Jenkins deployed before starting this lab.
+**Prerequisite:** Complete [SETUP.md](../SETUP.md) first — you should have the app, ArgoCD, Bob CLI, and Jenkins deployed before starting this lab.
 
 **Time:** ~10 minutes
 
@@ -48,15 +48,7 @@ Navigate to **sre-pipeline** and click **Build with Parameters**. Leave BRANCH a
 
 ---
 
-## 1.3 — Deploy Bob CLI
-
-Bob CLI runs as a pod on the cluster. Deploy it now — you'll use it in Lab 2:
-
-```bash
-make oc-deploy-bob
-```
-
-Verify it's running:
+## 1.3 — Verify Bob CLI
 
 ```bash
 # Pod is running

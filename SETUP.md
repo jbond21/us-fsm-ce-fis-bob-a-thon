@@ -207,7 +207,24 @@ oc extract secret/openshift-gitops-cluster -n openshift-gitops --to=-
 
 ---
 
-## Step 10: Deploy Jenkins
+## Step 10: Deploy Bob CLI
+
+Bob CLI runs as a pod on the cluster. The labs use it to add AI-assisted analysis to the pipeline.
+
+```bash
+make oc-deploy-bob
+```
+
+Verify it's running:
+
+```bash
+oc get pods -l component=bob-cli
+make oc-bob PROMPT="Say hello in one sentence"
+```
+
+---
+
+## Step 11: Deploy Jenkins
 
 This section adds Jenkins CI/CD to your OpenShift deployment so you can run the lab scenarios with a live SRE pipeline — PR analysis, PCI compliance checks, risk assessment, and automated change control.
 
@@ -315,7 +332,7 @@ oc set env dc/jenkins GIT_SSL_NO_VERIFY=true
 ## Day-to-Day Commands
 
 ```bash
-# Deploy everything (app + ArgoCD + Jenkins)
+# Deploy everything (app + ArgoCD + Bob + Jenkins)
 make setup
 
 # Remove everything from the cluster

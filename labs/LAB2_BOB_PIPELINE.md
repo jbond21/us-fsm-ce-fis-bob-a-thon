@@ -292,15 +292,60 @@ Now run it against the PCI violation branch: `BRANCH=lab/pci-violation`. This ti
 
 ---
 
+## Exercise 5: Bob triages smoke test failures
+
+After deployment, smoke tests verify the service is actually working. When they fail, Bob can analyze the output and recommend whether to rollback.
+
+Find the `Smoke Tests` stage. Look for this comment block:
+
+```groovy
+// ╔════════════════════════════════════════════════════╗
+// ║  LAB 2, EXERCISE 5: Add Bob smoke test analysis   ║
+// ╚════════════════════════════════════════════════════╝
+```
+
+Replace it with:
+
+```groovy
+env.BOB_SMOKE_ANALYSIS = askBob("""Post-deployment smoke tests detected issues.
+
+Smoke test output:
+${smokeOutput}
+
+Analyze:
+1. Which services are unhealthy and why
+2. Is this a deployment issue or a pre-existing problem?
+3. Should we rollback?
+
+Be concise.""")
+
+echo "Bob's Smoke Test Analysis:\n${env.BOB_SMOKE_ANALYSIS}"
+```
+
+### Test it
+
+Run a build with `BRANCH=lab/smoke-failure`. This branch changes the health endpoint to return 503. All pipeline checks pass (lint, PCI, tests, security), the build and deploy succeed, but the smoke tests fail post-deployment. Bob should analyze the 503 and recommend rollback.
+
+```bash
+git add Jenkinsfile
+git commit -m "lab: add Bob smoke test triage"
+git push origin lab/my-pipeline
+```
+
+> **Checkpoint:** Bob identifies the broken health endpoint and recommends rollback.
+
+---
+
 ## What you built
 
-You started with a pipeline that had no AI integration and added three capabilities:
+You started with a pipeline that had no AI integration and added four capabilities:
 
 | What you added | Where | What it does |
 |---|---|---|
 | `askBob()` helper | Bottom of Jenkinsfile | Sends any prompt to Bob CLI and returns the response |
 | Failure diagnosis | PCI + Test stages | When a check fails, Bob explains why and how to fix it |
 | DCR generation | Approval stage | Bob writes a formal change management ticket from pipeline data |
+| Smoke test triage | Smoke Tests stage | When post-deploy checks fail, Bob recommends rollback or investigation |
 
 ### The pattern
 
