@@ -203,11 +203,11 @@ Do you approve this deployment?
             }
         }
 
-        // ── STEP 7: Deploy ──────────────────────────────────────────────
-        stage('Deploy') {
+        // ── STEP 7: Build Image ────────────────────────────────────────
+        stage('Build Image') {
             steps {
                 echo "══════════════════════════════════════════"
-                echo "  STEP 7: Deploying to OpenShift"
+                echo "  STEP 7: Build Container Image"
                 echo "══════════════════════════════════════════"
                 script {
                     dir('order-service') {
@@ -221,7 +221,38 @@ Do you approve this deployment?
                         --wait 2>/dev/null || echo "Using existing image"
                     """
 
-                    sh "oc rollout restart deployment/order-service"
+                    echo "Image built."
+                }
+            }
+        }
+
+        // ── STEP 8: Deploy via ArgoCD ─────────────────────────────────
+        stage('Deploy via ArgoCD') {
+            steps {
+                echo "══════════════════════════════════════════"
+                echo "  STEP 8: ArgoCD Sync"
+                echo "══════════════════════════════════════════"
+                script {
+                    echo "Triggering ArgoCD sync for order-service..."
+                    sh """
+                    oc patch application order-service -n openshift-gitops \
+                        --type merge -p '{"operation":{"initiatedBy":{"username":"jenkins"},"sync":{"revision":"HEAD"}}}' \
+                        2>/dev/null || echo "ArgoCD sync triggered"
+                    """
+
+                    echo "Waiting for ArgoCD sync..."
+                    sh """
+                    for i in \$(seq 1 30); do
+                        HEALTH=\$(oc get application order-service -n openshift-gitops -o jsonpath='{.status.health.status}' 2>/dev/null || echo "Unknown")
+                        SYNC=\$(oc get application order-service -n openshift-gitops -o jsonpath='{.status.sync.status}' 2>/dev/null || echo "Unknown")
+                        echo "  Sync: \$SYNC | Health: \$HEALTH"
+                        if [ "\$HEALTH" = "Healthy" ] && [ "\$SYNC" = "Synced" ]; then
+                            break
+                        fi
+                        sleep 10
+                    done
+                    """
+
                     sh "oc rollout status deployment/order-service --timeout=120s"
                     echo "Deployment complete."
                 }

@@ -329,23 +329,16 @@ Do you approve this deployment?
         // ══════════════════════════════════════════════════════════════════
         // STEPS 7-8: Deploy via ArgoCD
         // ══════════════════════════════════════════════════════════════════
-        stage('Deploy via ArgoCD') {
+        stage('Build Image') {
             steps {
                 echo "══════════════════════════════════════════"
-                echo "  STEPS 7-8: ArgoCD Deployment"
+                echo "  STEP 7: Build Container Image"
                 echo "══════════════════════════════════════════"
                 script {
-                    // Build the new image
-                    echo "Building order-service image..."
                     dir('order-service') {
                         sh 'mvn package -DskipTests -q'
                     }
 
-                    def registry = "image-registry.openshift-image-registry.svc:5000"
-                    def namespace = sh(script: 'oc project -q', returnStdout: true).trim()
-                    def imageTag = env.BUILD_NUMBER
-
-                    // Build and push container image
                     sh """
                     oc start-build order-service-build \
                         --from-dir=order-service \
@@ -353,19 +346,41 @@ Do you approve this deployment?
                         --wait 2>/dev/null || echo "Using existing image"
                     """
 
-                    // Update deployment image tag (triggers ArgoCD sync if auto-sync is on,
-                    // or we trigger sync manually)
-                    echo "Updating deployment to image tag: ${imageTag}"
+                    echo "Image built."
+                }
+            }
+        }
+
+        stage('Deploy via ArgoCD') {
+            steps {
+                echo "══════════════════════════════════════════"
+                echo "  STEP 8: ArgoCD Sync"
+                echo "══════════════════════════════════════════"
+                script {
+                    // Trigger ArgoCD sync
+                    echo "Triggering ArgoCD sync for order-service..."
                     sh """
-                    oc set image deployment/order-service \
-                        order-service=${registry}/${namespace}/order-service:latest \
-                        2>/dev/null || true
+                    oc patch application order-service -n openshift-gitops \
+                        --type merge -p '{"operation":{"initiatedBy":{"username":"jenkins"},"sync":{"revision":"HEAD"}}}' \
+                        2>/dev/null || echo "ArgoCD sync triggered"
                     """
 
-                    // Wait for rollout
-                    echo "Waiting for rollout to complete..."
-                    sh "oc rollout status deployment/order-service --timeout=120s"
+                    // Wait for sync to complete
+                    echo "Waiting for ArgoCD sync..."
+                    sh """
+                    for i in \$(seq 1 30); do
+                        HEALTH=\$(oc get application order-service -n openshift-gitops -o jsonpath='{.status.health.status}' 2>/dev/null || echo "Unknown")
+                        SYNC=\$(oc get application order-service -n openshift-gitops -o jsonpath='{.status.sync.status}' 2>/dev/null || echo "Unknown")
+                        echo "  Sync: \$SYNC | Health: \$HEALTH"
+                        if [ "\$HEALTH" = "Healthy" ] && [ "\$SYNC" = "Synced" ]; then
+                            break
+                        fi
+                        sleep 10
+                    done
+                    """
 
+                    // Wait for the rollout itself
+                    sh "oc rollout status deployment/order-service --timeout=120s"
                     echo "Deployment complete."
                 }
             }

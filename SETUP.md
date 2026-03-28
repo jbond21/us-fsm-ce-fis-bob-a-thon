@@ -189,17 +189,35 @@ All pods should show `Running` with `1/1` ready. It may take 1-2 minutes for all
 
 ---
 
-## Jenkins CI/CD Setup (Optional)
+## Step 9: Deploy ArgoCD
+
+ArgoCD watches your Git repo and syncs the k8s manifests to the cluster. The pipeline uses it for deployments.
+
+```bash
+make oc-deploy-argocd
+```
+
+This installs the OpenShift GitOps operator, grants it access to your namespace, and creates an Application CR pointing at the `k8s/` directory in this repo.
+
+When it finishes, it prints the ArgoCD UI URL. Get the admin password with:
+
+```bash
+oc extract secret/openshift-gitops-cluster -n openshift-gitops --to=-
+```
+
+---
+
+## Step 10: Deploy Jenkins
 
 This section adds Jenkins CI/CD to your OpenShift deployment so you can run the lab scenarios with a live SRE pipeline — PR analysis, PCI compliance checks, risk assessment, and automated change control.
 
-**Prerequisite:** Complete Steps 1-8 above first — all services must be running on the cluster before setting up Jenkins.
+**Prerequisite:** Complete Steps 1-9 above first.
 
 ### What You'll Need
 
 You'll need a **GitHub Enterprise PAT** — create one at [github.ibm.com/settings/tokens](https://github.ibm.com/settings/tokens) with `repo` scope.
 
-### Step 9: Deploy Jenkins + Create Pipeline Job
+### Deploy Jenkins + Create Pipeline Job
 
 One command does everything — deploys Jenkins, installs plugins, configures credentials, and creates the pipeline job:
 
@@ -234,11 +252,11 @@ Jenkins UI:     https://jenkins-sre-deploy-lab.apps.your-cluster.cloud.ibm.com
 Pipeline job:   https://jenkins-sre-deploy-lab.apps.your-cluster.cloud.ibm.com/job/sre-pipeline/
 ```
 
-### Step 10: Test It
+### Test It
 
 #### From Jenkins UI
 
-1. Open the Jenkins URL from Step 9 in your browser
+1. Open the Jenkins URL printed by the setup script
 2. Click on **sre-pipeline**
 3. Click **"Build with Parameters"** on the left sidebar
 4. Leave BRANCH as `lab/happy-path` (or change to another lab branch)
@@ -246,7 +264,7 @@ Pipeline job:   https://jenkins-sre-deploy-lab.apps.your-cluster.cloud.ibm.com/j
 
 Watch the build progress in Jenkins. If you have the app's Pipeline page open with the toggle set to **Live**, events will stream in real-time.
 
-### Step 11: Create Lab Branches (Optional)
+### Create Lab Branches (Optional)
 
 The pipeline uses different Git branches to demonstrate different failure scenarios. Each branch is forked from `main` with one targeted change:
 
@@ -339,7 +357,7 @@ oc set env dc/jenkins GIT_SSL_NO_VERIFY=true
 ## Day-to-Day Commands
 
 ```bash
-# Deploy everything (app + Jenkins + Bob CLI)
+# Deploy everything (app + ArgoCD + Jenkins + Bob CLI)
 make setup
 
 # Remove everything from the cluster
@@ -368,6 +386,10 @@ oc logs dc/jenkins -f
 
 # Restart Jenkins
 oc rollout restart dc/jenkins
+
+# Deploy/remove ArgoCD
+make oc-deploy-argocd
+make oc-teardown-argocd
 
 # Deploy/remove Bob CLI
 make oc-deploy-bob
