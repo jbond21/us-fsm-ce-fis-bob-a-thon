@@ -100,22 +100,27 @@ stage('Bob PR Analysis') {
         echo "  STEP 2: Bob Analyzes the PR"
         echo "══════════════════════════════════════════"
         script {
-            def diffStat = sh(
-                script: 'git diff --stat origin/main...HEAD 2>/dev/null || git diff --stat HEAD~1 2>/dev/null || echo "No diff"',
+            def diffContent = sh(
+                script: 'git diff origin/main...HEAD 2>/dev/null || git diff HEAD~1 2>/dev/null || echo "No diff"',
                 returnStdout: true
             ).trim()
 
-            env.BOB_PR_ANALYSIS = askBob("""You are reviewing a pull request. All the information you need is provided below — do not look for files.
+            // Truncate to avoid shell limits
+            if (diffContent.length() > 8000) {
+                diffContent = diffContent.substring(0, 8000) + "\n... (truncated)"
+            }
+
+            env.BOB_PR_ANALYSIS = askBob("""A pull request has been submitted. Here are the changed files and the full diff:
 
 Branch: ${params.BRANCH}
 
 Changed files:
 ${env.CHANGED_FILES}
 
-Diff summary:
-${diffStat}
+Diff:
+${diffContent}
 
-Based on the above:
+Analyze this PR:
 1. What is this change doing?
 2. What are the potential risks?
 3. What should reviewers focus on?
