@@ -100,6 +100,7 @@ spec:
                             // ╚════════════════════════════════════════════════════╝
 
                             echo "PCI compliance FAILED. Violations:\n${output}"
+                            unstable("PCI compliance check failed")
                         } else {
                             env.PCI_FAILED = 'false'
                             echo "PCI compliance check passed."
@@ -135,6 +136,7 @@ spec:
                             // ╚════════════════════════════════════════════════════╝
 
                             echo "Tests FAILED:\n${testOutput}"
+                            unstable("Unit tests failed")
                         } else {
                             env.TEST_FAILED = 'false'
                         }
@@ -158,6 +160,7 @@ spec:
                     if (scanResult.contains('CRITICAL') || scanResult.contains('HIGH')) {
                         env.SECURITY_RISK = 'HIGH'
                         echo "Security scan found HIGH/CRITICAL vulnerabilities:\n${scanResult}"
+                        unstable("Security scan found HIGH/CRITICAL vulnerabilities")
                     } else {
                         env.SECURITY_RISK = 'LOW'
                         echo "No critical or high vulnerabilities found."
@@ -288,6 +291,7 @@ Do you approve this deployment?
                         // ╚════════════════════════════════════════════════════╝
 
                         echo "Smoke tests detected issues."
+                        unstable("Smoke tests failed")
                     } else {
                         env.DEPLOY_STATUS = 'HEALTHY'
                         echo "All smoke tests passed."

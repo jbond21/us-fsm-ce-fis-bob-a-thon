@@ -153,6 +153,7 @@ For each violation:
 Be specific and reference PCI DSS requirements where applicable.""")
 
                             echo "Bob's PCI Analysis:\n${env.BOB_PCI_ANALYSIS}"
+                            unstable("PCI compliance check failed")
                         } else {
                             env.PCI_FAILED = 'false'
                             echo "PCI compliance check passed."
@@ -197,6 +198,7 @@ Provide:
 Be specific — reference exact class names and line numbers.""")
 
                             echo "Bob's Test Analysis:\n${env.BOB_TEST_ANALYSIS}"
+                            unstable("Unit tests failed")
                         } else {
                             env.TEST_FAILED = 'false'
                         }
@@ -234,6 +236,7 @@ For each vulnerability:
 Prioritize by severity.""")
 
                         echo "Bob's Security Analysis:\n${env.BOB_SECURITY_ANALYSIS}"
+                        unstable("Security scan found HIGH/CRITICAL vulnerabilities")
                     } else {
                         env.SECURITY_RISK = 'LOW'
                         echo "No critical or high vulnerabilities found."
@@ -425,6 +428,7 @@ Analyze:
 Be concise.""")
                         echo "Bob's Smoke Test Analysis:\n${analysis}"
                         env.BOB_SMOKE_ANALYSIS = analysis
+                        unstable("Smoke tests failed")
                     } else {
                         env.DEPLOY_STATUS = 'HEALTHY'
                         echo "All smoke tests passed."
