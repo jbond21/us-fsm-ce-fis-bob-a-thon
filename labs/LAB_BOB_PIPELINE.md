@@ -1,6 +1,6 @@
 # Lab: Integrating IBM Bob into Your Pipeline
 
-The `main` branch has a working Jenkins pipeline that implements the client's 10-step regulated deployment flow — but it has no AI assistance. When stages fail, the pipeline dumps raw output that's hard to act on. In this lab you'll add Bob at three key pain points to make failures understandable.
+The `main` branch has a working Jenkins pipeline that implements a regulated deployment flow — but it has no AI assistance. When stages fail, the pipeline dumps raw output that's hard to act on. In this lab you'll add Bob at three key points to make failures understandable.
 
 **Time:** ~30 minutes
 **Prerequisites:** Setup complete (app, ArgoCD, Bob CLI, Jenkins all running). The completed version is at `labs/solution/Jenkinsfile.solution`.
@@ -11,11 +11,10 @@ The `main` branch has a working Jenkins pipeline that implements the client's 10
 
 Run a build in Jenkins with `BRANCH=main`. The pipeline has intentional issues:
 
-- **PCI Compliance (Step 4)** — a `System.out.println` violates PCI checkstyle rules (yellow)
 - **Unit Tests (Step 5)** — status validation was removed, 2 tests fail (yellow)
 - **Security Scan (Step 6)** — Spring Boot 3.2.0 has known CVEs (yellow)
 
-Look at the console output for each failing stage. It's raw Maven output, raw test stack traces, and a wall of CVE tables. By the end of this lab, Bob will explain all of it in plain language.
+Look at the console output for each failing stage. The test stage dumps raw Maven stack traces. The security stage dumps a wall of CVE tables. By the end of this lab, Bob will explain all of it in plain language.
 
 ---
 
@@ -32,7 +31,7 @@ You will wrap this in a Groovy helper function so every pipeline stage can call 
 
 ---
 
-## Exercise 1: Add the `askBob` helper function
+## Step 1: Add the `askBob` helper function
 
 Open `Jenkinsfile` in Bob. At the very bottom of the file, **after** the closing `}` of the `pipeline` block, add:
 
@@ -62,28 +61,11 @@ def askBob(prompt) {
 }
 ```
 
-**Test it.** Add a temporary stage right after Checkout:
-
-```groovy
-stage('Test Bob Connection') {
-    steps {
-        script {
-            def response = askBob("Reply with exactly: BOB_OK")
-            echo "Bob says: ${response}"
-        }
-    }
-}
-```
-
-Commit, push, rebuild on `main`. Verify Bob responds, then remove the test stage.
-
-> **Checkpoint:** Bob's response appears in the Jenkins console.
-
 ---
 
-## Exercise 2: Bob analyzes the PR
+## Step 2: Add Bob PR Analysis
 
-Add a new stage after Checkout. Find this comment in the Jenkinsfile:
+Find this comment in the Jenkinsfile:
 
 ```groovy
 // ╔════════════════════════════════════════════════════════════╗
@@ -105,7 +87,6 @@ stage('Bob PR Analysis') {
                 returnStdout: true
             ).trim()
 
-            // Truncate to avoid shell limits
             if (diffContent.length() > 8000) {
                 diffContent = diffContent.substring(0, 8000) + "\n... (truncated)"
             }
@@ -133,13 +114,9 @@ Be concise.""")
 }
 ```
 
-Commit, push, rebuild. Bob should summarize the changes and flag the risks before any checks run.
-
-> **Checkpoint:** Bob's PR analysis appears in the console before the Lint stage.
-
 ---
 
-## Exercise 3: Bob diagnoses test failures
+## Step 3: Add Bob test failure diagnosis
 
 Find this comment in the Test stage:
 
@@ -167,13 +144,9 @@ Be specific — reference exact class names and methods.""")
 echo "Bob's Test Analysis:\n${env.BOB_TEST_ANALYSIS}"
 ```
 
-Commit, push, rebuild. The Test stage should still go yellow, but now Bob explains what broke and how to fix it.
-
-> **Checkpoint:** Bob identifies the missing status validation and suggests restoring it.
-
 ---
 
-## Exercise 4: Bob triages security vulnerabilities
+## Step 4: Add Bob security scan triage
 
 Find this comment in the Security Scan stage:
 
@@ -201,15 +174,32 @@ Prioritize by severity. Be concise.""")
 echo "Bob's Security Analysis:\n${env.BOB_SECURITY_ANALYSIS}"
 ```
 
-Commit, push, rebuild. Instead of a raw Trivy table, Bob explains each CVE and tells you exactly what to upgrade.
+---
 
-> **Checkpoint:** Bob's security analysis appears with actionable fix recommendations.
+## Step 5: Build and test
+
+Commit and push all your changes:
+
+```bash
+git checkout -b lab/my-pipeline
+git add Jenkinsfile
+git commit -m "lab: add Bob PR analysis, test diagnosis, and security triage"
+git push origin lab/my-pipeline
+```
+
+Run a build in Jenkins with `BRANCH=lab/my-pipeline`. Compare the output to your first build:
+
+- **PR Analysis (Step 2)** — Bob summarizes your Jenkinsfile changes and flags risks
+- **Unit Tests (Step 5)** — instead of raw stack traces, Bob identifies the missing status validation and tells you how to fix it
+- **Security Scan (Step 6)** — instead of a CVE table, Bob explains each vulnerability, its PCI impact, and the exact version to upgrade to
+
+> **Checkpoint:** All three Bob integration points produce actionable output.
 
 ---
 
 ## What you built
 
-| Exercise | Pipeline stage | What Bob does |
+| Step | Pipeline stage | What Bob does |
 |---|---|---|
 | `askBob()` helper | — | Sends any prompt to the Bob CLI pod |
 | PR Analysis | After Checkout (Step 2) | Summarizes the change, identifies risks before checks run |
