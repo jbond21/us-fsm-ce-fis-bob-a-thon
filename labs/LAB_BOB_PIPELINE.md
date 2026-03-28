@@ -105,7 +105,9 @@ stage('Bob PR Analysis') {
                 returnStdout: true
             ).trim()
 
-            env.BOB_PR_ANALYSIS = askBob("""A pull request has been submitted for review.
+            env.BOB_PR_ANALYSIS = askBob("""You are reviewing a pull request. All the information you need is provided below — do not look for files.
+
+Branch: ${params.BRANCH}
 
 Changed files:
 ${env.CHANGED_FILES}
@@ -113,7 +115,7 @@ ${env.CHANGED_FILES}
 Diff summary:
 ${diffStat}
 
-Analyze this PR:
+Based on the above:
 1. What is this change doing?
 2. What are the potential risks?
 3. What should reviewers focus on?
