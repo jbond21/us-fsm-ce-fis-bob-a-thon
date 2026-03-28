@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide walks you through deploying the SRE Deploy Lab to an OpenShift cluster. The lab showcases how Bob integrates into a Jenkins CI/CD pipeline for the SRE use case, using a sample Order Service as the application under deployment.
+This guide walks you through deploying the SRE Deploy Lab to an OpenShift cluster. The lab showcases how IBM Bob integrates into a Jenkins CI/CD pipeline for the SRE use case, using a sample Order Service as the application under deployment.
 
 **Time required:** ~20 minutes for the app (plus ~10 minutes for image builds), ~10 more minutes if adding Jenkins
 

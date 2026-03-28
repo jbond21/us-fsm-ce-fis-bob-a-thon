@@ -1,6 +1,6 @@
 # Lab 4: Custom SRE Operator Mode
 
-Create a custom Bob mode with rules tailored for SRE operations in a PCI-regulated environment.
+Create a custom IBM Bob mode with rules tailored for SRE operations in a PCI-regulated environment.
 
 **Prerequisites:** Lab 3 complete (Jenkins MCP connected).
 

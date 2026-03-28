@@ -1,4 +1,4 @@
-# Lab: Integrating Bob into Your Pipeline
+# Lab: Integrating IBM Bob into Your Pipeline
 
 In this lab you will add Bob AI to a working Jenkins pipeline, one integration point at a time. Each exercise adds Bob at a specific stage, and you'll test it by running the pipeline against a branch that triggers that failure.
 
@@ -40,7 +40,7 @@ You will wrap this pattern in a Groovy helper function so every pipeline stage c
 
 ## Exercise 1: Add the `askBob` helper function
 
-Open `Jenkinsfile` in your editor. At the very bottom of the file, **after** the closing `}` of the `pipeline` block, add this helper function:
+Open `Jenkinsfile` in Bob. At the very bottom of the file, **after** the closing `}` of the `pipeline` block, add this helper function:
 
 ```groovy
 // ── Helper: ask Bob CLI a question ──────────────────────────────────────
@@ -112,7 +112,7 @@ Find the `PCI Compliance Check` stage. Look for this comment block:
 
 ```groovy
 // ╔════════════════════════════════════════════════════╗
-// ║  LAB 2, EXERCISE 2: Add Bob PCI analysis here     ║
+// ║  EXERCISE 2a: Add Bob PCI analysis here            ║
 // ╚════════════════════════════════════════════════════╝
 ```
 
@@ -144,7 +144,7 @@ Find the `Test` stage. Look for this comment block:
 
 ```groovy
 // ╔════════════════════════════════════════════════════╗
-// ║  LAB 2, EXERCISE 3: Add Bob test analysis here    ║
+// ║  EXERCISE 2b: Add Bob test analysis here           ║
 // ╚════════════════════════════════════════════════════╝
 ```
 
@@ -194,8 +194,8 @@ Find the `Approval` stage. Look for this comment block:
 
 ```groovy
 // ╔════════════════════════════════════════════════════════╗
-// ║  LAB 2, EXERCISE 4: Replace this manual summary with  ║
-// ║  a Bob-generated Deployment Change Request (DCR)      ║
+// ║  EXERCISE 3: Replace this manual summary with a        ║
+// ║  Bob-generated Deployment Change Request (DCR)        ║
 // ╚════════════════════════════════════════════════════════╝
 ```
 
@@ -276,7 +276,7 @@ git push origin main
 
 ---
 
-## Exercise 5: Bob triages smoke test failures
+## Exercise 4: Bob triages smoke test failures
 
 After deployment, smoke tests verify the service is actually working. When they fail, Bob can analyze the output and recommend whether to rollback.
 
@@ -284,7 +284,7 @@ Find the `Smoke Tests` stage. Look for this comment block:
 
 ```groovy
 // ╔════════════════════════════════════════════════════╗
-// ║  LAB 2, EXERCISE 5: Add Bob smoke test analysis   ║
+// ║  EXERCISE 4: Add Bob smoke test analysis           ║
 // ╚════════════════════════════════════════════════════╝
 ```
 

@@ -1,6 +1,6 @@
 # Lab 3: Jenkins MCP Server
 
-Connect Bob to Jenkins via MCP so you can operate pipelines directly from the terminal.
+Connect IBM Bob to Jenkins via MCP so you can operate pipelines directly from the terminal.
 
 **Prerequisites:** Lab 1 complete (Jenkins running on the cluster).
 

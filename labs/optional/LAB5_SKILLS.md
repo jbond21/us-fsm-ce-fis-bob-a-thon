@@ -1,6 +1,6 @@
 # Lab 5: SRE Skills
 
-Create reusable skills that Bob can invoke on demand for common SRE tasks.
+Create reusable skills that IBM Bob can invoke on demand for common SRE tasks.
 
 **Prerequisites:** Lab 4 complete (SRE Operator mode active with Jenkins MCP).
 

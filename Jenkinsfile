@@ -96,7 +96,7 @@ spec:
                             env.PCI_FAILED = 'true'
 
                             // ╔════════════════════════════════════════════════════╗
-                            // ║  LAB 2, EXERCISE 2: Add Bob PCI analysis here     ║
+                            // ║  EXERCISE 2a: Add Bob PCI analysis here            ║
                             // ╚════════════════════════════════════════════════════╝
 
                             echo "PCI compliance FAILED. Violations:\n${output}"
@@ -131,7 +131,7 @@ spec:
                             env.TEST_FAILED = 'true'
 
                             // ╔════════════════════════════════════════════════════╗
-                            // ║  LAB 2, EXERCISE 3: Add Bob test analysis here    ║
+                            // ║  EXERCISE 2b: Add Bob test analysis here           ║
                             // ╚════════════════════════════════════════════════════╝
 
                             echo "Tests FAILED:\n${testOutput}"
@@ -177,8 +177,8 @@ spec:
                     def testStatus = env.TEST_FAILED == 'true' ? 'FAILED' : 'PASSED'
 
                     // ╔════════════════════════════════════════════════════════╗
-                    // ║  LAB 2, EXERCISE 4: Replace this manual summary with  ║
-                    // ║  a Bob-generated Deployment Change Request (DCR)      ║
+                    // ║  EXERCISE 3: Replace this manual summary with a        ║
+                    // ║  Bob-generated Deployment Change Request (DCR)        ║
                     // ╚════════════════════════════════════════════════════════╝
 
                     try {
@@ -284,7 +284,7 @@ Do you approve this deployment?
                         env.DEPLOY_STATUS = 'DEGRADED'
 
                         // ╔════════════════════════════════════════════════════╗
-                        // ║  LAB 2, EXERCISE 5: Add Bob smoke test analysis   ║
+                        // ║  EXERCISE 4: Add Bob smoke test analysis           ║
                         // ╚════════════════════════════════════════════════════╝
 
                         echo "Smoke tests detected issues."

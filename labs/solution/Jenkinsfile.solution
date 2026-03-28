@@ -451,7 +451,7 @@ DEPLOYMENT RESULTS:
 - Smoke tests: ${env.DEPLOY_STATUS == 'HEALTHY' ? 'All services healthy' : 'Issues detected'}
 ${env.DEPLOY_STATUS != 'HEALTHY' ? '- Issues: ' + (env.BOB_SMOKE_ANALYSIS ?: 'See smoke test output') : ''}
 
-Write a formal status update for the DCR JIRA ticket.
+Write a formal status update for the DCR.
 Include:
 1. Deployment timestamp and status
 2. Verification results

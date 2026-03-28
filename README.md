@@ -1,6 +1,6 @@
-# SRE Deploy Demo
+# SRE Deploy Lab
 
-Hands-on lab for integrating Bob AI into a regulated CI/CD pipeline. You'll deploy a Spring Boot app to OpenShift, set up Jenkins, and progressively add Bob to diagnose failures and generate deployment change requests.
+Hands-on lab for integrating IBM Bob into a regulated CI/CD pipeline. You'll deploy a Spring Boot app to OpenShift, set up Jenkins, and progressively add Bob to diagnose failures and generate deployment change requests.
 
 ## What You'll Build
 
