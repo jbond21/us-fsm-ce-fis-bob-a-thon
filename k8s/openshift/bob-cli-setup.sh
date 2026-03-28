@@ -59,7 +59,6 @@ echo "=== Building Bob CLI image (on-cluster BuildConfig) ==="
 
 if ! oc get bc/sre-bob-cli-build &>/dev/null 2>&1; then
     oc new-build --binary --name=sre-bob-cli-build \
-        --docker-image=registry.access.redhat.com/ubi8/ubi-minimal:latest \
         --strategy=docker
 fi
 
