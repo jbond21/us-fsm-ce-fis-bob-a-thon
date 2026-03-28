@@ -259,50 +259,8 @@ Pipeline job:   https://jenkins-sre-deploy-lab.apps.your-cluster.cloud.ibm.com/j
 1. Open the Jenkins URL printed by the setup script
 2. Click on **sre-pipeline**
 3. Click **"Build with Parameters"** on the left sidebar
-4. Leave BRANCH as `lab/happy-path` (or change to another lab branch)
+4. Leave BRANCH as `main`
 5. Click **Build**
-
-Watch the build progress in Jenkins. If you have the app's Pipeline page open with the toggle set to **Live**, events will stream in real-time.
-
-### Create Lab Branches (Optional)
-
-The pipeline uses different Git branches to demonstrate different failure scenarios. Each branch is forked from `main` with one targeted change:
-
-| Branch | What's Different | Pipeline Outcome |
-|---|---|---|
-| `lab/happy-path` | Minor change (comment, version bump) | All stages pass, Bob approves |
-| `lab/test-failure` | Bug in OrderService — status validation removed | Tests fail, Bob identifies fix |
-| `lab/security-vuln` | PCI violation + old base image in Dockerfile | Security scan finds CVEs, Bob analyzes |
-
-Create them from `main` after merging any pending PRs:
-
-```bash
-# Start from main
-git checkout main
-git pull
-
-# Happy path — minor change so there's a diff for Bob to review
-git checkout -b lab/happy-path
-# Make a small change (add a comment, bump a version, etc.)
-git commit -am "minor: add coverage notes to README"
-git push origin lab/happy-path
-
-# Test failure — remove status validation in OrderService
-git checkout main
-git checkout -b lab/test-failure
-# Edit order-service/src/.../service/OrderService.java
-# Remove the status transition validation so unit tests fail
-git commit -am "refactor: simplify order status handling"
-git push origin lab/test-failure
-
-# Security vulnerability — PCI violation + old base image
-git checkout main
-git checkout -b lab/security-vuln
-# Edit order-service/Dockerfile — change base image to eclipse-temurin:17.0.8-jre-alpine
-# Add a System.out.println to trip the PCI checkstyle rule
-git commit -am "chore: pin base image version"
-git push origin lab/security-vuln
-```
 
 ---
 
