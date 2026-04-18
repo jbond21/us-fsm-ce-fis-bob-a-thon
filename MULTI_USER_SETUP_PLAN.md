@@ -2,9 +2,21 @@
 
 ## Executive Summary
 
-**YES, this architecture is feasible and recommended for your 20-user lab environment.**
+This plan details how to implement a single Jenkins instance with Bob CLI as a sidecar container in Jenkins agent pods, serving 20 isolated user projects. The architecture upgrades the `askBob` function from using `oc exec` to communicate with separate Bob pods to using a shared volume for direct communication with Bob running as a sidecar container in the same pod.
 
-The proposed architecture is not only possible but follows Kubernetes/OpenShift best practices. This plan details how to implement a single Jenkins instance with Bob CLI as a sidecar container in Jenkins agent pods, serving 20 isolated user projects.
+## Key Design Decisions
+
+| Aspect | Decision | Rationale |
+|--------|----------|-----------|
+| **Jenkins Location** | Single instance in `jenkins-project` | Centralized management, resource efficiency |
+| **Bob Location** | Sidecar in each Jenkins agent pod | Standard Kubernetes pattern, Bob available during pipeline execution |
+| **API Key Strategy** | Single shared Bob API key in a Secret | Rotatable mid-event without code changes |
+| **User Isolation** | Jenkins folder RBAC + OpenShift RBAC | Users see only their own Jenkins folder; users have NO OpenShift role on `jenkins-project` |
+| **Naming Convention** | `user1` through `user20` | Clear, predictable naming for automation |
+| **Prompt Storage** | One file per prompt in `pipeline/prompts/` | Keeps Jenkinsfile readable; prompts are reviewable, diffable, and reusable across pipelines |
+| **`askBob` Signature** | `askBob(promptName, vars = [:], mode = null)` | Loads prompt by name, substitutes `${VAR}` placeholders, optionally selects a Bob mode (e.g. `sre-operator`) |
+| **Custom Bob Modes** | Project-level modes in repo's `.bob/`, auto-loaded via shared workspace | Per-lab modes ship with the branch; participants can read them; no image rebuild needed when a mode changes |
+
 
 ---
 
@@ -57,19 +69,6 @@ graph TB
 ```
 
 ---
-
-## Key Design Decisions
-
-| Aspect | Decision | Rationale |
-|--------|----------|-----------|
-| **Jenkins Location** | Single instance in `jenkins-project` | Centralized management, resource efficiency |
-| **Bob Location** | Sidecar in each Jenkins agent pod | Standard Kubernetes pattern, Bob available during pipeline execution |
-| **API Key Strategy** | Single shared Bob API key in a Secret | Rotatable mid-event without code changes |
-| **User Isolation** | Jenkins folder RBAC + OpenShift RBAC | Users see only their own Jenkins folder; users have NO OpenShift role on `jenkins-project` |
-| **Naming Convention** | `user1` through `user20` | Clear, predictable naming for automation |
-| **Prompt Storage** | One file per prompt in `pipeline/prompts/` | Keeps Jenkinsfile readable; prompts are reviewable, diffable, and reusable across pipelines |
-| **`askBob` Signature** | `askBob(promptName, vars = [:], mode = null)` | Loads prompt by name, substitutes `${VAR}` placeholders, optionally selects a Bob mode (e.g. `sre-operator`) |
-| **Custom Bob Modes** | Project-level modes in repo's `.bob/`, auto-loaded via shared workspace | Per-lab modes ship with the branch; participants can read them; no image rebuild needed when a mode changes |
 
 ---
 
