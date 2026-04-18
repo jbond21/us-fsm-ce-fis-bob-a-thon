@@ -20,6 +20,19 @@ This plan details how to implement a single Jenkins instance with Bob CLI as a s
 
 ---
 
+## Workflow: Progressive Stages with Manual Commits
+
+This implementation runs in 11 stages on a dedicated branch (`multi_user_implementation`). Each stage is independently testable. The rules:
+
+1. **One stage at a time.** Complete the stage's work and run its test/validation step.
+2. **Commit manually.** After validation, review the diff and create the commit using the suggested message.
+3. **Wait for explicit confirmation.** Claude does not begin the next stage until you say "committed" (or equivalent). The "⏸ Stop" marker at the end of each stage is a hard stop.
+4. **If a stage fails its test**, fix it inside the same stage — do not advance and squash later.
+
+This gives clean, reviewable commits and lets you bail out at any stage without leaving half-finished work behind.
+
+---
+
 ## Architecture Overview
 
 ```mermaid
@@ -108,19 +121,6 @@ repo/
     ├── smoke-failure.md
     └── dcr-update.md
 ```
-
----
-
-## Workflow: Progressive Stages with Manual Commits
-
-This implementation runs in 11 stages on a dedicated branch (`multi_user_implementation`). Each stage is independently testable. The rules:
-
-1. **One stage at a time.** Complete the stage's work and run its test/validation step.
-2. **Commit manually.** After validation, review the diff and create the commit using the suggested message.
-3. **Wait for explicit confirmation.** Claude does not begin the next stage until you say "committed" (or equivalent). The "⏸ Stop" marker at the end of each stage is a hard stop.
-4. **If a stage fails its test**, fix it inside the same stage — do not advance and squash later.
-
-This gives clean, reviewable commits and lets you bail out at any stage without leaving half-finished work behind.
 
 ---
 
