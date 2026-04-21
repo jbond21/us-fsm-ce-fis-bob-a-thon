@@ -5,8 +5,9 @@
 // custom modes defined in the repo's .bob/custom_modes.yaml are loaded
 // by the bob-cli sidecar at runtime.
 //
-// Before running: replace YOUR_NAMESPACE_HERE (line ~27) with your
-// actual OpenShift project name (e.g. andy-bob-sidecar-test).
+// Currently wired for namespace: andy-bob-sidecar-test
+// If running in a different project, update the bob-cli image URL
+// (search for "andy-bob-sidecar-test" in the pod spec below).
 //
 // See docs/SIDECAR_MODE_TEST_PLAN.md for full context.
 // ═══════════════════════════════════════════════════════════════════
@@ -46,7 +47,7 @@ spec:
 
   # Bob CLI Sidecar Container
   - name: bob-cli
-    image: image-registry.openshift-image-registry.svc:5000/YOUR_NAMESPACE_HERE/bob-cli-sidecar:latest
+    image: image-registry.openshift-image-registry.svc:5000/andy-bob-sidecar-test/bob-cli-sidecar:latest
     command: ['sleep']
     args: ['infinity']
     workingDir: /workspace
