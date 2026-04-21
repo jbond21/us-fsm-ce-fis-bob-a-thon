@@ -1,0 +1,224 @@
+// ═══════════════════════════════════════════════════════════════════
+// Bob CLI Sidecar — Mode Discovery Test Pipeline
+//
+// Purpose: prove the sidecar pattern works end-to-end by checking that
+// custom modes defined in the repo's .bob/custom_modes.yaml are loaded
+// by the bob-cli sidecar at runtime.
+//
+// Before running: replace YOUR_NAMESPACE_HERE (line ~27) with your
+// actual OpenShift project name (e.g. andy-bob-sidecar-test).
+//
+// See docs/SIDECAR_MODE_TEST_PLAN.md for full context.
+// ═══════════════════════════════════════════════════════════════════
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins-agent: sidecar-test
+spec:
+  serviceAccountName: jenkins
+  containers:
+
+  # Jenkins Agent Container
+  - name: jenkins-agent
+    image: jenkins/inbound-agent:latest
+    command: ['sleep']
+    args: ['infinity']
+    workingDir: /workspace
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /workspace
+    env:
+    - name: HOME
+      value: /workspace
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "1"
+
+  # Bob CLI Sidecar Container
+  - name: bob-cli
+    image: image-registry.openshift-image-registry.svc:5000/YOUR_NAMESPACE_HERE/bob-cli-sidecar:latest
+    command: ['sleep']
+    args: ['infinity']
+    workingDir: /workspace
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /workspace
+    env:
+    - name: BOBSHELL_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: bob-cli-credentials
+          key: BOBSHELL_API_KEY
+    - name: BOB_ACCEPT_LICENSE
+      value: "true"
+    - name: HOME
+      value: /workspace
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "2Gi"
+        cpu: "500m"
+
+  # Shared Volume
+  volumes:
+  - name: workspace-volume
+    emptyDir: {}
+"""
+            defaultContainer 'jenkins-agent'
+        }
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "=== Checking out repository ==="
+                checkout scm
+
+                echo "=== Verifying workspace contents ==="
+                sh '''
+                    echo "Current directory: $(pwd)"
+                    echo "Workspace contents:"
+                    ls -la
+                    echo ""
+                    echo "Bob directory contents:"
+                    ls -la .bob/ || echo "No .bob directory found"
+                '''
+            }
+        }
+
+        stage('Verify Bob CLI Setup') {
+            steps {
+                echo "=== Verifying Bob CLI in sidecar ==="
+                container('bob-cli') {
+                    sh '''
+                        echo "Current directory in bob-cli container: $(pwd)"
+                        echo "Workspace contents from bob-cli:"
+                        ls -la
+                        echo ""
+                        echo "Bob directory from bob-cli:"
+                        ls -la .bob/ || echo "No .bob directory found"
+                        echo ""
+                        echo "Checking Bob installation:"
+                        which bob
+                        bob --version || echo "Bob version check failed"
+                    '''
+                }
+            }
+        }
+
+        stage('Test Bob Basic Functionality') {
+            steps {
+                echo "=== Testing Bob basic functionality ==="
+                container('bob-cli') {
+                    script {
+                        def result = sh(
+                            script: '''
+                                bob -p "Reply with exactly: BOB_IS_WORKING" \
+                                    --hide-intermediary-output 2>&1
+                            ''',
+                            returnStdout: true
+                        ).trim()
+
+                        echo "Bob response:\n${result}"
+
+                        if (result.contains("BOB_IS_WORKING")) {
+                            echo "Bob CLI is working!"
+                        } else {
+                            echo "Bob CLI may not be working correctly"
+                            echo "Full output: ${result}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Verify Custom Modes Loaded') {
+            steps {
+                echo "=== Verifying custom modes are loaded ==="
+                container('bob-cli') {
+                    script {
+                        def result = sh(
+                            script: '''
+                                bob --mode sre-operator \
+                                    -p "Reply with exactly: CUSTOM_MODE_WORKING" \
+                                    --hide-intermediary-output 2>&1
+                            ''',
+                            returnStatus: true
+                        )
+
+                        if (result == 0) {
+                            echo "Custom mode 'sre-operator' is loaded and working!"
+                        } else {
+                            echo "Custom mode 'sre-operator' failed to load"
+                            error("Custom mode test failed")
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Test Code Analysis with Custom Mode') {
+            steps {
+                echo "=== Testing Bob code analysis with custom mode ==="
+                container('bob-cli') {
+                    script {
+                        def hasJava = sh(
+                            script: 'find . -name "*.java" | head -1',
+                            returnStdout: true
+                        ).trim()
+
+                        if (hasJava) {
+                            def analysis = sh(
+                                script: '''
+                                    bob --mode code-reviewer \
+                                        -p "List the Java files in this project and briefly describe what you see" \
+                                        --hide-intermediary-output 2>&1
+                                ''',
+                                returnStdout: true
+                            ).trim()
+
+                            echo "Bob analysis:\n${analysis}"
+                        } else {
+                            echo "No Java files found, skipping code analysis test"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "=== Pipeline Complete ==="
+            echo "Result: ${currentBuild.result ?: 'SUCCESS'}"
+        }
+        success {
+            echo "Sidecar setup is working correctly!"
+            echo ""
+            echo "Next steps:"
+            echo "1. Workshop participants can now add their own modes to .bob/custom_modes.yaml"
+            echo "2. Modes will be automatically available in subsequent builds"
+            echo "3. Try creating a new mode and testing it!"
+        }
+        failure {
+            echo "Sidecar setup needs troubleshooting"
+            echo "Check the logs above for errors"
+            echo "Common issues:"
+            echo "- Image pull errors: verify namespace in image URL"
+            echo "- Bob authentication: verify bob-cli-credentials secret"
+            echo "- Custom modes not found: verify .bob/custom_modes.yaml in repo"
+        }
+    }
+}
