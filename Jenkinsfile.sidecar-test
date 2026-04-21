@@ -152,7 +152,7 @@ spec:
                     script {
                         def result = sh(
                             script: '''
-                                bob --mode sre-operator \
+                                bob --chat-mode sre-operator \
                                     -p "Reply with exactly: CUSTOM_MODE_WORKING" \
                                     --hide-intermediary-output 2>&1
                             ''',
@@ -183,7 +183,7 @@ spec:
                         if (hasJava) {
                             def analysis = sh(
                                 script: '''
-                                    bob --mode code-reviewer \
+                                    bob --chat-mode code-reviewer \
                                         -p "List the Java files in this project and briefly describe what you see" \
                                         --hide-intermediary-output 2>&1
                                 ''',
