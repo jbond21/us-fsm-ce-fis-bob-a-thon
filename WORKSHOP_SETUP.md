@@ -145,14 +145,14 @@ The test pipeline's pod spec hardcodes the namespace for the Bob CLI image pull 
 ```bash
 # From repo root, on a branch you control
 # Open Jenkinsfile.sidecar-test and replace the namespace
-# Search for: andy-bob-sidecar-test
+# Search for: fis-bobathon
 # Replace with: your project name from Step 2
 ```
 
 Or via sed (adjust the project name):
 
 ```bash
-sed -i '' "s/andy-bob-sidecar-test/$(oc project -q)/g" Jenkinsfile.sidecar-test
+sed -i '' "s/fis-bobathon/$(oc project -q)/g" Jenkinsfile.sidecar-test
 ```
 
 Commit and push this change to the branch participants will fork from (typically `main` or a workshop-specific branch).
@@ -263,7 +263,7 @@ Run `oc get template jenkins-persistent -n openshift` — if it returns `not fou
 
 ### Pipeline fails with `ImagePullBackOff`
 
-The image URL in `Jenkinsfile.sidecar-test` probably still says `andy-bob-sidecar-test` (or someone else's project). Revisit Step 6.
+The image URL in `Jenkinsfile.sidecar-test` probably still says `fis-bobathon` (or someone else's project). Revisit Step 6.
 
 ### Participant login doesn't work
 
