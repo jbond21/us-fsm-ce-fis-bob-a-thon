@@ -74,23 +74,35 @@ Take note of the **project name** — you'll use it in Step 5.
 
 ---
 
-## Step 3 — Clone this repo and build the Bob CLI sidecar image
+## Step 3 — Clone this repo and build the two container images
+
+Every pipeline pod runs two containers: `bob-cli-sidecar` (Bob Shell CLI) and `jenkins-agent` (the build environment). Both images are built once into your project's internal OpenShift registry.
 
 ```bash
 # Clone or pull latest
 git clone <this-repo-url>
 cd us-fsm-ce-fis-bob-a-thon
 
-# Build the Bob CLI sidecar image into your project's internal registry
+# --- Build the Bob CLI sidecar image ---
 cd k8s/openshift/bob-cli-sidecar
 oc new-build --binary --name=bob-cli-sidecar --strategy=docker
 oc start-build bob-cli-sidecar --from-dir=. --follow
 
-# Verify
-oc get imagestream bob-cli-sidecar
+# --- Build the Jenkins agent image ---
+cd ../jenkins-agent
+oc new-build --binary --name=jenkins-agent --strategy=docker
+oc start-build jenkins-agent --from-dir=. --follow
+
+# Verify both ImageStreams exist
+oc get imagestream bob-cli-sidecar jenkins-agent
 ```
 
-Expected: a ~2–5 minute build producing an ImageStream named `bob-cli-sidecar` with tag `latest`.
+Expected: two ~2–5 minute builds. Both ImageStreams should appear with tag `latest`.
+
+**What's in each image:**
+
+- `bob-cli-sidecar` — Bob Shell CLI on a minimal Node base. Runs alongside the agent in every pipeline pod; invoked from a Jenkinsfile via `container('bob-cli') { sh 'bob ...' }`.
+- `jenkins-agent` — Jenkins inbound agent (JDK17) with Maven, git, curl, and jq. Lab colleagues extend the Dockerfile for their lab's needs (e.g. a security scanner in Lab 3, a linter in Lab 4) and rebuild with `oc start-build jenkins-agent --from-dir=. --follow`.
 
 ---
 
