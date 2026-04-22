@@ -100,9 +100,45 @@ spec:
         //    Add a stage here that runs Bob in a "senior developer"
         //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
 
-        // ── Lab 2: Unit Testing ──────────────────────────────────
-        //    Add a mvn test stage + Bob test-failure analysis.
-        //    See labs/LAB2_UNIT_TESTING.md.
+        stage('Unit Tests') {
+            steps {
+                echo "=== Running Unit Tests ==="
+                dir('order-service') {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        sh 'mvn test'
+                    }
+                }
+                
+                echo "=== Analyzing Test Results with Bob ==="
+                container('bob-cli') {
+                    script {
+                        def analysis = sh(
+                            returnStdout: true,
+                            script: '''
+                                bob --chat-mode pipeline-test-failure-analyzer -p "Please analyze the test failure logs in /workspace/order-service/target/surefire-reports/ and review the relevant source code under /workspace/order-service/src/ to identify the root cause of any test failures and provide recommendations for fixes." --hide-intermediary-output
+                            '''
+                        ).trim()
+
+                        echo ''
+                        echo '════════════════════════════════════════════════════'
+                        echo '  Bob Test Failure Analysis'
+                        echo '════════════════════════════════════════════════════'
+                        echo ''
+                        echo analysis
+                        echo ''
+                        echo '════════════════════════════════════════════════════'
+
+                        writeFile file: 'bob-analysis.md', text: analysis
+                    }
+                }
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                    archiveArtifacts artifacts: 'bob-analysis.md', allowEmptyArchive: true
+                }
+            }
+        }
 
         // ── Lab 3: Security Scanning ─────────────────────────────
         //    Add a scanner stage + Bob CVE/vuln analysis.
