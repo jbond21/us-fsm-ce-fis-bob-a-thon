@@ -1,0 +1,41 @@
+# jenkins-values.yaml
+# GITIGNORED — contains plaintext passwords.
+
+appName: jenkins
+route: true
+
+deployment:
+  openshiftauth: false    # use Jenkins own user database, not OpenShift OAuth
+
+  imagestream:
+    name: jenkins
+    tag: "2"
+
+  limits:
+    memory_request: 2Gi
+    memory_limit: 4Gi
+    cpu_request: 500m
+    cpu_limit: "2"
+
+persistence:
+  accessModes: ReadWriteOnce
+  volumeSize: 20Gi
+
+# JCasC — configures security and pre-creates all workshop users on first boot
+configAsCode:
+  configMap: jenkins-casc
+  body: |
+    jenkins:
+      numExecutors: 0
+      securityRealm:
+        local:
+          allowsSignup: false
+          users:
+            - id: "user01"
+              password: "user01Workshop!"
+      authorizationStrategy:
+        loggedInUsersCanDoAnything:
+          allowAnonymousRead: false
+    unclassified:
+      location:
+        url: "https://jenkins-jenkins.apps.<your-cluster-domain>/"
