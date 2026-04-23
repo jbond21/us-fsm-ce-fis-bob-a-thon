@@ -1,0 +1,39 @@
+# jenkins-values.yaml
+# Jenkins Helm chart values for the workshop environment.
+#
+# Usage:
+#   helm install jenkins jenkins/jenkins -f jenkins-values.yaml -n jenkins --wait --timeout 10m
+controller:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  admin:
+    username: admin
+  installPlugins:
+    - kubernetes:latest
+    - workflow-aggregator:latest
+    - git:latest
+    - credentials-binding:latest
+    - junit:latest
+    - ansicolor:latest
+    - matrix-auth:latest
+    - cloudbees-folder:latest 
+  service:
+    type: ClusterIP
+  serviceAccount:
+    create: true
+    name: jenkins
+  JCasC:
+    enabled: true
+    overwriteConfiguration: true
+    defaultConfig: false
+    configScripts: {}
+persistence:
+  enabled: true
+  size: 20Gi
+
+
