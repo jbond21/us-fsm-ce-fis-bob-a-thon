@@ -29,7 +29,7 @@ All renames are applied via local sed pipes and inline commands — no files in 
 
 1. **Bob image source.** The doc says "tag and push `bob-cli:latest`" but doesn't include a Dockerfile. Build from `k8s/openshift/bob-cli-sidecar/Dockerfile` (in this repo).
 2. **Secret naming.** Create the secret as `bob-cli-credentials` with key `BOBSHELL_API_KEY`. Our Bob binary reads `BOBSHELL_API_KEY` from env and won't authenticate under the doc's `bob-api-key` / `api-key` names.
-3. **Test pipeline pod spec.** Use the corrected pipeline in [Step 17](#17-create-and-run-the-test-pipeline). It keeps the 3-container shape from the doc but adds explicit shared-volume + `workingDir` + `HOME=/workspace` on every container — see [Why the explicit pod spec](#why-the-explicit-pod-spec) below.
+3. **Test pipeline pod spec.** Use the corrected pipeline in step 18. It keeps the 3-container shape from the doc but adds explicit shared-volume + `workingDir` + `HOME=/workspace` on every container — see [Why the explicit pod spec](#why-the-explicit-pod-spec) below.
 
 ---
 
@@ -198,6 +198,7 @@ instance.save()
     prop.add(Run.DELETE,      username)
     prop.add(Run.UPDATE,      username)
     prop.add(Run.ARTIFACTS,   username)
+    prop.add(com.cloudbees.plugins.credentials.CredentialsProvider.VIEW,           username)
     prop.add(com.cloudbees.plugins.credentials.CredentialsProvider.CREATE,         username)
     prop.add(com.cloudbees.plugins.credentials.CredentialsProvider.UPDATE,         username)
     prop.add(com.cloudbees.plugins.credentials.CredentialsProvider.DELETE,         username)
@@ -211,7 +212,9 @@ instance.save()
 println "Done — each user can only see their own folder"
 ```
 
-Log out of admin and log back in as `user1` / `user1Workshop2026!` to confirm you see only the `user1` folder on the homepage.
+Log out of admin and log back in as `user1` / `user1Workshop2026!` to confirm you see only the `user1` folder on the homepage, and that clicking into the folder shows a **Credentials** link in the left sidebar.
+
+> **Note — one addition vs. the coworker's Groovy.** The block above adds `CredentialsProvider.VIEW` to each user's folder permissions. Without it, the Credentials link doesn't render in the folder sidebar even though `CREATE/UPDATE/DELETE` are granted — user ends up with no UI path to add their own PAT. This is a Phase 2 change needed in `setup/INSTRUCTOR_SETUP_TZ.md` §3.1.7; flag it for the adoption plan.
 
 ## 12. Grant the Jenkins ServiceAccount cluster permissions
 
@@ -227,7 +230,40 @@ oc policy add-role-to-user system:image-puller \
   -n jenkins-andy-test
 ```
 
-## 13. Create per-user OpenShift namespaces
+## 13. Configure the Jenkins Kubernetes cloud
+
+The Helm values file sets `JCasC.defaultConfig: false`, which skips the chart's default Kubernetes cloud config. Without a cloud, pipelines fail with `ERROR: No Kubernetes cloud was found.` Configure one now.
+
+Logged in as `admin`, open `https://<jenkins-route>/script` and paste-and-run:
+
+```groovy
+import jenkins.model.*
+import org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud
+
+def jenkins = Jenkins.getInstance()
+jenkins.clouds.removeAll { it instanceof KubernetesCloud }
+
+def cloud = new KubernetesCloud("kubernetes")
+cloud.setNamespace("jenkins-andy-test")
+cloud.setJenkinsUrl("http://jenkins.jenkins-andy-test.svc.cluster.local:8080")
+cloud.setJenkinsTunnel("jenkins-agent.jenkins-andy-test.svc.cluster.local:50000")
+cloud.setContainerCapStr("10")
+
+jenkins.clouds.add(cloud)
+jenkins.save()
+
+println "Kubernetes cloud configured: ${cloud.name} in ${cloud.namespace}"
+```
+
+Expected output: `Kubernetes cloud configured: kubernetes in jenkins-andy-test`.
+
+Verify via UI if you want: **Manage Jenkins → Clouds** should now list a `kubernetes` cloud pointing at `jenkins-andy-test`.
+
+> This is a Phase 2 gap in `setup/INSTRUCTOR_SETUP_TZ.md` — see `CHANGES_NEEDED.md` item #5. The coworker's doc doesn't set up a cloud, and the values file's `defaultConfig: false` disables the chart's auto-config.
+
+---
+
+## 14. Create per-user OpenShift namespaces
 
 `setup/scripts/create-projects.sh` hardcodes `JENKINS_NS='jenkins'` and `USERS=(user1 … user20)`. Rather than edit it, just inline the two commands-per-user it contains, using our names:
 
@@ -256,7 +292,7 @@ for USER in user1-andy user2-andy; do
 done
 ```
 
-## 14. Build the Bob CLI image
+## 15. Build the Bob CLI image
 
 Build from our Dockerfile, tagged as `bob-cli:latest` (keeping the doc's image name).
 
@@ -296,7 +332,7 @@ oc get imagestream bob-cli -n jenkins-andy-test
 
 Expected: a row with tag `latest`.
 
-## 15. Create the Bob API key secret
+## 16. Create the Bob API key secret
 
 **This deviates from the doc** — we use our secret name and key so our Bob binary authenticates.
 
@@ -321,28 +357,35 @@ oc create rolebinding bob-secret-reader \
   -n jenkins-andy-test
 ```
 
-## 16. (Private repo only) Add a user-scoped GitHub PAT
+## 17. (Private repo only) Add a user-scoped GitHub PAT
 
-Skip if your workshop repo is public.
+Skip this step if your workshop repo is public.
+
+**The credential must land in the *folder* store, not the *user* store.** Folder-store credentials show up in the pipeline Credentials dropdown; user-store credentials don't. The navigation below goes directly to the folder store — follow it exactly, don't click the **Credentials** link under your username in the top-right menu (that path lands on the wrong store).
 
 1. Log into Jenkins as `user1` / `user1Workshop2026!`.
-2. Click your username (top-right) → **Credentials** → click `user1` in the Stores table → **Global credentials (unrestricted)** → **Add Credentials**.
-3. Fill in:
+2. From the Jenkins homepage, click the **`user1`** folder (the one with the folder icon in the list of items).
+3. In the folder's left sidebar, click **Credentials**.
+4. You land on the folder's credential page. Click the **`(global)`** link under the **Stores scoped to user1** section (or, if a Stores table is shown, click the row labeled **Folder** with scope `user1`).
+5. Click **Add Credentials** (top-right of the page, or the left-sidebar link).
+6. Fill in:
    - **Kind:** Username with password
-   - **Scope:** Global
+   - **Scope:** Global (this is the URL-matching domain — see note below)
    - **Username:** your GitHub username
    - **Password:** a GitHub PAT with `repo` scope
    - **ID:** `user1-github-pat`
    - **Description:** anything
-4. **Create.**
+7. **Create.**
 
-The fact that the credential lives in the `user1` folder and not at Jenkins root is the isolation feature we're validating. Log in as `user2` later to confirm `user2` cannot see this PAT.
+> **About "Scope: Global".** Confusingly named — it does **not** mean "visible to all users." It means "applicable to any URL" (as opposed to a domain-restricted credential). Visibility is determined by the *store* you picked in step 4 (the `user1` folder store), which is only accessible to `user1` and admin. Other workshop users cannot see this PAT.
 
-## 17. Push the branch and run the test pipeline
+You'll pick this credential by its ID (`user1-github-pat`) when configuring the pipeline in step 18.
+
+## 18. Push the branch and run the test pipeline
 
 The test pipeline lives in `Jenkinsfile.test` on this branch. It's a 3-container pod (`build-tools` + `oc-tools` + `bob`) with explicit shared volumes, pointing at `jenkins-andy-test/bob-cli:latest` and the `bob-cli-credentials` secret — everything the prior steps set up.
 
-### 17a. Commit and push the branch
+### 18a. Commit and push the branch
 
 From the repo root on your laptop:
 
@@ -352,7 +395,7 @@ git commit -m "Dry-run test pipeline for setup/ validation"
 git push -u origin adopt-instructor-setup
 ```
 
-### 17b. Create the Jenkins pipeline job
+### 18b. Create the Jenkins pipeline job
 
 Still logged in as `user1`:
 
@@ -362,7 +405,7 @@ Still logged in as `user1`:
    - **Definition:** `Pipeline script from SCM`
    - **SCM:** `Git`
    - **Repository URL:** your GitHub repo URL (the one you just pushed to)
-   - **Credentials:** the `user1-github-pat` you added in step 16 (leave as `- none -` if the repo is public)
+   - **Credentials:** the `user1-github-pat` you added in step 17 (leave as `- none -` if the repo is public)
    - **Branch Specifier:** `*/adopt-instructor-setup`
    - **Script Path:** `Jenkinsfile.test`
 4. **Save.**
@@ -370,7 +413,7 @@ Still logged in as `user1`:
 
 The pipeline will clone your branch, land it in `/workspace` on all three containers, and then the `bob` container runs `bob --chat-mode solution-code-reviewer -p "..."` to prove the custom mode loads from the checked-out `.bob/custom_modes.yaml`.
 
-## 18. Validation gates
+## 19. Validation gates
 
 Watch the Console Output and confirm each gate:
 
@@ -387,7 +430,7 @@ If any fail, **don't edit `setup/`** — fix in the test pipeline or secret nami
 
 ---
 
-## 19. Cleanup
+## 20. Cleanup
 
 Tear down everything this dry run created:
 
@@ -403,7 +446,7 @@ oc delete project user1-andy-dev user2-andy-dev --wait=false
 oc delete clusterrolebinding jenkins-andy-test-anyuid --ignore-not-found
 ```
 
-Namespace deletes are asynchronous — `oc get project | grep andy` should come back empty within a minute or two. The image-registry `defaultRoute` patch from step 14 is cluster-wide; leave it in place.
+Namespace deletes are asynchronous — `oc get project | grep andy` should come back empty within a minute or two. The image-registry `defaultRoute` patch from step 15 is cluster-wide; leave it in place.
 
 ---
 
@@ -415,7 +458,7 @@ The doc's `template-jenkins-pipeline` declares no `volumes:`, no `workingDir:`, 
 - **Our Bob image bakes in `WORKDIR /workspace` + `HOME=/workspace`** — if the plugin remaps CWD to `/home/jenkins/agent` but doesn't also change `HOME`, Bob writes state to one path and reads mode files from another.
 - **OpenShift random-UID-in-group-0** — `/workspace` in our Dockerfile is pre-created with `chgrp 0` + `chmod g=u` so a random UID in group 0 can write to `.bob/`. `/home/jenkins/agent` in the `node:22-slim` base image isn't tuned this way; first write from a random UID fails.
 
-Our proven pod spec (see `Jenkinsfile` lines 30–78) declares all four mechanisms explicitly: a named `workspace-volume` emptyDir at pod level, `volumeMounts` on each container to `/workspace`, `workingDir: /workspace` on each, and `env: HOME=/workspace` on each. The test pipeline in step 17 merges that mechanism into the doc's 3-container public-image shape.
+Our proven pod spec (see `Jenkinsfile` lines 30–78) declares all four mechanisms explicitly: a named `workspace-volume` emptyDir at pod level, `volumeMounts` on each container to `/workspace`, `workingDir: /workspace` on each, and `env: HOME=/workspace` on each. The test pipeline in step 18 merges that mechanism into the doc's 3-container public-image shape.
 
 ---
 
@@ -432,7 +475,7 @@ Two scope items `ADOPT_INSTRUCTOR_SETUP_PLAN.md` doesn't call out that this dry 
 
 - **`.bob/` not visible in the `bob` container after checkout.** The `workspace-volume` mount on the `bob` container didn't take. Run `oc describe pod <agent-pod-name> -n jenkins-andy-test` and confirm the `volumeMounts` under `bob` matches the other two containers. If the volume is mounted but empty, `defaultContainer` isn't writing to `/workspace` — the test pipeline sets `defaultContainer 'build-tools'`, so confirm it's present.
 - **Bob authentication error (`401` / `API key not found`).** `BOBSHELL_API_KEY` isn't reaching the container. Run `oc describe pod <agent-pod-name> -n jenkins-andy-test` and on the `bob` container confirm the env lists `BOBSHELL_API_KEY` from `bob-cli-credentials.BOBSHELL_API_KEY`.
-- **`ImagePullBackOff` on the `bob` container.** Usually means the pod's ServiceAccount can't pull from `jenkins-andy-test`. For agent pods running in `jenkins-andy-test`, the `system:image-puller` grant in step 12 covers it. If the pod lands in a different namespace (e.g., a user-dev namespace), ensure that namespace's `default` SA has image-puller on `jenkins-andy-test` — step 13's loop already does this for `user1-andy-dev` and `user2-andy-dev`.
+- **`ImagePullBackOff` on the `bob` container.** Usually means the pod's ServiceAccount can't pull from `jenkins-andy-test`. For agent pods running in `jenkins-andy-test`, the `system:image-puller` grant in step 12 covers it. If the pod lands in a different namespace (e.g., a user-dev namespace), ensure that namespace's `default` SA has image-puller on `jenkins-andy-test` — step 14's loop already does this for `user1-andy-dev` and `user2-andy-dev`.
 - **Pod stays `Pending`.** Run `oc describe pod <agent-pod-name> -n jenkins-andy-test` and `oc describe quota -n jenkins-andy-test`. The Helm values file doesn't set a namespace quota, so this is usually a scheduling issue (node selectors, SCC mismatch) rather than capacity.
 - **Permission denied writing `.bob/`.** The `bob` container is running under a UID outside group 0, or `/workspace` wasn't mounted with group-writable perms. `oc rsh -n jenkins-andy-test -c bob <agent-pod-name>` → `id` and `ls -la /workspace`. Our Dockerfile's `chgrp -R 0 /workspace && chmod -R g=u /workspace` should cover this; if the dirs are owned by UID 0 with group 0 and no group-write, the image didn't build with that RUN step — rebuild.
 - **Podman push fails with TLS error.** OpenShift's registry uses a self-signed cert exposed via the route; `--tls-verify=false` on both `login` and `push` is the expected workaround for dev / dry-run use.
