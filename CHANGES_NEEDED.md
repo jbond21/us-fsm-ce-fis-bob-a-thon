@@ -57,29 +57,35 @@ Use `$REGISTRY` in the `podman login/tag/push` commands with `--tls-verify=false
 **Files:** `setup/assets/template-jenkins-values_v2.yaml` (JCasC block) + `setup/INSTRUCTOR_SETUP_TZ.md` (missing step between §3.2 and §4).
 
 **Current:** Values file sets `JCasC.defaultConfig: false` and `configScripts: {}`. No Kubernetes cloud gets configured, and no step in the doc creates one. First pipeline run fails with `ERROR: No Kubernetes cloud was found.`
-**Needed:** Add an explicit `configScripts.kubernetes-cloud` block to `template-jenkins-values_v2.yaml`:
+**Needed:** Add a new section to `INSTRUCTOR_SETUP_TZ.md` (e.g., §3.3, after matrix auth) with a Groovy snippet the instructor pastes into `/script`, matching the existing pattern used by security setup and user creation:
 
-```yaml
-controller:
-  JCasC:
-    enabled: true
-    overwriteConfiguration: true
-    defaultConfig: false
-    configScripts:
-      kubernetes-cloud: |
-        jenkins:
-          clouds:
-            - kubernetes:
-                name: "kubernetes"
-                namespace: "{{ .Release.Namespace }}"
-                jenkinsUrl: "http://jenkins.{{ .Release.Namespace }}.svc.cluster.local:8080"
-                jenkinsTunnel: "jenkins-agent.{{ .Release.Namespace }}.svc.cluster.local:50000"
-                containerCapStr: "10"
+```bash
+NS=$(oc project -q)
+cat <<EOF
+import jenkins.model.*
+import org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud
+
+def jenkins = Jenkins.getInstance()
+jenkins.clouds.removeAll { it instanceof KubernetesCloud }
+
+def cloud = new KubernetesCloud("kubernetes")
+cloud.setNamespace("${NS}")
+cloud.setJenkinsUrl("http://jenkins.${NS}.svc.cluster.local:8080")
+cloud.setJenkinsTunnel("jenkins-agent.${NS}.svc.cluster.local:50000")
+cloud.setContainerCapStr("10")
+
+jenkins.clouds.add(cloud)
+jenkins.save()
+
+println "Kubernetes cloud configured: \${cloud.name} in \${cloud.namespace}"
+EOF
 ```
 
-The Jenkins chart runs `tpl` on configScripts values, so `{{ .Release.Namespace }}` is resolved at `helm install` time — works in any namespace without editing the file.
+Instructor runs the heredoc, copies the output, pastes into `/script`, clicks **Run**.
 
-**Why:** Without a cloud, `agent { kubernetes { ... } }` blocks can't provision pods — blocks every pipeline in the workshop. Declarative placement avoids adding a post-install Groovy step; the cloud exists the moment Jenkins finishes starting.
+**Why not declarative in `template-jenkins-values_v2.yaml`:** JCasC-driven config on this chart has been flaky in past attempts (inconsistent startup states, unsecured Jenkins, repeated uninstall/reinstall). The existing doc avoids JCasC for its user and security setup for that reason; adding a cloud via a Groovy step is consistent with that decision and sidesteps re-opening JCasC debugging.
+
+**Why we need this at all:** Without a cloud, `agent { kubernetes { ... } }` blocks can't provision pods — blocks every pipeline in the workshop.
 
 ---
 
@@ -93,18 +99,21 @@ The Jenkins chart runs `tpl` on configScripts values, so `{{ .Release.Namespace 
 
 ---
 
-## 7. Ambiguous credential-store navigation
+## 7. Ambiguous credential-store navigation — deferred to user lab setup
 
-**File:** `setup/INSTRUCTOR_SETUP_TZ.md` (no PAT-add section today; workshop flow requires one).
+**Where this belongs:** not the instructor setup doc. The "add a GitHub PAT" flow is a participant action, so it belongs in the user-facing Lab 0 / `labs/00_SETUP.md` flow (to be rewritten in Phase 3 of the adoption plan).
 
-**Current:** TZ doc doesn't cover "add a GitHub PAT" end-to-end. Natural-looking paths (top-right username → Credentials) land on the user-personal credential store, which is invisible to pipeline jobs. Users hit "credential not in dropdown" at pipeline config time.
-**Needed:** Add a PAT-add section with explicit navigation:
+**Content to capture when it's written there:**
+
+Natural-looking paths in Jenkins (top-right username → Credentials) land on the user-personal credential store, which is invisible to pipeline jobs. The correct navigation is:
+
 1. Jenkins homepage → click the `userN` folder
 2. Folder left sidebar → **Credentials**
 3. Click **(global)** under "Stores scoped to userN"
 4. Add Credentials
 
-Include a note that "Scope: Global" refers to URL domain, not visibility.
+Include a note that "Scope: Global" in the credential dialog refers to URL domain, not visibility.
+
 **Why:** User-personal credentials don't surface to pipeline jobs. Only folder-store credentials do.
 
 ---
@@ -125,24 +134,23 @@ Resolved: `setup/assets/template-jenkins-pipeline` has been deleted. The 3-conta
 
 ---
 
-## Phase 2 checklist (condensed)
+## Adoption plan — Phase 1 checklist
 
-Grouped by target file so Phase 2 commits can be file-scoped per `ADOPT_INSTRUCTOR_SETUP_PLAN.md` §3 ("one commit per file").
+Grouped by the functional commits defined in `ADOPT_INSTRUCTOR_SETUP_PLAN.md` §1.
 
-**`setup/INSTRUCTOR_SETUP_TZ.md`:**
+**Commit A — Add Kubernetes cloud setup step to the instructor doc** (`setup/INSTRUCTOR_SETUP_TZ.md` new §3.3):
+- [ ] #5 Add Groovy-based cloud config step after the matrix-auth Groovy
+
+**Commit B — Fix per-folder matrix auth** (`setup/INSTRUCTOR_SETUP_TZ.md` §3.1.7 step 4 Groovy):
+- [ ] #6 Add `CredentialsProvider.VIEW`
+- [ ] #9 Remove `Item.DELETE`
+
+**Commit D — Move Bob Dockerfile into `setup/` and reconcile the instructor doc** (`git mv` + `setup/INSTRUCTOR_SETUP_TZ.md`):
+- [ ] Move `k8s/openshift/bob-cli-sidecar/Dockerfile` into `setup/` (destination TBD)
 - [ ] #1 Bob naming across §1.2, §1.3, §1.3.1, §5.1, §5.2, troubleshooting, rotate-key
-- [ ] #2 Add Dockerfile build step in §5.1
+- [ ] #2 Add `podman build` step in §5.1 referencing the new Dockerfile path
 - [ ] #3 Add external-route setup in §5.1 (registry exposure + `$REGISTRY` variable)
 - [ ] #4 Swap `-u $(oc whoami)` → `-u unused` in §5.1 podman login
-- [ ] #5 Add Kubernetes cloud configuration step (new §3.3) — or delegate to chart default
-- [ ] #6 Add `CredentialsProvider.VIEW` to §3.1.7 step 4 Groovy
-- [ ] #7 Add explicit "Add GitHub PAT" section with correct store navigation
-- [ ] #9 Remove `Item.DELETE` from §3.1.7 step 4 Groovy
 
-**`setup/assets/template-jenkins-values_v2.yaml`:**
-- [ ] #5 Resolve cloud config — flip `JCasC.defaultConfig: true` or add an explicit `clouds.kubernetes` block in `configScripts`
-
-**`setup/assets/template-jenkins-pipeline`:** deleted — no edits needed.
-
-**`setup/INSTRUCTOR_SETUP_NotTZ.md`:**
-- [ ] Mirror TZ changes — or delete per adoption plan §9.1
+**Deferred to Phase 3 (user-facing lab docs):**
+- #7 Explicit "Add GitHub PAT" navigation — belongs in `labs/00_SETUP.md`, not the instructor doc
