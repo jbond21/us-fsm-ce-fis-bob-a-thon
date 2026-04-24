@@ -294,6 +294,37 @@ project-based matrix security, giving each user full control of only their own f
 
 1. Verify the output shows `Folders and authorization configured`.
 
+#### 3.1.8 Configure the Kubernetes cloud
+
+Jenkins starts with the Kubernetes plugin installed but no Cloud configured (the values file keeps `JCasC.defaultConfig: false`). Without a Cloud, pipelines that use `agent { kubernetes { ... } }` fail with `ERROR: No Kubernetes cloud was found.` — every workshop pipeline is blocked until we add one. Configure it via the Script Console, matching the pattern used by the security and user setup above.
+
+1. Paste this Groovy into `https://<jenkins-route>/script` and click **Run**:
+
+    ```groovy
+    import jenkins.model.*
+    import org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud
+
+    def jenkins = Jenkins.getInstance()
+    jenkins.clouds.removeAll { it instanceof KubernetesCloud }
+
+    def cloud = new KubernetesCloud("kubernetes")
+    cloud.setNamespace("jenkins")
+    cloud.setJenkinsUrl("http://jenkins.jenkins.svc.cluster.local:8080")
+    cloud.setJenkinsTunnel("jenkins-agent.jenkins.svc.cluster.local:50000")
+    cloud.setContainerCapStr("10")
+
+    jenkins.clouds.add(cloud)
+    jenkins.save()
+
+    println "Kubernetes cloud configured: ${cloud.name} in ${cloud.namespace}"
+    ```
+
+    > **Note:** If your Jenkins namespace isn't `jenkins`, replace the three `jenkins` strings inside `setNamespace`, `setJenkinsUrl`, and `setJenkinsTunnel` with your namespace before pasting.
+
+1. Verify the output shows `Kubernetes cloud configured: kubernetes in jenkins`.
+
+1. [Optional] Verify via UI: **Manage Jenkins → Clouds** should list a `kubernetes` cloud pointing at your namespace.
+
 ### 3.2 Grant the Jenkins ServiceAccount the cluster permissions it needs
 
 1. Allow Jenkins to manage pods in its own namespace (required for dynamic agents)
