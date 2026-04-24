@@ -7,8 +7,8 @@
 // can load custom modes from the checkout.
 //
 // See DRY_RUN_PLAN.md for the full context. Cluster prereqs:
-//   - Namespace:          jenkins-andy-test
-//   - ImageStream:        jenkins-andy-test/bob-cli:latest
+//   - Namespace:          jenkins
+//   - ImageStream:        jenkins/bob-cli:latest
 //   - Secret:             bob-cli-credentials (key: BOBSHELL_API_KEY)
 //   - Jenkins SA + role:  bob-secret-reader granted
 // ═══════════════════════════════════════════════════════════════════
@@ -43,7 +43,7 @@ spec:
     - name: HOME
       value: /workspace
   - name: bob
-    image: image-registry.openshift-image-registry.svc:5000/jenkins-andy-test/bob-cli:latest
+    image: image-registry.openshift-image-registry.svc:5000/jenkins/bob-cli:latest
     command: ['sleep', 'infinity']
     workingDir: /workspace
     volumeMounts:
