@@ -80,6 +80,15 @@ No push yet — nothing calls the helper. On to the mode.
 
 The `askBob` helper is mode-agnostic. The *behavior* — what Bob actually does when invoked — comes from the custom mode you pass in. For Lab 1 that's a "senior developer glancing at a PR" mode: a short, risk-ranked summary, not an exhaustive review.
 
+### Key characteristics of this mode:
+
+- **Purpose**: Quick risk-oriented PR triage, not exhaustive code review
+- **Permissions**: Read-only (minimal permissions for CI environment)
+- **Output format**: Plain text optimized for Jenkins console (no ANSI colors or complex markdown)
+- **Structure**: Organized sections (Summary, Risk, Watch for) for easy scanning
+- **Scope**: Focuses on notable changes only — security, concurrency, null-safety, behavior changes, missing tests
+- **No IDE restart needed**: Pipeline modes are loaded fresh from the workspace on each run
+
 Start a new task and switch to the built-in **Mode Writer** mode. Paste this as a starting prompt, or write your own:
 
 ```
@@ -112,7 +121,17 @@ Since you won't be invoking this mode from the IDE, there's **no need to restart
 
 ## Part 3 - Create a custom mode for writing Jenkinsfile stages with Bob integration
 
-Before you start writing stages that call Bob, let's create a mode that understands both Jenkins pipeline DSL and Bob integration patterns. Start a new task and switch to the built-in Mode Writer mode. Paste this prompt:
+Before you start writing stages that call Bob, let's create a mode that understands both Jenkins pipeline DSL and Bob integration patterns. This mode will be your go-to tool for all subsequent labs when you need to add or modify pipeline stages.
+
+### Key characteristics of this mode:
+
+- **Purpose**: Specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns
+- **Permissions**: Read + Edit (restricted to `Jenkinsfile.*` and `.bob/custom_modes.yaml` only)
+- **Expertise**: Knows the `askBob` helper pattern, container selection, file-based prompts, output handling
+- **Use case**: You'll use this mode in your IDE throughout the workshop to write/modify pipeline stages
+- **Requires IDE restart**: Unlike pipeline modes, IDE modes need a restart to appear in the mode dropdown
+
+Start a new task and switch to the built-in Mode Writer mode. Paste this prompt:
 
 ```
 Write me a custom mode for creating Jenkins pipeline stages that integrate Bob. This mode is a specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns.
