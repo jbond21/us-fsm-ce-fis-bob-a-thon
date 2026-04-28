@@ -96,7 +96,7 @@ Since you won't be invoking this mode from the IDE, there's **no need to restart
 
 ## Part 3 - Create a custom mode for writing Jenkinsfile stages with Bob integration
 
-Before you start writing stages that call Bob, you need a mode that understands both Jenkins pipeline DSL and Bob integration patterns. Start a new task and switch to the built-in Mode Writer mode. Paste this prompt:
+Before you start writing stages that call Bob, let's create a mode that understands both Jenkins pipeline DSL and Bob integration patterns. Start a new task and switch to the built-in Mode Writer mode. Paste this prompt:
 
 ```
 Write me a custom mode for creating Jenkins pipeline stages that integrate Bob. This mode is a specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns.
@@ -142,36 +142,21 @@ Since you'll be using this mode in the IDE, restart Bob IDE after the mode is cr
 
 ## Part 4 — Add the `PR Review` stage to your Jenkinsfile
 
-Need a rewrite here:
+Ensure you have restarted Bob IDE for the new `jenkins-bob-integration` mode to appear in your mode dropdown — modes are loaded at IDE startup.
 
-Now wire the two together. Start a new task and switch to **Code** mode. Ask Bob to add a `PR Review` stage after `Checkout` in `@Jenkinsfile`. Example prompt:
+Then, start a new task and switch to the **Jenkins Bob Integration** mode. From that mode, write your own prompt that asks Bob to do all of the following:
 
-```
-In @Jenkinsfile, add a new stage called "PR Review" that runs immediately after the Checkout stage. The stage should:
+- Add a new stage called **`PR Review`** to `@Jenkinsfile` that runs immediately after the Checkout stage.
+- Compute the diff of the **entire branch against `main`** (`git diff origin/main...HEAD`) and write the output to `/workspace/git-diff.txt`. The three-dot syntax mirrors what a reviewer sees in a PR — everything the branch has added since it forked from `main`, not just the latest commit. Jenkins's `checkout scm` already fetches `origin/main`, so no extra `git fetch` is needed. Make the shell step resilient — fall back to an empty file rather than failing the stage if the diff can't be computed (e.g., on a build of `main` itself).
+- Call the `askBob` helper from Part 1 with the mode `pipeline-git-diff-overview` (the one you created in Part 2) and a short prompt telling Bob to read `/workspace/git-diff.txt` and produce the senior-developer overview the mode is trained for.
+- Capture `askBob`'s return value into a local variable.
+- Print the analysis between banner lines in the Jenkins console so it's easy to spot in the build log.
+- Write the analysis to `bob-pr-review.md` and archive it as a build artifact.
 
-1. Compute a git diff of the commit that triggered the build. Use `git diff HEAD~1 HEAD` and write the output to /workspace/git-diff.txt. Make the shell step resilient — if there's only one commit on the branch, `HEAD~1` doesn't exist and the diff should fall back to an empty file (don't fail the build).
-
-2. Call my askBob helper with:
-     - mode: "pipeline-git-diff-overview"
-     - prompt: something short telling Bob to read /workspace/git-diff.txt and produce the senior-developer overview the mode is trained for
-
-3. Capture the return value into a local variable (e.g. `def review = askBob(...)`).
-
-4. Print a banner to the Jenkins console with the review between banner lines, so it's easy to spot in the build log. Something like:
-     echo ''
-     echo '════════════════════════════════════════════════════'
-     echo '  Bob — PR Review'
-     echo '════════════════════════════════════════════════════'
-     echo review
-     echo '════════════════════════════════════════════════════'
-
-5. Write the review to a file called bob-pr-review.md and archive it as a build artifact (either in the stage's steps or a post-always block).
-```
-
-Bob will wire it up. Before pushing, read the diff and sanity-check:
+Watch Bob work. Before pushing, read the diff and sanity-check:
 
 - The stage sits between `Checkout` and wherever Lab 2's `Unit Tests` stage will go.
-- `askBob` is called with the exact mode slug you created in Part 2.
+- `askBob` is called with the exact mode slug from Part 2.
 - The `archiveArtifacts` path matches the `writeFile` path.
 
 ---
@@ -203,7 +188,7 @@ Open the archived artifact from the build page and you've got a persistent recor
 
 - **Pipeline fails with something like `askBob: method not found`.** Your helper function is inside the `pipeline { }` block. Move it to the top level of the file (outside the `pipeline { }` braces).
 - **Bob stage runs but says the mode wasn't found.** Check (a) `.bob/custom_modes.yaml` contains the slug `pipeline-git-diff-overview`, (b) you're passing that exact string to `askBob`, (c) you committed and pushed `.bob/`. Bob reads `custom_modes.yaml` fresh from the workspace on every run.
-- **The diff is empty on the first build.** `git diff HEAD~1 HEAD` needs at least two commits on the branch. If you only just created the branch and pushed one commit, `HEAD~1` doesn't exist. Push any small follow-up change (a newline in the Jenkinsfile works) and rebuild.
+- **The diff is empty.** Two common causes: (a) your branch hasn't diverged from `main` yet — there are no commits since the branch point — or (b) `origin/main` isn't available locally on the Jenkins agent (rare, but possible if the Git plugin's clone config was customized). Confirm by adding `git branch -r` to your shell step temporarily: it should list `origin/main` after `checkout scm`. If it doesn't, the agent isn't fetching `main`; you may need an explicit `git fetch origin main` before the diff.
 - **Bob output looks like a novel, not a triage summary.** The mode's rules file probably isn't constraining output length. Re-open Mode Writer and refine the rules to enforce brevity — cap per-change output to a few lines, require the three-section structure, tell Bob to skip uninteresting changes.
 - **`Jenkinsfile` not working?** Copy `Jenkinsfile.lab1solution` from the repo root over your own `Jenkinsfile` and push. That's the reference state after Lab 1 and a safe reset point.
 
