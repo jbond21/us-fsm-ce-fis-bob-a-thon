@@ -2,15 +2,7 @@
 
 ## Overview of Lab 1
 
-Lab 1 establishes the **foundational infrastructure** you'll use throughout all subsequent labs. The centerpiece is the **`askBob` helper function** — a reusable Groovy function that encapsulates all the mechanics of calling Bob from your Jenkins pipeline. Every lab after this one will use `askBob` to invoke Bob with different custom modes for different pipeline tasks (test analysis, security scans, deployment validation, etc.).
-
-Think of `askBob` as your pipeline's universal interface to Bob. It handles:
-- Switching to the correct container (`container('bob')`)
-- Writing prompts to temporary files (avoiding shell escaping nightmares with diffs and logs)
-- Invoking the Bob CLI with the appropriate `--chat-mode` flag
-- Returning Bob's analysis as a string for your stage to process
-
-You write it once in Lab 1, then every subsequent lab just calls `askBob(prompt, mode)` — no repeated boilerplate.
+Lab 1 establishes the **foundational infrastructure** you'll use throughout all subsequent labs. 
 
 ### What you'll build in Lab 1
 
