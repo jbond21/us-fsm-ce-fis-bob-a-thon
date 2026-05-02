@@ -130,17 +130,19 @@ Append the new mode to the bottom of the existing @.bob/custom_modes.yaml file �
 
 Before you start writing stages that call Bob, let's create a mode that understands both Jenkins pipeline DSL and Bob integration patterns. This mode will be your go-to tool for all subsequent labs when you need to add or modify pipeline stages.
 
-Now that you have an example prompt from Part 2, work with Bob in Plan mode to create a prompt to use in Mode Writer mode. 
-
-Some ideas to tell Plan mode: 
-
 - **Purpose**: Specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns
 - **Permissions**: Read + Edit (restricted to `Jenkinsfile.*` and `.bob/custom_modes.yaml` only)
 - **Expertise**: Knows the `askBob` helper pattern, container selection, file-based prompts, output handling
 - **Use case**: You'll use this mode in your IDE throughout the workshop to write/modify pipeline stages
 - **Requires IDE restart**: Unlike pipeline modes, IDE modes need a restart to appear in the mode dropdown
 
-Start a new task and switch to the built-in Mode Writer mode. Paste this prompt:
+Start a new task and switch to **Plan** mode. Tell Bob you want to create a prompt for the `mode writer mode` in the .bob directory. Tell Bob you want the new mode to has the information above in your own words. There is an example prompt at the bottom of this step for reference. 
+
+Once you have created a prompt you like with Plan mode, copy it, start a new task, switch to **Mode Writer** mode and paste. Press enter and watch Bob create the mode. Bob may ask you some questions for clarification.
+
+Since you won't be invoking this mode from the IDE, there's **no need to restart Bob IDE**. When the pipeline runs, Bob reads `.bob/custom_modes.yaml` fresh from the checked-out workspace, so the new mode is available as soon as the branch is pushed.
+
+Notice that this mode has only `read` permission — deliberately narrower than an IDE mode. A pipeline mode should do the minimum it needs to.
 
 ```
 Write me a custom mode for creating Jenkins pipeline stages that integrate Bob. This mode is a specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns.
@@ -180,15 +182,11 @@ Add a rules directory for this mode with XML files covering:
 Append the new mode to the bottom of the existing @.bob/custom_modes.yaml file — do not overwrite anything.
 ```
 
-Watch Bob work and provide input where it helps. This mode will be your go-to for all subsequent labs when you need to add or modify pipeline stages that call Bob.
-
-Since you'll be using this mode in the IDE, restart Bob IDE after the mode is created so it appears in your mode dropdown.
-
 ## Part 4 — Add the `PR Review` stage to your Jenkinsfile
 
 Ensure you have restarted Bob IDE for the new `jenkins-bob-integration` mode to appear in your mode dropdown — modes are loaded at IDE startup.
 
-Then, start a new task and switch to the **Jenkins Bob Integration** mode. From that mode, write your own prompt that asks Bob to do all of the following:
+Then, start a new task and switch to the **Jenkins Bob Integration** mode. The prompt for this mode shows how detailed you can get with your 
 
 - Add a new stage called **`PR Review`** to `@Jenkinsfile` that runs immediately after the Checkout stage.
 - Before any git command in the stage, configure git's `safe.directory` so it'll cooperate inside the `build-tools` container: run `git config --global --add safe.directory "$WORKSPACE"` as the first line of the stage's shell step. Without this, git refuses to operate with `fatal: detected dubious ownership in repository` because Jenkins's checkout creates files owned by a UID different from the one running git inside the maven image. `$WORKSPACE` is a Jenkins-provided env var pointing at the job's workspace on the agent — scoping the trust to this specific path is safer than the `'*'` wildcard.
