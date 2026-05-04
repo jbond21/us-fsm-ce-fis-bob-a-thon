@@ -100,17 +100,25 @@ git push
 
 ---
 
-## Part 2 - Use Github MCP to analyze git diff. 
+## Part 2 - Use Bob to analyze git diff. 
 
-Start a new task and switch to Advanced mode. Ask Bob to find the PR then give you an overview of the diff from main. 
+Start a new task and switch to Advanced mode. Ask Bob to analyze the diff between your branch and main. 
+
+Bob has the ability analyze the diff using the `obtain_git_diff` tool, the Github MCP server or even with Github CLI. 
 
 This overview of the diff is fine, but we can implement custom modes to get more detailed and better formatted information. 
 
 ## Part 3 - Create the `pipeline-git-diff-overview` mode
 
-Part 2's overview was unstructured — fine for a one-off, noisy on every push. A custom mode pins the output shape and the read-only permissions a CI mode should have.
+The overview Bob gave in Part 2 was unstructured — fine for a one-off, noisy on every push. A custom mode pins the output shape and the read-only permissions a CI mode should have.
 
-Start a new task, switch to **Mode Writer** mode, and paste:
+Start a new task and switch to **Mode Writer** mode. Mode Writer turns a prompt into a reusable custom mode — you
+describe the behavior you want once, and Bob applies it on every future invocation of that mode.
+
+The prompt below is a starter for a senior-developer-style diff overview — a quick risk-oriented glance, not a
+full code review. Treat it as a base, not a fixed script: anything you want every PR overview to do (output
+format, patterns to flag, noise to skip, the tone you want Bob to take) belongs in this prompt rather than the
+per-stage call.
 
 ```
 Write a custom mode with slug `pipeline-git-diff-overview`. Append it to @.bob/custom_modes.yaml — don't overwrite anything else.
@@ -133,7 +141,9 @@ Read-only is deliberate — a pipeline mode should do the minimum it needs to. N
 
 ## Part 4 — Build the `PR Review` stage
 
-Switch to the provided Jenkins Bob Integration mode. 
+Now that you have created a custom mode, let's add the new stage to the `Jenkinsfile`. Start a new task, and switch to the provided **Jenkins Pipeline Integration** mode. This mode contains environment specific information for this lab environment. This mode's files are in `.bob/rules-jenkins-bob-integration` if you want to view them. 
+
+Paste the following prompt:
 
 ```
   Add a "PR Review" stage to @Jenkinsfile right after the Checkout stage. The stage should:
