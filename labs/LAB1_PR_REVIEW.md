@@ -56,8 +56,8 @@ Piece by piece:
 
 - **`bob`** — the Bob CLI, available in the `bob` container.
 - **`-p "..."`** — runs Bob in one-shot prompt mode: take this prompt, do the work, print the result to stdout, exit. No interactive chat.
-- **`"$(cat ${promptFile})"`** — substitutes in the contents of the tempfile we wrote a moment earlier. We go through a file (instead of inlining the prompt) because diffs and logs contain quotes, backticks, and newlines that wreck shell escaping.
-- **`--hide-intermediary-output`** — suppresses Bob's tool-call traces and "thinking" output so we capture only the final analysis. Without this, `returnStdout` would pick up everything Bob printed along the way.
+- **`"$(cat ${promptFile})"`** — substitutes in the contents of a tempfile as the prompt. We go through a file (instead of inlining the prompt) because diffs and logs contain quotes, backticks, and newlines that wreck shell escaping.
+- **`--hide-intermediary-output`** — suppresses Bob's tool-call traces and "thinking" output so we capture only the final analysis. Without this, `returnStdout` would pick up everything Bob printed about it's thought process along the way.
 
 Now paste the helper into your `@Jenkinsfile` at the bottom, **outside** the `pipeline { }` block:
 
