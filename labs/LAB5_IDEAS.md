@@ -170,7 +170,3 @@ Every extension above is technically possible. Not all of them are wise to deplo
 - Treat MCP server credentials with the same care as the Bob API key. Kubernetes Secret, `secretKeyRef` mount, no plaintext in `mcp.json`, no logs that print env vars
 - Distinguish between "Bob writes a file" (cheap to undo) and "Bob mutates an external system" (expensive to undo). Most of these extensions blur that line — make sure the mode's rules don't
 - The `pipeline-` prefix on mode slugs is a convention for read-mostly CI modes. If your extension introduces non-trivial mutation (idea 11, idea 14), consider a different prefix (e.g., `release-` or `gated-`) to make the higher-blast-radius modes scan-visible in the modes file
-
----
-
-If you build one of these and it works well, drop a `solution-` prefixed mode in `.bob/custom_modes.yaml` and a short paragraph in this file describing what it does and what to watch out for. The next workshop benefits.

@@ -1,6 +1,6 @@
 # Lab 2 — Extension Ideas
 
-Lab 2's base exercise gets you a `Unit Tests` stage that runs `mvn test`, publishes the JUnit XML to Jenkins, and has Bob diagnose any failures via `pipeline-test-failure-analyzer`. That's the floor. This doc collects extensions that take Bob from "explains what broke" to "actively helps you write better tests, fix flaky ones, and propose patches."
+Lab 2's base exercise gets you a `Unit Tests` stage that runs `mvn test`, publishes the JUnit XML to Jenkins, and has Bob diagnose any failures via `pipeline-test-failure-analyzer`. This doc collects extensions that take Bob from "explains what broke" to "actively helps you write better tests, fix flaky ones, and propose patches."
 
 The base lab keeps Bob read-only on purpose — failure analysis shouldn't mutate code mid-build. Several extensions below relax that constraint *outside* the build (for example, by writing patches as artifacts the developer applies locally), which is a useful pattern: keep CI deterministic, but still let Bob do real work.
 
@@ -215,7 +215,3 @@ The base lab is conservative for a reason — a build that auto-rewrites your co
 - Patches that Bob proposes (idea 7, 13) are not commits Bob made. Keep them as artifacts or branches that always go through human review. "Bob committed it" is a fine description of what happened; it's a bad description of who's accountable
 - Self-healing extensions (idea 13) work or fail on the strength of the review checklist. Treat the checklist as part of the rules, not as folklore — if it's not written down, the next reviewer will skip it
 - Coverage-driven test generation (idea 11) is satisfying but produces tests that test what the code *does*, not what the code *should* do. Tag generated tests so future maintainers know to scrutinize them harder than human-written ones
-
----
-
-If you build one of these and it works well, drop a `solution-` prefixed mode in `.bob/custom_modes.yaml` and a short paragraph in this file describing what it does and what to watch out for. The next workshop benefits.

@@ -190,7 +190,3 @@ Code review is an opinionated activity. Bob will sometimes be wrong, and "Bob sa
 - Risk-band gating (idea 10) and reviewer assignment (idea 12) shift human accountability. Make sure the override paths are documented and auditable; "who can bypass Bob" matters more than "what Bob blocks"
 - `pipeline-` prefixed modes are read-mostly by convention. If your extension introduces meaningful mutation (idea 1, 6, 10, 12), keep the alwaysAllow list narrow and document what the mode is allowed to write
 - Inline comments and PR comments are public artifacts of your team's process. Tune the mode's tone explicitly — sarcasm and snark age badly when archived for years
-
----
-
-If you build one of these and it works well, drop a `solution-` prefixed mode in `.bob/custom_modes.yaml` and a short paragraph in this file describing what it does and what to watch out for. The next workshop benefits.

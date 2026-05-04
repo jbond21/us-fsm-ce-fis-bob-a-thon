@@ -6,11 +6,12 @@
   - [What you'll build in Lab 2](#what-youll-build-in-lab-2)
   - [What you'll reuse from Lab 1](#what-youll-reuse-from-lab-1)
 - [Before you start](#before-you-start)
-- [Part 1 — Create a custom mode for writing unit tests](#part-1--create-a-custom-mode-for-writing-unit-tests)
-- [Part 2 — Use your new mode to add a test](#part-2--use-your-new-mode-to-add-a-test)
-- [Part 3 — Create a custom mode for analyzing test failures](#part-3--create-a-custom-mode-for-analyzing-test-failures)
-- [Part 4 — Add the Unit Tests stage with Bob analysis to your Jenkinsfile](#part-4--add-the-unit-tests-stage-with-bob-analysis-to-your-jenkinsfile)
-- [Part 5 — Break a test intentionally and watch Bob analyze it](#part-5--break-a-test-intentionally-and-watch-bob-analyze-it)
+- [Part 1 — Survey the existing test conventions](#part-1--survey-the-existing-test-conventions)
+- [Part 2 — Create a custom mode for writing unit tests](#part-2--create-a-custom-mode-for-writing-unit-tests)
+- [Part 3 — Use your new mode to add a test](#part-3--use-your-new-mode-to-add-a-test)
+- [Part 4 — Create a custom mode for analyzing test failures](#part-4--create-a-custom-mode-for-analyzing-test-failures)
+- [Part 5 — Add the Unit Tests stage with Bob analysis to your Jenkinsfile](#part-5--add-the-unit-tests-stage-with-bob-analysis-to-your-jenkinsfile)
+- [Part 6 — Break a test intentionally and watch Bob analyze it](#part-6--break-a-test-intentionally-and-watch-bob-analyze-it)
 - [Stuck?](#stuck)
 
 ---
@@ -43,12 +44,42 @@ By the end, failing tests won't just break your build — Bob will explain what 
 
 ---
 
-## Part 1 — Create a custom mode for writing unit tests
+## Part 1 — Survey the existing test conventions
 
-Start a new task and switch to the built-in **Mode Writer** mode. Read this prompt template, then adjust how you see fit before sending. If you have personal preferences about how to write unit tests (naming conventions, @DisplayName annotations, whatever) add it to the prompt. 
+Before you ask Mode Writer to build a unit-test mode, get a feel for what "good" looks like *in this repo*. A generic "JUnit 5 + Mockito" mode is fine, but a mode tuned to the conventions you actually use produces better tests on the first try — and you don't have to guess what those conventions are. Bob can read them off the existing tests for you.
+
+Start a new task in your Bob IDE in **Ask** mode (or **Plan** mode — either works). Point Bob at the existing tests under `order-service/src/test/` and ask something like:
 
 ```
-Write me a custom mode for writing Java unit tests. This mode should be an expert at JUnit 5 + Mockito unit test best practices. Specifically for a Spring Boot application. This mode should also read existing unit tests to ensure we match code style and naming conventions of existing tests. 
+Survey the existing tests under @order-service/src/test/. Tell me:
+
+- Which testing framework and assertion library? (JUnit 5 vs 4 vs TestNG; AssertJ vs Hamcrest vs JUnit's built-in asserts.)
+- How are mocks wired up? (Mockito @Mock + @InjectMocks, manual mocks, MockMvc, @WebMvcTest, @SpringBootTest, etc.)
+- Test method naming convention. (shouldDoX_whenY, methodName_state_expected, plain English with @DisplayName, ...)
+- Test class organization. (One class per production class, nested @Nested classes, given/when/then comments, fixture builders, parameterized tests.)
+- Anything else worth copying — custom assertions, base test classes, helper utilities.
+
+Be concrete: name files and quote short snippets so I can see the pattern.
+```
+
+Read Bob's answer and pick out the conventions worth pinning. You'll feed those findings straight into the Mode Writer prompt in Part 2 — that's how you get a mode that writes tests in *your repo's* voice rather than a generic JUnit-on-Stack-Overflow voice.
+
+This is the same prompt-then-promote loop from Lab 1: discover with a prompt first, then crystallize the findings into a mode.
+
+---
+
+## Part 2 — Create a custom mode for writing unit tests
+
+Start a new task and switch to the built-in **Mode Writer** mode. Take the conventions you surfaced in Part 1 and bake them into the prompt — replace the bracketed placeholder below with the specifics from your survey (frameworks, mocking patterns, naming convention, organization, anything else worth pinning):
+
+```
+Write me a custom mode for writing Java unit tests for this Spring Boot application.
+
+The mode should be an expert at the conventions actually used in this repo:
+  [paste the findings from Part 1 here — frameworks, assertion library, mocking patterns,
+   naming convention, class/test organization, anything else you want every new test to follow]
+
+The mode should still read related existing tests when it's writing a new one, so it picks up patterns the survey above didn't capture.
 
 The slug should be: java-unit-test-mode
 
@@ -56,18 +87,18 @@ Tool groups:
   - `read`
   - `edit`
 
-Add a rules directory with XML files for this mode. 
+Add a rules directory with XML files for this mode.
 
-Append this to the bottom of the existing custom_modes file, don't overwrite anything. 
+Append this to the bottom of the existing custom_modes file, don't overwrite anything.
 ```
 
-Watch Bob work on the task, and provide input where needed. 
+Watch Bob work on the task, and provide input where needed.
 
-Once the task is complete, restart Bob IDE for the mode to appear in your mode dropdown. 
+Once the task is complete, restart Bob IDE for the mode to appear in your mode dropdown.
 
 ---
 
-## Part 2 — Use your new mode to add a test
+## Part 3 — Use your new mode to add a test
 
 Start a new task and switch Bob to Ask mode.
 
@@ -94,7 +125,7 @@ mvn test
 
 ---
 
-## Part 3 — Create a custom mode for analyzing test failures
+## Part 4 — Create a custom mode for analyzing test failures
 
 Your test-writer mode is great for the IDE, but for the pipeline you want something different: a mode that only reads (no edits), trained on test-failure diagnosis.
 
@@ -118,7 +149,7 @@ Since you won't be using this mode in the IDE, there is no need to restart Bob. 
 
 ---
 
-## Part 4 — Add the Unit Tests stage with Bob analysis to your Jenkinsfile
+## Part 5 — Add the Unit Tests stage with Bob analysis to your Jenkinsfile
 
 Ensure you have restarted Bob IDE for the `jenkins-bob-integration` mode to appear in your mode dropdown — modes are loaded at IDE startup.
 
@@ -142,7 +173,7 @@ Watch Bob work. Before pushing, read the diff and sanity-check:
 
 ---
 
-## Part 5 — Break a test intentionally and watch Bob analyze it
+## Part 6 — Break a test intentionally and watch Bob analyze it
 
 Pick one of the existing tests (or the one your test-writer mode added) and flip an assertion so it'll fail. For example, in `OrderServiceTest.java`:
 

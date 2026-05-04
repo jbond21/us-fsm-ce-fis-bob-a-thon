@@ -19,7 +19,7 @@
 
 ## Overview of Lab 1
 
-Lab 1 walks you through the same loop you'll use in every later lab: **prompt first, then promote to a mode.** You'll build a working pipeline stage with a plain prompt, see the limits of that, and then crystallize the behavior you want into a reusable Bob custom mode.
+You'll build a working pipeline stage with a plain prompt, see the limits of that, and then crystallize the behavior you want into a reusable Bob custom mode.
 
 ### What you'll build in Lab 1
 
@@ -96,51 +96,56 @@ The prompt you give Bob should cover the *plumbing* (where in the Jenkinsfile, w
 Read git-diff.txt and tell me what changed in this PR.
 ```
 
-Here's a prompt you can paste into your IDE task to have Bob build the stage:
+Your prompt has two parts. The first is **environment context** — quirks of our Jenkins + Bob setup that Bob can't figure out from reading the repo. You have to tell it. The bullets are the same in every pipeline lab, so save them somewhere — you'll paste them into Lab 2's pipeline prompt and beyond. The second part is the actual **task**: what *this stage* does, lab-specific.
+
+Paste this into your IDE task:
 
 ```
-Add a new stage called "PR Review" to my @Jenkinsfile, immediately after the Checkout stage. The stage should:
+Add a new stage called "PR Review" to my @Jenkinsfile, immediately after the Checkout stage.
 
-- Configure git's safe.directory as the FIRST line of the stage's shell step:
+Environment context for our Jenkins + Bob pipeline setup (these apply to any pipeline stage you write — keep them in mind):
+
+- As the FIRST line of any git-using shell step in this pipeline, run:
     git config --global --add safe.directory "$WORKSPACE"
-  Without this, git refuses to operate inside the build-tools (maven) container with
-  "fatal: detected dubious ownership in repository" because Jenkins's checkout
-  creates files owned by a UID different from the one running git inside the image.
-  Use $WORKSPACE (Jenkins-provided) rather than the '*' wildcard so we only trust
-  this specific path.
+  Without this, git refuses to operate inside the build-tools (maven) container
+  with "fatal: detected dubious ownership in repository" — Jenkins's checkout
+  creates files owned by a UID different from the one git runs as inside the
+  maven image. Scope the trust to $WORKSPACE rather than the '*' wildcard.
 
-- Compute the diff of the entire branch against main:
+- Bob's working directory when invoked from the pipeline is the Jenkins job
+  workspace (/workspace/workspace/<folder>/<job>/), and Bob's tooling only
+  reads files within that subtree. Any file shared between a shell step and
+  Bob must use a PLAIN RELATIVE PATH (e.g. `git-diff.txt`), NEVER an absolute
+  path like /workspace/git-diff.txt.
+
+- Jenkins's `checkout scm` already fetches origin/main — you don't need to
+  fetch it again before diffing.
+
+What the stage should do:
+
+- Compute the diff of the entire branch against main using three-dot syntax:
     git diff origin/main...HEAD
-  Three-dot syntax mirrors what a reviewer sees in a PR — everything the branch
-  has added since it forked from main, not just the latest commit. Jenkins's
-  `checkout scm` already fetches origin/main.
-
-- Write the diff to git-diff.txt — a PLAIN RELATIVE PATH, NOT /workspace/git-diff.txt.
-  Bob's working directory when invoked from the pipeline is the Jenkins job workspace
-  (/workspace/workspace/<folder>/<job>/), and Bob's tooling only reads files within
-  that subtree.
-
-- Make the shell step resilient — fall back to writing an empty file rather than
-  failing the stage if the diff can't be computed (e.g., on a build of main itself).
-
+  Three-dot mirrors what a reviewer sees in a PR — everything the branch has
+  added since it forked from main, not just the latest commit. Write the diff
+  to git-diff.txt.
+- Make the shell step resilient — fall back to writing an empty file rather
+  than failing the stage if the diff can't be computed (e.g., on a build of
+  main itself).
 - Call the askBob helper that's already defined at the bottom of the Jenkinsfile.
-  Hand it the literal prompt: "Read git-diff.txt and tell me what changed in this PR."
-  Nothing more — keep the prompt short on purpose.
-
+  Hand it the literal prompt: "Read git-diff.txt and tell me what changed in
+  this PR." Nothing more — keep the prompt short on purpose.
 - Capture askBob's return value into a local variable.
-
 - Print the analysis between banner lines (e.g. echo '════════════════') so it's
   easy to spot in the build log.
-
 - Write the analysis to bob-pr-review.md and archive it as a build artifact.
 
-Do NOT modify the askBob helper. Do NOT create any new files outside the
-Jenkinsfile.
+Do NOT modify the askBob helper. Do NOT create any new files outside the Jenkinsfile.
 ```
 
 Watch Bob work. Before pushing, read the diff and sanity-check:
 
 - The stage sits between `Checkout` and wherever Lab 2's `Unit Tests` stage will go.
+- `git config --global --add safe.directory "$WORKSPACE"` is the first line of the shell step.
 - `askBob` is called with a single, short prompt — no format hints.
 - The diff is written to a relative path (`git-diff.txt`) and Bob is told to read the same relative path.
 - The `archiveArtifacts` path matches the `writeFile` path.
