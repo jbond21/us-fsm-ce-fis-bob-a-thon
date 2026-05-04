@@ -6,31 +6,30 @@
   - [What you'll build in Lab 1](#what-youll-build-in-lab-1)
 - [Before you start](#before-you-start)
 - [Part 1 — Add the `askBob` helper to your Jenkinsfile](#part-1--add-the-askbob-helper-to-your-jenkinsfile)
-- [Part 2 — Create the `pipeline-git-diff-overview` custom mode](#part-2--create-the-pipeline-git-diff-overview-custom-mode)
+- [Part 2 — Build the `PR Review` stage with a simple prompt](#part-2--build-the-pr-review-stage-with-a-simple-prompt)
+- [Part 3 — TBD: intermediate push & build?](#part-3--tbd-intermediate-push--build)
+- [Part 4 — Upgrade `askBob` to accept an optional mode](#part-4--upgrade-askbob-to-accept-an-optional-mode)
+- [Part 5 — Create the `pipeline-git-diff-overview` mode](#part-5--create-the-pipeline-git-diff-overview-mode)
   - [Key characteristics of this mode](#key-characteristics-of-this-mode)
-- [Part 3 - Create a custom mode for writing Jenkinsfile stages with Bob integration](#part-3---create-a-custom-mode-for-writing-jenkinsfile-stages-with-bob-integration)
-  - [Key characteristics of this mode](#key-characteristics-of-this-mode-1)
-- [Part 4 — Add the `PR Review` stage to your Jenkinsfile](#part-4--add-the-pr-review-stage-to-your-jenkinsfile)
-- [Part 5 — Push and watch](#part-5--push-and-watch)
+- [Part 6 — Update the stage to use the new mode](#part-6--update-the-stage-to-use-the-new-mode)
+- [Part 7 — Push and watch](#part-7--push-and-watch)
 - [Stuck?](#stuck)
 
 ---
 
 ## Overview of Lab 1
 
-Lab 1 establishes the **foundational infrastructure** you'll use throughout all subsequent labs.
+Lab 1 walks you through the same loop you'll use in every later lab: **prompt first, then promote to a mode.** You'll build a working pipeline stage with a plain prompt, see the limits of that, and then crystallize the behavior you want into a reusable Bob custom mode.
 
 ### What you'll build in Lab 1
 
-1. **The `askBob` helper function** — Your pipeline's reusable interface to Bob. This function will be called in every subsequent lab to invoke Bob with different custom modes.
+1. **The `askBob` helper function** — your pipeline's reusable interface to Bob. You'll write it twice: a one-argument version first (just a prompt), then upgrade it to take an optional custom mode once you need one. Every subsequent lab calls this helper.
 
-2. **A custom Bob mode for Jenkins integration** (`jenkins-bob-integration`) — A specialist mode that understands Jenkins pipeline DSL and Bob integration patterns. You'll use this mode in your IDE throughout the workshop whenever you need to write or modify pipeline stages that call Bob.
+2. **A `PR Review` stage** — your first pipeline stage that calls `askBob`. You'll build it the cheap way first: hand Bob a one-line prompt and read the generic output. That generic output is the point — it sets up the contrast for what custom modes give you next.
 
-3. **A custom Bob mode for PR review** (`pipeline-git-diff-overview`) — A mode that reads git diffs like a senior developer glancing at a PR, producing risk-ranked summaries. This is the first *task-specific* mode you'll create, demonstrating the pattern you'll follow in later labs.
+3. **A custom Bob mode** (`pipeline-git-diff-overview`) — once you've felt the limits of a plain prompt, you'll use **Mode Writer** mode to build a reusable mode that produces structured, scannable output. The same stage now produces a senior-developer-style risk-ranked review without you having to spell that out in the prompt each time.
 
-4. **A `PR Review` stage** in your Jenkinsfile — Your first pipeline stage that uses the `askBob` helper. It captures the branch's diff against `main` and hands it to Bob for analysis.
-
-By the end, every push will trigger an automated senior reviewer that surfaces risk before any other stage runs — and you'll have the reusable infrastructure (`askBob` + `jenkins-bob-integration` mode) to build similar stages for unit test analysis, security scans, and more in later labs.
+By the end, every push triggers a structured PR review in your Jenkins console — and you've practiced the prompt-then-mode loop you'll repeat for unit tests, security scans, and linting in the labs that follow.
 
 ---
 
@@ -43,18 +42,128 @@ By the end, every push will trigger an automated senior reviewer that surfaces r
 
 ## Part 1 — Add the `askBob` helper to your Jenkinsfile
 
-Every stage that invokes Bob has to do the same two things: step into `container('bob')` and run `bob --chat-mode …`. Factor that out **once** and each stage just passes a prompt and a mode, and gets back the analysis string to do whatever it wants with.
+Every stage that invokes Bob has to do the same two things: step into `container('bob')` and run `bob …`. Factor that out **once** and each stage just passes a prompt and gets back the analysis string to do whatever it wants with.
 
-Because this helper is shared workshop infrastructure — you'll call it the same way in every subsequent lab — we're giving you the code directly rather than having you generate it. Paste it into your `@Jenkinsfile` at the bottom, **outside** the `pipeline { }` block:
+Because this helper is shared workshop infrastructure — you'll call it the same way in every subsequent lab — we're giving you the code directly rather than having you generate it.
+
+The line that actually invokes Bob is:
+
+```sh
+bob -p "$(cat ${promptFile})" --hide-intermediary-output
+```
+
+Piece by piece:
+
+- **`bob`** — the Bob CLI, available in the `bob` container.
+- **`-p "..."`** — runs Bob in one-shot prompt mode: take this prompt, do the work, print the result to stdout, exit. No interactive chat.
+- **`"$(cat ${promptFile})"`** — substitutes in the contents of the tempfile we wrote a moment earlier. We go through a file (instead of inlining the prompt) because diffs and logs contain quotes, backticks, and newlines that wreck shell escaping.
+- **`--hide-intermediary-output`** — suppresses Bob's tool-call traces and "thinking" output so we capture only the final analysis. Without this, `returnStdout` would pick up everything Bob printed along the way.
+
+Now paste the helper into your `@Jenkinsfile` at the bottom, **outside** the `pipeline { }` block:
+
+```groovy
+// ── Helper: ask Bob ───────────────────────────────────────────────────────────
+// Writes the prompt to a tempfile in the shared workspace and runs `bob` in
+// the bob container. Returns the analysis as a string. Using a tempfile
+// (instead of inlining the prompt on the command line) avoids shell-escaping
+// issues when the prompt contains quotes, backticks, or newlines — common
+// with diffs.
+def askBob(String prompt) {
+    container('bob') {
+        def promptFile = ".bob-prompt-${System.currentTimeMillis()}.txt"
+        writeFile file: promptFile, text: prompt
+
+        def analysis = sh(
+            script: """bob -p "\$(cat ${promptFile})" --hide-intermediary-output""",
+            returnStdout: true
+        ).trim()
+
+        sh "rm -f ${promptFile}"
+        return analysis
+    }
+}
+```
+
+---
+
+## Part 2 — Build the `PR Review` stage with a simple prompt
+
+You're going to write the stage by *describing* it to Bob and letting Bob write the Groovy. Open a new task in your Bob IDE in **Plan** mode and ask Bob to plan a `PR Review` stage for your Jenkinsfile.
+
+The prompt you give Bob should cover the *plumbing* (where in the Jenkinsfile, what to compute, how to call `askBob`) — but the prompt your stage hands to `askBob` should be **deliberately minimal**. Something like:
+
+```
+Read git-diff.txt and tell me what changed in this PR.
+```
+
+Here's a prompt you can paste into your IDE task to have Bob build the stage:
+
+```
+Add a new stage called "PR Review" to my @Jenkinsfile, immediately after the Checkout stage. The stage should:
+
+- Configure git's safe.directory as the FIRST line of the stage's shell step:
+    git config --global --add safe.directory "$WORKSPACE"
+  Without this, git refuses to operate inside the build-tools (maven) container with
+  "fatal: detected dubious ownership in repository" because Jenkins's checkout
+  creates files owned by a UID different from the one running git inside the image.
+  Use $WORKSPACE (Jenkins-provided) rather than the '*' wildcard so we only trust
+  this specific path.
+
+- Compute the diff of the entire branch against main:
+    git diff origin/main...HEAD
+  Three-dot syntax mirrors what a reviewer sees in a PR — everything the branch
+  has added since it forked from main, not just the latest commit. Jenkins's
+  `checkout scm` already fetches origin/main.
+
+- Write the diff to git-diff.txt — a PLAIN RELATIVE PATH, NOT /workspace/git-diff.txt.
+  Bob's working directory when invoked from the pipeline is the Jenkins job workspace
+  (/workspace/workspace/<folder>/<job>/), and Bob's tooling only reads files within
+  that subtree.
+
+- Make the shell step resilient — fall back to writing an empty file rather than
+  failing the stage if the diff can't be computed (e.g., on a build of main itself).
+
+- Call the askBob helper that's already defined at the bottom of the Jenkinsfile.
+  Hand it the literal prompt: "Read git-diff.txt and tell me what changed in this PR."
+  Nothing more — keep the prompt short on purpose.
+
+- Capture askBob's return value into a local variable.
+
+- Print the analysis between banner lines (e.g. echo '════════════════') so it's
+  easy to spot in the build log.
+
+- Write the analysis to bob-pr-review.md and archive it as a build artifact.
+
+Do NOT modify the askBob helper. Do NOT create any new files outside the
+Jenkinsfile.
+```
+
+Watch Bob work. Before pushing, read the diff and sanity-check:
+
+- The stage sits between `Checkout` and wherever Lab 2's `Unit Tests` stage will go.
+- `askBob` is called with a single, short prompt — no format hints.
+- The diff is written to a relative path (`git-diff.txt`) and Bob is told to read the same relative path.
+- The `archiveArtifacts` path matches the `writeFile` path.
+
+---
+
+## Part 3 — TBD: intermediate push & build?
+
+> Decide whether students push and run here — to see Bob's
+> generic output and prove the plumbing works — before progressing to modes.
+---
+
+## Part 4 — Upgrade `askBob` to accept an optional mode
+
+The helper you wrote in Part 1 takes one argument. That's fine for "ask Bob anything," but every subsequent lab is going to want to pin a *specific* custom mode (so Bob behaves like a unit-test analyst, a security analyst, a linter analyst, etc.). Time to grow the helper.
+
+Replace your `askBob` definition with this version — note the second parameter has a default of `null`, so existing calls (one argument, no mode) keep working unchanged:
 
 ```groovy
 // ── Helper: ask Bob, optionally with a specific custom mode ──────────────────
-// Writes the prompt to a tempfile in the shared workspace and runs
-// `bob` in the bob container, adding `--chat-mode <mode>` only if mode is
-// provided (otherwise Bob uses its built-in default mode). Returns the
-// analysis as a string. Using a tempfile (instead of inlining the prompt
-// on the command line) avoids shell-escaping issues when the prompt
-// contains quotes, backticks, or newlines — common with diffs.
+// Same as before, but adds `--chat-mode <mode>` only if mode is provided.
+// Without a mode, Bob uses its built-in default behavior (what you saw in Part 2).
+// With a mode, Bob applies the rules and tools defined for that custom mode.
 def askBob(String prompt, String mode = null) {
     container('bob') {
         def promptFile = ".bob-prompt-${System.currentTimeMillis()}.txt"
@@ -72,20 +181,18 @@ def askBob(String prompt, String mode = null) {
 }
 ```
 
-A few things to notice while you paste it in:
+Two things changed:
 
-- **It lives outside `pipeline { }`.** Groovy functions at the top level of the Jenkinsfile are callable from any stage. Functions declared *inside* `pipeline { }` get interpreted as stage definitions by the Jenkins DSL, which isn't what you want.
-- **It runs inside `container('bob')`.** The pipeline pod has three containers (`build-tools`, `oc-tools`, `bob`). Bob only lives in the last one, so every `bob` command has to be wrapped in `container('bob')`.
-- **`mode` is optional** (`String mode = null`). Call `askBob("quick question")` to use Bob's default mode, or `askBob("do the thing", "some-custom-mode")` to pin a specific mode. For every lab in this workshop you'll pass a mode — that's the whole point of custom modes — but keeping the parameter optional means the helper is also usable for one-off asks.
-- **The prompt goes through a file, not the command line.** This is the pattern you'll use to hand Bob larger inputs (diffs, scan outputs, logs) later in the workshop. Keeps shell quoting clean no matter what's in the prompt.
+- **`String mode = null` parameter.** Optional. Existing callers (`askBob(prompt)`) are unaffected. New callers can do `askBob(prompt, "some-mode")` to pin a behavior.
+- **`--chat-mode <mode>` is appended only when a mode is passed.** No mode → no flag → Bob uses its built-in default (which is what your Part 2 stage relies on).
 
-No `git push` yet — nothing calls the helper. On to the mode.
+Your Part 2 stage still calls `askBob(prompt)` with one argument — and it still works. We haven't broken anything. Now we've got the door open for the next part.
 
 ---
 
-## Part 2 — Create the `pipeline-git-diff-overview` custom mode
+## Part 5 — Create the `pipeline-git-diff-overview` mode
 
-The `askBob` helper is mode-agnostic. The *behavior* — what Bob actually does when invoked — comes from the custom mode you pass in. For Lab 1 that's a "senior developer glancing at a PR" mode: a short, risk-ranked summary, not an exhaustive review.
+Your Part 2 stage works, but the output is generic — whatever Bob feels like saying about a diff that day. For CI you want the same shape every time: a one-line summary, an explicit risk band, a "watch for" list. That's what custom modes are for. The mode owns the *how* (output format, what to prioritize, what to skip) so the stage's prompt can stay short and the *behavior* stays consistent across runs.
 
 ### Key characteristics of this mode:
 
@@ -95,11 +202,11 @@ The `askBob` helper is mode-agnostic. The *behavior* — what Bob actually does 
 - **Structure**: Organized sections (Summary, Risk, Watch for) for easy scanning
 - **Scope**: Focuses on notable changes only — security, concurrency, null-safety, behavior changes, missing tests
 
-Start a new task and switch to **Plan** mode. Tell Bob you want to create a prompt for the `mode writer mode` in the .bob directory. Tell Bob you want the new mode to has the information above in your own words. There is an example prompt at the bottom of this step for reference. 
+Start a new task and switch to **Plan** mode. Tell Bob you want to draft a prompt for **Mode Writer** mode that defines a custom mode for pipeline-side PR review. Walk through what behavior you want (using the bullets above as a starting point). There's an example prompt at the bottom of this step you can use as a starting point or reference.
 
-Once you have created a prompt you like with Plan mode, copy it, start a new task, switch to **Mode Writer** mode and paste. Press enter and watch Bob create the mode. Bob may ask you some questions for clarification.
+Once you're happy with the drafted prompt, copy it, start a new task, switch to **Mode Writer** mode and paste. Press enter and watch Bob create the mode. Bob may ask you a few clarifying questions.
 
-Since you won't be invoking this mode from the IDE, there's **no need to restart Bob IDE**. When the pipeline runs, Bob reads `.bob/custom_modes.yaml` fresh from the checked-out workspace, so the new mode is available as soon as the branch is pushed.
+Since you won't be invoking this mode from the IDE (it's used by the pipeline), there's **no need to restart Bob IDE**. When the pipeline runs, Bob reads `.bob/custom_modes.yaml` fresh from the checked-out workspace, so the new mode is available as soon as the branch is pushed.
 
 Notice that this mode has only `read` permission — deliberately narrower than an IDE mode. A pipeline mode should do the minimum it needs to.
 
@@ -123,88 +230,26 @@ Add a rules directory for this mode with XML files describing how to structure t
 Append the new mode to the bottom of the existing @.bob/custom_modes.yaml file — do not overwrite anything.
 ```
 
+---
+
+## Part 6 — Update the stage to use the new mode
+
+You've got an upgraded `askBob` (Part 4) and a custom mode (Part 5). Now wire them together. Open a new task with the default mode (or any mode you like — this is a quick edit), point Bob at `@Jenkinsfile`, and ask it to:
+
+- Update the `PR Review` stage to call `askBob` with **two** arguments: the prompt and the mode slug `pipeline-git-diff-overview`.
+- The prompt itself stays short — the mode now owns the format, so something like *"Read `git-diff.txt` and produce the senior-developer PR overview."* is enough.
+- Leave the rest of the stage untouched (safe.directory, diff computation, banner printing, artifact archiving).
+
+Re-read the diff and sanity-check:
+
+- `askBob` is called with the exact mode slug from Part 5 (`pipeline-git-diff-overview`).
+- The `archiveArtifacts` path still matches the `writeFile` path.
+
+This is the pattern you'll repeat in every subsequent lab: write the stage with a short prompt and let a custom mode shape the output. Modes are how you keep stages small and behaviors consistent.
 
 ---
 
-## Part 3 - Create a custom mode for writing Jenkinsfile stages with Bob integration
-
-Before you start writing stages that call Bob, let's create a mode that understands both Jenkins pipeline DSL and Bob integration patterns. This mode will be your go-to tool for all subsequent labs when you need to add or modify pipeline stages.
-
-- **Purpose**: Specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns
-- **Permissions**: Read + Edit (restricted to `Jenkinsfile.*` and `.bob/custom_modes.yaml` only)
-- **Expertise**: Knows the `askBob` helper pattern, container selection, file-based prompts, output handling
-- **Use case**: You'll use this mode in your IDE throughout the workshop to write/modify pipeline stages
-- **Requires IDE restart**: Unlike pipeline modes, IDE modes need a restart to appear in the mode dropdown
-
-Start a new task and switch to **Plan** mode. Tell Bob you want to create a prompt for the `mode writer mode` in the .bob directory. Tell Bob you want the new mode to has the information above in your own words. There is an example prompt at the bottom of this step for reference. 
-
-Once you have created a prompt you like with Plan mode, copy it, start a new task, switch to **Mode Writer** mode and paste. Press enter and watch Bob create the mode. Bob may ask you some questions for clarification.
-
-Since you won't be invoking this mode from the IDE, there's **no need to restart Bob IDE**. When the pipeline runs, Bob reads `.bob/custom_modes.yaml` fresh from the checked-out workspace, so the new mode is available as soon as the branch is pushed.
-
-Notice that this mode has only `read` permission — deliberately narrower than an IDE mode. A pipeline mode should do the minimum it needs to.
-
-```
-Write me a custom mode for creating Jenkins pipeline stages that integrate Bob. This mode is a specialist in Jenkins Declarative Pipeline DSL + Bob CLI integration patterns.
-
-The slug should be: jenkins-bob-integration
-
-The mode's expertise includes:
-  - Writing declarative pipeline stages that invoke Bob via the askBob helper
-  - Understanding when to use container('bob') vs other containers
-  - Structuring file-based prompts to avoid shell escaping issues (especially with diffs and logs)
-  - Selecting appropriate Bob custom modes for different pipeline tasks (PR review, test analysis, security scans, etc.)
-  - Handling Bob's output: capturing return values, formatting for Jenkins console (no ANSI colors), archiving as artifacts
-  - Making stages resilient with catchError and post blocks so Bob analysis runs even when earlier steps fail
-  - Understanding Jenkins workspace file paths (/workspace/...) and temp file patterns
-  - Writing clear console banners to make Bob's output easy to spot in build logs
-
-Output constraints for stages this mode creates:
-  - Use the askBob helper function (don't inline Bob CLI calls)
-  - Always write prompts to temp files, never inline on command line
-  - Format console output with clear banner lines (e.g., echo '════════════════')
-  - Archive Bob's analysis as build artifacts for historical reference
-  - Use catchError with buildResult: 'UNSTABLE' when you want the pipeline to continue after failures
-
-Tool groups:
-  - read
-  - edit (restricted to Jenkinsfile.* and .bob/custom_modes.yaml only)
-
-Add a rules directory for this mode with XML files covering:
-  - The askBob helper pattern and when to use it
-  - File-based prompt construction (avoiding shell escaping)
-  - Container selection guidelines
-  - Output handling patterns (banners, artifacts, console formatting)
-  - Error resilience patterns (catchError, post blocks)
-  - Common stage patterns (PR review, test analysis, security scan analysis)
-  - How to select which Bob custom mode to use for different pipeline tasks
-
-Append the new mode to the bottom of the existing @.bob/custom_modes.yaml file — do not overwrite anything.
-```
-
-## Part 4 — Add the `PR Review` stage to your Jenkinsfile
-
-Ensure you have restarted Bob IDE for the new `jenkins-bob-integration` mode to appear in your mode dropdown — modes are loaded at IDE startup.
-
-Then, start a new task and switch to the **Jenkins Bob Integration** mode. The prompt for this mode shows how detailed you can get with your 
-
-- Add a new stage called **`PR Review`** to `@Jenkinsfile` that runs immediately after the Checkout stage.
-- Before any git command in the stage, configure git's `safe.directory` so it'll cooperate inside the `build-tools` container: run `git config --global --add safe.directory "$WORKSPACE"` as the first line of the stage's shell step. Without this, git refuses to operate with `fatal: detected dubious ownership in repository` because Jenkins's checkout creates files owned by a UID different from the one running git inside the maven image. `$WORKSPACE` is a Jenkins-provided env var pointing at the job's workspace on the agent — scoping the trust to this specific path is safer than the `'*'` wildcard.
-- Compute the diff of the **entire branch against `main`** (`git diff origin/main...HEAD`) and write the output to **`git-diff.txt`** in the Jenkins workspace — i.e., a plain relative path, **not** `/workspace/git-diff.txt`. Bob's working directory when invoked from the pipeline is the Jenkins job workspace (`/workspace/workspace/<folder>/<job>/`), and Bob's tooling only reads files within that directory subtree. The three-dot syntax mirrors what a reviewer sees in a PR — everything the branch has added since it forked from `main`, not just the latest commit. Jenkins's `checkout scm` already fetches `origin/main`. Make the shell step resilient — fall back to an empty file rather than failing the stage if the diff can't be computed (e.g., on a build of `main` itself).
-- Call the `askBob` helper from Part 1 with the mode `pipeline-git-diff-overview` (the one you created in Part 2) and a short prompt telling Bob to read **`git-diff.txt`** (the same relative path, **not** `/workspace/git-diff.txt`) and produce the senior-developer overview the mode is trained for.
-- Capture `askBob`'s return value into a local variable.
-- Print the analysis between banner lines in the Jenkins console so it's easy to spot in the build log.
-- Write the analysis to `bob-pr-review.md` and archive it as a build artifact.
-
-Watch Bob work. Before pushing, read the diff and sanity-check:
-
-- The stage sits between `Checkout` and wherever Lab 2's `Unit Tests` stage will go.
-- `askBob` is called with the exact mode slug from Part 2.
-- The `archiveArtifacts` path matches the `writeFile` path.
-
----
-
-## Part 5 — Push and watch
+## Part 7 — Push and watch
 
 ```bash
 git add Jenkinsfile .bob/
@@ -231,6 +276,7 @@ Open the archived artifact from the build page and you've got a persistent recor
 
 - **Pipeline fails with something like `askBob: method not found`.** Your helper function is inside the `pipeline { }` block. Move it to the top level of the file (outside the `pipeline { }` braces).
 - **Bob stage runs but says the mode wasn't found.** Check (a) `.bob/custom_modes.yaml` contains the slug `pipeline-git-diff-overview`, (b) you're passing that exact string to `askBob`, (c) you committed and pushed `.bob/`. Bob reads `custom_modes.yaml` fresh from the workspace on every run.
+- **Part 2 stage works but the output is messy / inconsistent across runs.** Expected — that's the whole reason for Parts 4–6. Without a mode, you're relying on the prompt to enforce format every time, and the prompt in Part 2 is intentionally minimal.
 - **The diff is empty.** Two common causes: (a) your branch hasn't diverged from `main` yet — there are no commits since the branch point — or (b) `origin/main` isn't available locally on the Jenkins agent (rare, but possible if the Git plugin's clone config was customized). Confirm by adding `git branch -r` to your shell step temporarily: it should list `origin/main` after `checkout scm`. If it doesn't, the agent isn't fetching `main`; you may need an explicit `git fetch origin main` before the diff.
 - **Pipeline fails with `fatal: detected dubious ownership in repository`.** Git refuses to operate when the directory's owner UID doesn't match the user running git. The `build-tools` (maven) container runs as a different user than the one that owns the checked-out files. Fix: add `git config --global --add safe.directory "$WORKSPACE"` as the **first** command in your stage's shell step, before any other git invocation. Use `$WORKSPACE` rather than the `'*'` wildcard so you're only trusting the directory you actually need.
 - **Bob says `git-diff.txt` "is not accessible from the current workspace directory".** This means your stage wrote the diff to an absolute path outside Bob's reachable directory tree — almost always `/workspace/git-diff.txt` instead of `git-diff.txt`. Bob's CWD is the Jenkins job workspace (`/workspace/workspace/<folder>/<job>/`), not the root of the shared volume; its tooling won't reach up out of its own workspace. Fix: write the diff to a **relative path** (`git-diff.txt`, no leading slash) and tell Bob to read the same relative path.
