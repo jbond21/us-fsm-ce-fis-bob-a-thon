@@ -6,13 +6,10 @@
   - [What you'll build in Lab 1](#what-youll-build-in-lab-1)
 - [Before you start](#before-you-start)
 - [Part 1 — Add the `askBob` helper to your Jenkinsfile](#part-1--add-the-askbob-helper-to-your-jenkinsfile)
-- [Part 2 — Build the `PR Review` stage with a simple prompt](#part-2--build-the-pr-review-stage-with-a-simple-prompt)
-- [Part 3 — TBD: intermediate push & build?](#part-3--tbd-intermediate-push--build)
-- [Part 4 — Upgrade `askBob` to accept an optional mode](#part-4--upgrade-askbob-to-accept-an-optional-mode)
-- [Part 5 — Create the `pipeline-git-diff-overview` mode](#part-5--create-the-pipeline-git-diff-overview-mode)
-  - [Key characteristics of this mode](#key-characteristics-of-this-mode)
-- [Part 6 — Update the stage to use the new mode](#part-6--update-the-stage-to-use-the-new-mode)
-- [Part 7 — Push and watch](#part-7--push-and-watch)
+- [Part 2 - Use Bob to analyze git diff](#part-2---use-bob-to-analyze-git-diff)
+- [Part 3 - Create the `pipeline-git-diff-overview` mode](#part-3---create-the-pipeline-git-diff-overview-mode)
+- [Part 4 — Build the `PR Review` stage](#part-4--build-the-pr-review-stage)
+- [Part 5 — Push and watch](#part-5--push-and-watch)
 - [Stuck?](#stuck)
 
 ---
@@ -23,11 +20,13 @@ You'll build a working pipeline stage with a plain prompt, see the limits of tha
 
 ### What you'll build in Lab 1
 
-1. **The `askBob` helper function** — your pipeline's reusable interface to Bob. You'll write it twice: a one-argument version first (just a prompt), then upgrade it to take an optional custom mode once you need one. Every subsequent lab calls this helper.
+1. **The `askBob` helper function** — your pipeline's reusable interface to Bob. One helper, optional second argument for pinning a custom mode. Every subsequent lab calls this same helper.
 
-2. **A `PR Review` stage** — your first pipeline stage that calls `askBob`. You'll build it the cheap way first: hand Bob a one-line prompt and read the generic output. That generic output is the point — it sets up the contrast for what custom modes give you next.
+2. **A built-in look at the diff** — before writing any pipeline code, you'll use Bob in your IDE (Advanced mode) to analyze the branch diff. The output is fine but unstructured — that gap is what motivates the next part.
 
-3. **A custom Bob mode** (`pipeline-git-diff-overview`) — once you've felt the limits of a plain prompt, you'll use **Mode Writer** mode to build a reusable mode that produces structured, scannable output. The same stage now produces a senior-developer-style risk-ranked review without you having to spell that out in the prompt each time.
+3. **A custom Bob mode** (`pipeline-git-diff-overview`) — built with **Mode Writer**, this mode pins the output shape and the read-only permissions a CI mode should have. Your pipeline stage will hand Bob a one-line prompt and the mode does the rest.
+
+4. **The `PR Review` stage** — uses the **Jenkins Pipeline Integration** mode (provided in this repo) to write a stage that calls `askBob` with your new mode and archives the result.
 
 By the end, every push triggers a structured PR review in your Jenkins console — and you've practiced the prompt-then-mode loop you'll repeat for unit tests, security scans, and linting in the labs that follow.
 
@@ -157,7 +156,7 @@ Paste the following prompt:
 ---
 
 
-## Part 7 — Push and watch
+## Part 5 — Push and watch
 
 ```bash
 git add Jenkinsfile .bob/
@@ -189,8 +188,8 @@ Open the archived artifact from the build page and you've got a persistent recor
 - **Pipeline fails with `fatal: detected dubious ownership in repository`.** Git refuses to operate when the directory's owner UID doesn't match the user running git. The `build-tools` (maven) container runs as a different user than the one that owns the checked-out files. Fix: add `git config --global --add safe.directory "$WORKSPACE"` as the **first** command in your stage's shell step, before any other git invocation. Use `$WORKSPACE` rather than the `'*'` wildcard so you're only trusting the directory you actually need.
 - **Bob says `git-diff.txt` "is not accessible from the current workspace directory".** This means your stage wrote the diff to an absolute path outside Bob's reachable directory tree — almost always `/workspace/git-diff.txt` instead of `git-diff.txt`. Bob's CWD is the Jenkins job workspace (`/workspace/workspace/<folder>/<job>/`), not the root of the shared volume; its tooling won't reach up out of its own workspace. Fix: write the diff to a **relative path** (`git-diff.txt`, no leading slash) and tell Bob to read the same relative path.
 - **Bob output looks like a novel, not a triage summary.** The mode's rules file probably isn't constraining output length. Re-open Mode Writer and refine the rules to enforce brevity — cap per-change output to a few lines, require the three-section structure, tell Bob to skip uninteresting changes.
-- **`Jenkinsfile` not working?** Copy `Jenkinsfile.lab1solution` from the repo root over your own `Jenkinsfile` and push. That's the reference state after Lab 1 and a safe reset point.
+- **`Jenkinsfile` not working?** Copy `labs/sre/lab1/Jenkinsfile.lab1solution` over your own `Jenkinsfile` and push. That's the reference state after Lab 1 and a safe reset point.
 
 ---
 
-When you're ready, open [LAB2_UNIT_TESTING.md](LAB2_UNIT_TESTING.md).
+When you're ready, open [LAB2_UNIT_TESTING.md](../lab2/LAB2_UNIT_TESTING.md).
