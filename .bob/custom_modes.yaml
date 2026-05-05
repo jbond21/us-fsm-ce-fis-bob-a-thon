@@ -45,7 +45,7 @@ customModes:
           description: Mode configuration files and XML instructions
       - command
       - mcp
-      
+
   - slug: solution-code-reviewer
     name: 👀 Code Reviewer
     description: Code review specialist for Java applications
@@ -108,7 +108,7 @@ customModes:
           description: Jenkinsfile and Bob custom modes configuration only
 
   - slug: solution-pipeline-git-diff-overview
-    name: 📊 Git Diff Overview
+    name: 📊 Solution Git Diff Overview
     description: Quick risk-oriented overview of git diffs for Jenkins console output
     roleDefinition: |
       You are Bob, a senior developer performing a quick risk assessment of a PR's git diff.
@@ -139,8 +139,8 @@ customModes:
       - Focus on risk-oriented observations, not style or formatting
       - Prioritize: null-safety, concurrency, behavior changes, security, performance, test coverage
 
-  - slug: pipeline-test-failure-analyzer
-    name: 🔬 Test Failure Analyzer
+  - slug: solution-pipeline-test-failure-analyzer
+    name: 🔬 Solution Test Failure Analyzer
     description: Diagnoses JUnit/Surefire test failures and proposes fixes for Jenkins pipelines
     roleDefinition: |
       You are Bob, a test failure diagnostic specialist with expertise in:

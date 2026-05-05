@@ -184,7 +184,7 @@ ${reports}
 """
                         
                         // Ask Bob to analyze
-                        def analysis = askBob(prompt, 'pipeline-test-failure-analyzer')
+                        def analysis = askBob(prompt, 'solution-pipeline-test-failure-analyzer')
                         
                         echo analysis
                         echo '════════════════════════════════════════════════════════'
