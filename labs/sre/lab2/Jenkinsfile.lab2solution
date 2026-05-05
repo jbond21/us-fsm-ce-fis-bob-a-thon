@@ -1,15 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-// FIS Bob-a-thon — Base Pipeline (Jenkinsfile)
+// FIS Bob-a-thon — Lab 2 Solution (Jenkinsfile.lab2solution)
 //
-// Starting point for the 5-lab workshop. Provisions a Kubernetes
-// agent pod with three containers — build-tools (Maven + JDK17),
-// oc-tools (OpenShift CLI), and bob (IBM Bob CLI) — sharing a
-// workspace-volume emptyDir mounted at /workspace on all three,
-// with HOME set to /workspace so Bob can read .bob/custom_modes.yaml
-// from the checkout.
+// Cumulative state after Lab 2: base pipeline + Lab 1 PR review stage
+// (TBD — added in a future commit) + Lab 2 Unit Tests stage that runs
+// `mvn test` and has Bob analyze any failures via a custom mode.
 //
-// This file has a single Checkout stage. Each lab adds one more
-// stage beneath it; see labs/LAB<N>_*.md for instructions.
+// See labs/LAB2_UNIT_TESTING.md for the participant walkthrough.
 //
 // Before running: if your OpenShift project is NOT named `jenkins`,
 // update the `bob` container image URL below.
