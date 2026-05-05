@@ -6,6 +6,8 @@
 - Completed Lab 1
 - Bob application running
 
+> 📌 Two helpful links are the [Bob documentation](https://bob.ibm.com/docs/ide) from the last intro lab and the [BobShell specific documentation site](https://bob.ibm.com/docs/shell)
+
 ---
 
 ## Table of Contents
@@ -55,10 +57,10 @@ BobShell is Bob's command-line interface that provides:
 
 ### Step 1: Install and Verify BobShell
 
-👉 **[BobShell Installation Guide](https://internal.bob.ibm.com/docs/shell/install-and-setup)**
+👉 **[BobShell Installation Guide](https://bob.ibm.com/docs/shell/getting-started/install-and-setup)**
 BobShell should auto-install on Mac Bob isntances 
 
-**📚 Note:** Public Bob documentation is available at: **https://ibm.biz/bob-doc**
+**📚 Note:** Public BobShell documentation is available at: **https://bob.ibm.com/docs/shell**
 
 **For all users**, verify that BobShell is installed and accessible:
 
@@ -114,7 +116,7 @@ bob
 
 To exit the interactive mode, press `Ctrl+C` twice.
 
-**📚 Learn More:** See the [BobShell Interactive Mode documentation](https://internal.bob.ibm.com/docs/shell/start-bobshell-interactive) for additional features and options.
+**📚 Learn More:** See the [BobShell Interactive Mode documentation](https://bob.ibm.com/docs/shell/getting-started/start-bobshell-interactive) for additional features and options.
 
 **What's Happening:**
 - Interactive mode provides a conversational interface in the terminal
@@ -158,6 +160,8 @@ bob "What is the difference between a list and a tuple in Python?"
 - Perfect for automation and scripting
 - Results are output to stdout for easy capture
 - Can be chained with other CLI tools using pipes
+
+**📚 Learn More:** See the [BobShell Non-Interactive Mode documentation](https://bob.ibm.com/docs/shell/getting-started/start-bobshell-non-interactive) for additional features and options.
 
 ### Step 4: Using Session Resume
 
@@ -334,9 +338,7 @@ bob "Create a sorting function and write it to sort.py" --yolo
    bob config set cache-ttl 3600
    ```
 
-## Additional Resources
-
-# Need to fill in
+> 📌 For more information on BobShell see the documentation site: https://bob.ibm.com/docs/shell 
 
 ---
 ## Introduction to MCP 
@@ -347,6 +349,8 @@ bob "Create a sorting function and write it to sort.py" --yolo
 > This lab showcases Bob's most powerful differentiator—its extensible architecture. Through customizable modes and MCP server integrations, Bob adapts to YOUR environment and workflows. Unlike other AI assistants that work in isolation, Bob can connect to internal APIs, databases, documentation systems, and custom tools. This extensibility makes Bob uniquely valuable for enterprise teams with specific needs and existing toolchains.
 
 ## What is MCP?
+
+> 📌 Bob documentation on MCP: https://bob.ibm.com/docs/ide/configuration/mcp/understanding-mcp 
 
 **Model Context Protocol (MCP)** is an open protocol that enables AI assistants like Bob to:
 - Access external data sources
@@ -464,11 +468,15 @@ async function lookupCustomer(customerId) {
 }
 ```
 
+> 📌 Bob documentation on MCP: https://bob.ibm.com/docs/ide/configuration/mcp/understanding-mcp 
+
 ------
 
 ## Custom Modes
 
 ### Creating Custom Modes (Read Only - No Actions Required)
+
+> 📌 Bob documentation on custom modes: https://bob.ibm.com/docs/ide/configuration/custom-modes 
 
 > **📖 This section explains custom modes. The mode files are already provided.**
 
@@ -571,6 +579,8 @@ For architecture and design:
 - `generate_diagram`: Architecture diagrams
 
 ## Best Practices (Read Only - Reference Material)
+
+> 📌 Bob documentation on best practices: https://bob.ibm.com/docs/ide/getting-started/best-practices
 
 > **📖 This section provides best practices for reference. No actions required.**
 
@@ -826,10 +836,6 @@ In this lab, you learned:
 > **🎯 Extensibility: Bob's Superpower**
 > You've now experienced Bob's extensible architecture firsthand. By creating MCP servers and custom modes, you can tailor Bob to your organization's unique needs. This extensibility—combined with Bob's other differentiators like intelligent resource optimization, Bob Findings, and Java modernization —makes Bob a uniquely powerful tool for enterprise development teams.
 
-
-## Additional Resources
-
-# NEED TO FILL IN
 
 ---
 
