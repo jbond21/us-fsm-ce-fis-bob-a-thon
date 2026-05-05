@@ -48,7 +48,7 @@ By the end, a failing test won't just turn the build yellow — Bob will explain
 
 ## Part 1 — Create the `java-unit-test-mode` IDE mode
 
-Start a new task and switch to **Mode Writer** mode. Mode Writer turns a prompt into a reusable custom mode — you describe the behavior you want once, and Bob applies it on every future invocation of that mode.
+Start a new task and switch to **Mode Writer** mode. 
 
 The prompt below is a starter for a Java unit-test specialist. Treat it as a base, not a fixed script: anything you want every test you write to follow (naming convention, `@DisplayName`, given/when/then comments, fixture builders, parameterized tests) belongs in this prompt rather than the per-test call.
 

@@ -139,7 +139,7 @@ Read-only is deliberate — a pipeline mode should do the minimum it needs to. N
 
 ## Part 4 — Build the `PR Review` stage
 
-Now that you have created a custom mode, let's add the new stage to the `Jenkinsfile`. Start a new task, and switch to the provided **Jenkins Pipeline Integration** mode. This mode contains environment specific information for this lab environment. This mode's files are in `.bob/rules-jenkins-bob-integration` if you want to view them. 
+Now that you have created a custom mode, let's add the new stage to the `Jenkinsfile`. Start a new task, and switch to the provided **Jenkins Pipeline Integration** mode. This mode was provided to minimize coniguration issues with the environment. It knows about `askBob`, the build-tools container, output archiving, and `catchError` resilience patterns. Rules live in `.bob/rules-jenkins-bob-integration/` if you want to look.
 
 Paste the following prompt:
 
