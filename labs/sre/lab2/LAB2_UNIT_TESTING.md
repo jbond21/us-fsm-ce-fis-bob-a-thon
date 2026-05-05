@@ -55,12 +55,17 @@ The prompt below is a starter for a Java unit-test specialist. Treat it as a bas
 ```
 Write a custom mode with slug `java-unit-test-mode`. Append it to @.bob/custom_modes.yaml — don't overwrite anything else.
 
-Job: write Java unit tests for this Spring Boot application. JUnit 5 + Mockito + AssertJ. Before writing a new test, read the related existing tests under @order-service/src/test/ to match this repo's conventions (assertion library, mocking style, naming pattern, fixture setup).
+Job: write Java unit tests for this Spring Boot application. JUnit 5 + Mockito + AssertJ. 
+Before writing a new test, read the related existing tests under @order-service/src/test/ to match this repo's conventions (assertion library, mocking style, naming pattern, fixture setup).
 
 Tool groups:
   - read
   - edit
+
+  Add some instructions files for the mode. The instruction files should be Markdown files, not xml. 
 ```
+
+Notice the prompt above tells the **Mode Writer** mode to write Markdown files instead of XML this time. Both are acceptable practice with Bob. 
 
 Once Bob finishes, **restart Bob IDE** so the new mode appears in your mode dropdown — IDE modes are loaded at IDE startup.
 
@@ -74,9 +79,13 @@ In a new task, switch to **Ask** mode and ask:
 
 Pick one of Bob's suggestions, switch to **Java Unit Test** mode (your new mode) in the same task, and ask:
 
-> "Write a test for [the edge case] and add it to @OrderServiceTest.java. Then run it and make sure it passes."
+> "Write a test for [the edge case] and add it to @OrderServiceTest.java."
 
-Bob will write the test, run it with `mvn test`, and iterate if it fails. The test isn't surfacing anything new about the application — that's not the point. The point is feeling how the mode bakes your conventions into every new test without you restating them.
+After Bob writes the tests, ask Bob to run the test.
+
+> "Run the tests and ensure they pass."
+
+Bob will ask to switch modes because we didn't give the unit test mode the `command` tool group. 
 
 ---
 
@@ -87,7 +96,7 @@ Your test-writer mode is great for the IDE — it edits files and writes new tes
 Start a new task and switch to **Mode Writer** mode. The prompt below is a starter — anything you want every test-failure diagnosis to do (output format, what to surface, what to skip as noise, tone) belongs here, not in the per-stage call.
 
 ```
-Write a custom mode with slug `pipeline-test-failure-analyzer`. Append it to @.bob/custom_modes.yaml — don't overwrite anything else.
+Write a custom mode with slug `pipeline-test-failure-analyzer`. Append it to @.bob/custom_modes.yaml — don't overwrite anything.
 
 Job: diagnose JUnit / Surefire test failures and propose fixes. Read the failure reports plus the relevant source files under @order-service/src/. For each failed test:
   - One sentence on what failed and where
@@ -99,6 +108,8 @@ Output: plain text for a Jenkins console (no ANSI, no markdown tables). Sections
 
 Tool groups: read only.
 ```
+
+We didn't explicitly tell Bob to create rules files here, so it may not have. If you feel you want more detailed instructions for the mode, ask Bob in Mode Writer mode to expand the mode into rules files. 
 
 Read-only is deliberate — a pipeline mode should do the minimum it needs to. No IDE restart needed: Bob loads `custom_modes.yaml` fresh from the workspace on every pipeline run.
 
