@@ -46,7 +46,7 @@ By the end, every push produces a structured DCR in Jenkins **and** a fresh Jira
 
 - [ ] Labs 1 and 2 complete (PR Review + Unit Tests stages already in your Jenkinsfile)
 - [ ] You're on your working branch (e.g. `user1-labs`)
-- [ ] **Your instructor has provisioned the Jira credential set in the `jenkins` namespace.** The `bob-cli` sidecar needs `JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, and `JIRA_PROJECT` injected as env vars (same `secretKeyRef` pattern as `BOBSHELL_API_KEY`). The first three authenticate the MCP server; the fourth tells the mode which project to file tickets in (e.g. `BOBA`). If those env vars aren't present in the pod, the MCP server will start but every Jira call will 401, or the create call will fail because no project was specified. If you don't know whether this has been done, ask your instructor before pushing.
+- [ ] **Your instructor has provisioned the Jira credential set in the `jenkins` namespace.** The `bob-cli` sidecar needs `JIRA_URL`, `JIRA_USERNAME`, `JIRA_API_TOKEN`, and `JIRA_PROJECT` injected as env vars (same `secretKeyRef` pattern as `BOBSHELL_API_KEY`). The first three authenticate the MCP server; the fourth tells the mode which project to file tickets in (e.g. `KAN`, the default key for Kanban-templated projects). If those env vars aren't present in the pod, the MCP server will start but every Jira call will 401, or the create call will fail because no project was specified. If you don't know whether this has been done, ask your instructor before pushing.
 - [ ] **The `bob-cli` image has `uv`/`uvx` installed.** The instructor's `setup/bob-cli/Dockerfile` ships Node only by default. The `mcp-atlassian` server is a Python package launched via `uvx`, so the image needs `uv` added (one extra line in the Dockerfile + a rebuild). If your instructor hasn't done this yet, the MCP block you write in Part 1 will cause the bob container to log `uvx: command not found` the first time the mode tries to use the server.
 
 > **Why this lab needs more environment setup than Labs 1–2.** The earlier labs only needed Bob to read files. This one needs Bob to **call out to a network service with credentials** — that's the cost of doing real work in a CI environment. Once the secret + image plumbing is in place, every future MCP server you add (GitHub, Confluence, ServiceNow, Slack…) follows the same pattern.
@@ -144,7 +144,7 @@ Inputs the mode should expect to find in the workspace at invocation time:
   - A short context file (dcr-context.txt) the pipeline writes containing three KEY=VALUE lines:
       BUILD_NUMBER=<jenkins build number>
       BRANCH=<branch name, e.g. user1-labs>
-      JIRA_PROJECT=<the project key to create the ticket in, e.g. BOBA>
+      JIRA_PROJECT=<the project key to create the ticket in, e.g. KAN>
 
 Output:
   1. Write a markdown DCR to deployment-change-request.md with these sections (in this order):
@@ -260,7 +260,7 @@ You already have everything you need to make this work — the per-branch label 
    - First call `jira_search` with a JQL query like `project = ${JIRA_PROJECT} AND labels = "<BRANCH>" AND labels = "bob-dcr" ORDER BY created DESC`
    - If the search returns one or more tickets, use `jira_add_comment` on the most recent one with the new DCR (or a digest of it — long comments get unwieldy on a real ticket)
    - If the search returns nothing, fall back to the create flow you already have
-   - Log clearly which path was taken so the Jenkins console tells you "commented on BOBA-3" vs "created BOBA-7"
+   - Log clearly which path was taken so the Jenkins console tells you "commented on KAN-3" vs "created KAN-7"
 
 Push twice and confirm: the first push creates a ticket, the second push lands a comment on the same ticket. Open the ticket and read the comment thread — does it tell a clear story across builds, or does each comment repeat too much?
 
@@ -272,7 +272,7 @@ If the search ever returns the **wrong** ticket (e.g., a coworker's tickets show
 
 - **`uvx: command not found` in the bob container's startup logs.** The image doesn't have `uv` installed. The fix is on the instructor — `setup/bob-cli/Dockerfile` needs `pip install uv` (or `curl -LsSf https://astral.sh/uv/install.sh | sh`) and a rebuild + push. Without this, the MCP server can't launch.
 - **MCP server connects but every Jira call returns 401.** The `JIRA_*` env vars aren't reaching the bob container. Confirm the secret was created in the `jenkins` namespace and that the container's `env` block in the Jenkinsfile pod spec references it via `secretKeyRef`. Rotate the API token if the credential is correct but expired.
-- **`jira_create_issue` returns 400 / "project is required"  / "No project could be found".** `JIRA_PROJECT` is empty or wrong in `dcr-context.txt`. Confirm (a) the env var is injected into the bob container alongside the other `JIRA_*` vars, and (b) the value matches an existing project key on your instance — capitalization matters (`BOBA` ≠ `boba`).
+- **`jira_create_issue` returns 400 / "project is required"  / "No project could be found".** `JIRA_PROJECT` is empty or wrong in `dcr-context.txt`. Confirm (a) the env var is injected into the bob container alongside the other `JIRA_*` vars, and (b) the value matches an existing project key on your instance — capitalization matters (`KAN` ≠ `kan`).
 - **`jira_create_issue` returns 403 / "you do not have permission".** The API token's account doesn't have *Create Issues* on the target project. On Jira Cloud free, the site admin (your instructor) can grant this in **Project settings → Access**. Don't add `jira_*` write tools to `alwaysAllow` as a workaround — fix the permission.
 - **Ticket is created but the description is empty / shows raw markdown asterisks.** `mcp-atlassian` converts markdown to Atlassian Document Format on send, but headers and code blocks sometimes render weirdly. Read the actual ticket on Jira's web UI before assuming the data is wrong — it's often just a render difference between the Jenkins console and Jira's editor.
 - **Bob says `Tool jira_transition_issue not in alwaysAllow list`.** Working as intended. Mutating tools that aren't in the list trigger an interactive approval prompt, which never gets answered in CI. Either add the tool to `alwaysAllow` (only if you actually want CI to perform that action), or rewrite the mode's rules so it doesn't try to transition.
