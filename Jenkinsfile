@@ -107,6 +107,19 @@ spec:
         //    See labs/LAB5_DCR_REPORTING.md.
     }
 
+    stage('MCP Expansion Test') {
+        steps {
+            container('bob') {
+                sh '''
+                    set -x
+                    # Pick any bob invocation that forces MCP init.
+                    # If Bob lazy-loads servers, --list-mcp-servers (or equivalent)
+                    # is the cheapest trigger. Otherwise fall back to a real askBob.
+                    bob --list-mcp-servers || bob --version || true
+                '''
+            }
+        }
+    }
     post {
         always {
             echo "=== Pipeline Complete ==="
