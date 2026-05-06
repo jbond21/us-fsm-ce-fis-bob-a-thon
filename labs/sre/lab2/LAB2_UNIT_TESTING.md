@@ -67,6 +67,8 @@ Tool groups:
 
 Notice the prompt above tells the **Mode Writer** mode to write Markdown files instead of XML this time. Both are acceptable practice with Bob. 
 
+Feel free to explore the XML files and see what Bob decided to generate.
+
 Once Bob finishes, **restart Bob IDE** so the new mode appears in your mode dropdown — IDE modes are loaded at IDE startup.
 
 ---
@@ -163,7 +165,7 @@ Expected:
 - `bob-test-analysis.md` appears under **Build Artifacts**
 - Pipeline ends UNSTABLE (yellow), not red
 
-Open the archived artifact for a persistent record of Bob's diagnosis.
+Open the archived artifact for a persistent record of Bob's diagnosis. Look into the build artifact and see if Bob found the failed test you added. 
 
 Once you've seen it work, revert the broken test and push again to get back to green.
 
