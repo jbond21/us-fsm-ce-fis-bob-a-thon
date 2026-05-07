@@ -18,13 +18,22 @@
 // Per-instance Jira credential routing. Each pipeline self-selects which
 // jira-creds-{a,b,c} secret to mount based on the user number parsed
 // from its job name. See setup/JIRA_ACCOUNT_SETUP.md Section 3.3.
-def jobName = env.JOB_NAME ?: ''
-def userMatch = jobName =~ /user0*(\d+)/
-def userNum = userMatch ? userMatch[0][1].toInteger() : 0
-def jiraSecret = (userNum >= 1  && userNum <= 5)  ? 'jira-creds-a' :
-                 (userNum >= 6  && userNum <= 10) ? 'jira-creds-b' :
-                 (userNum >= 11 && userNum <= 15) ? 'jira-creds-c' :
-                                                    'jira-creds-c'
+//
+// @NonCPS keeps the regex Matcher object inside this method so it never
+// becomes a CPS-serialized local variable (Matcher is not Serializable
+// and would crash the pipeline on checkpoint).
+@NonCPS
+def routeJiraSecret(String jobName) {
+    def m = jobName =~ /user0*(\d+)/
+    if (!m) return 'jira-creds-c'
+    int userNum = m[0][1].toInteger()
+    if (userNum >= 1  && userNum <= 5)  return 'jira-creds-a'
+    if (userNum >= 6  && userNum <= 10) return 'jira-creds-b'
+    if (userNum >= 11 && userNum <= 15) return 'jira-creds-c'
+    return 'jira-creds-c'
+}
+
+def jiraSecret = routeJiraSecret(env.JOB_NAME ?: '')
 
 pipeline {
     agent {

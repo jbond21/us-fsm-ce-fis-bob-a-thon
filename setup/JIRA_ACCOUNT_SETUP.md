@@ -146,16 +146,23 @@ The pod template is inline in the repo's root `Jenkinsfile` (the `yaml """..."""
 **Change 1 — routing variable.** Add at the top of the file, above `pipeline { }`:
 
 ```groovy
-def jobName = env.JOB_NAME ?: ''
-def userMatch = jobName =~ /user0*(\d+)/
-def userNum = userMatch ? userMatch[0][1].toInteger() : 0
-def jiraSecret = (userNum >= 1  && userNum <= 5)  ? 'jira-creds-a' :
-                 (userNum >= 6  && userNum <= 10) ? 'jira-creds-b' :
-                 (userNum >= 11 && userNum <= 15) ? 'jira-creds-c' :
-                                                    'jira-creds-c'
+@NonCPS
+def routeJiraSecret(String jobName) {
+    def m = jobName =~ /user0*(\d+)/
+    if (!m) return 'jira-creds-c'
+    int userNum = m[0][1].toInteger()
+    if (userNum >= 1  && userNum <= 5)  return 'jira-creds-a'
+    if (userNum >= 6  && userNum <= 10) return 'jira-creds-b'
+    if (userNum >= 11 && userNum <= 15) return 'jira-creds-c'
+    return 'jira-creds-c'
+}
+
+def jiraSecret = routeJiraSecret(env.JOB_NAME ?: '')
 ```
 
-Pulls the numeric portion of the username out of the job name (`user1`, `user01`, `user015` all parse to integers) and routes by integer comparison. Anything that doesn't match a known range falls through to `jira-creds-c`.
+Pulls the numeric portion of the username from the job name (`user1`, `user01`, `user015` all parse to integers) and routes by integer comparison. Anything that doesn't match a known range falls through to `jira-creds-c`.
+
+`@NonCPS` is required: Groovy's regex `Matcher` object isn't `Serializable`, and Jenkins' CPS engine serializes all local pipeline variables across checkpoints. Wrapping the regex work in a `@NonCPS` method keeps the Matcher contained — it never becomes a top-level pipeline variable, so the serializer never sees it.
 
 **Change 2 — env entries.** In the bob container's `env:` block (after `BOBSHELL_API_KEY`, `BOB_ACCEPT_LICENSE`, `HOME`), add:
 
