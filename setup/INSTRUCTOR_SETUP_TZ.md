@@ -173,6 +173,8 @@ helm repo update
 
     > **Note:** If you edit the values file and something's malformed, `helm install` will surface the error in its output. No separate validation step needed.
 
+    > **Note on the plugin list:** The template's `controller.installPlugins` includes `pipeline-graph-view`, which adds a modern graph-style "Pipeline Overview" tab to every pipeline job (the same view participants will recognize from most Jenkins demos). It's installed at first `helm install`; if you're upgrading an existing Jenkins, run `helm upgrade` with the updated values file to pick it up.
+
 #### 3.1.5 Install Jenkins via Helm
 
 ```bash
