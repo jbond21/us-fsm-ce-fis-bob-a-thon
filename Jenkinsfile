@@ -15,6 +15,17 @@
 // update the `bob` container image URL below.
 // ═══════════════════════════════════════════════════════════════════
 
+// Per-instance Jira credential routing. Each pipeline self-selects which
+// jira-creds-{a,b,c} secret to mount based on the user number parsed
+// from its job name. See setup/JIRA_ACCOUNT_SETUP.md Section 3.3.
+def jobName = env.JOB_NAME ?: ''
+def userMatch = jobName =~ /user0*(\d+)/
+def userNum = userMatch ? userMatch[0][1].toInteger() : 0
+def jiraSecret = (userNum >= 1  && userNum <= 5)  ? 'jira-creds-a' :
+                 (userNum >= 6  && userNum <= 10) ? 'jira-creds-b' :
+                 (userNum >= 11 && userNum <= 15) ? 'jira-creds-c' :
+                                                    'jira-creds-c'
+
 pipeline {
     agent {
         kubernetes {
@@ -61,6 +72,26 @@ spec:
       value: "true"
     - name: HOME
       value: /workspace
+    - name: JIRA_URL
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_URL
+    - name: JIRA_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_USERNAME
+    - name: JIRA_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_API_TOKEN
+    - name: JIRA_PROJECT
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_PROJECT
   volumes:
   - name: workspace-volume
     emptyDir: {}
@@ -105,6 +136,7 @@ spec:
         //    Add a DCR generation stage; Bob pushes the result to
         //    Jira via the Jira MCP server.
         //    See labs/LAB5_DCR_REPORTING.md.
+    }
 
     post {
         always {

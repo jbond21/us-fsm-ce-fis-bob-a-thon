@@ -147,12 +147,15 @@ The pod template is inline in the repo's root `Jenkinsfile` (the `yaml """..."""
 
 ```groovy
 def jobName = env.JOB_NAME ?: ''
-def jiraSecret = (jobName ==~ /.*user0[1-5].*/) ? 'jira-creds-a' :
-                 (jobName ==~ /.*user(0[6-9]|10).*/) ? 'jira-creds-b' :
-                                                       'jira-creds-c'
+def userMatch = jobName =~ /user0*(\d+)/
+def userNum = userMatch ? userMatch[0][1].toInteger() : 0
+def jiraSecret = (userNum >= 1  && userNum <= 5)  ? 'jira-creds-a' :
+                 (userNum >= 6  && userNum <= 10) ? 'jira-creds-b' :
+                 (userNum >= 11 && userNum <= 15) ? 'jira-creds-c' :
+                                                    'jira-creds-c'
 ```
 
-Assumes `userNN-pipeline` job naming from `labs/sre/00_SETUP.md`. Anything that doesn't match the first two patterns falls through to `jira-creds-c`.
+Pulls the numeric portion of the username out of the job name (`user1`, `user01`, `user015` all parse to integers) and routes by integer comparison. Anything that doesn't match a known range falls through to `jira-creds-c`.
 
 **Change 2 — env entries.** In the bob container's `env:` block (after `BOBSHELL_API_KEY`, `BOB_ACCEPT_LICENSE`, `HOME`), add:
 
