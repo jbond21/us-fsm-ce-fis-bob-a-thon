@@ -21,7 +21,41 @@ In this lab, you will:
 5. Enhance the Jenkins pipeline with security stages
 6. Create CVE analysis prompts for pipeline integration
 
+## Table of Contents
+
+- [Lab Overview](#lab-overview)
+- [Before you start](#before-you-start)
+- [Part 1: Inject Security Vulnerabilities](#part-1-inject-security-vulnerabilities)
+  - [Step 1.1: Review Bob Findings Before Injection](#step-11-review-bob-findings-before-injection)
+  - [Step 1.2: Run the Vulnerability Injection Script](#step-12-run-the-vulnerability-injection-script)
+  - [Step 1.3: Review Bob Findings After Injection](#step-13-review-bob-findings-after-injection)
+- [Part 2: Security Analysis with Software Security Reviewer Mode](#part-2-security-analysis-with-software-security-reviewer-mode)
+  - [Step 2.1: Import the Software Security Reviewer Mode](#step-21-import-the-software-security-reviewer-mode)
+  - [Step 2.2: Perform Comprehensive Security Analysis](#step-22-perform-comprehensive-security-analysis)
+  - [Step 2.3: Review Security Findings](#step-23-review-security-findings)
+- [Part 3: SonarQube Security Scanning](#part-3-sonarqube-security-scanning)
+  - [Step 3.1: Generate SonarQube Token](#step-31-generate-sonarqube-token)
+  - [Step 3.2: Run SonarQube Scan](#step-32-run-sonarqube-scan)
+  - [Step 3.3: Review SonarQube Results](#step-33-review-sonarqube-results)
+- [Part 4: Enhance Jenkins Pipeline](#part-4-enhance-jenkins-pipeline)
+  - [Step 4.1: Add Security Scanning Stage](#step-41-add-security-scanning-stage)
+  - [Step 4.2: Test the Pipeline](#step-42-test-the-pipeline)
+- [Part 5: CVE Analysis Prompt](#part-5-cve-analysis-prompt)
+  - [Step 5.1: Create CVE Analysis Prompt](#step-51-create-cve-analysis-prompt)
+  - [Step 5.2: Test CVE Analysis](#step-52-test-cve-analysis)
+- [Part 6: Push and Watch](#part-6-push-and-watch)
+  - [Step 6.1: Restore Original Code](#step-61-restore-original-code)
+  - [Step 6.2: Commit and Push Changes](#step-62-commit-and-push-changes)
+- [Lab Summary](#lab-summary)
+
 ---
+---
+
+## Before you start
+
+- [ ] Lab 2 complete (your Jenkinsfile already has a PR Review stage and the askBob helper)
+- [ ] You're on your working branch (e.g. `user1-labs`)
+
 
 ## Part 1: Inject Security Vulnerabilities
 
@@ -378,6 +412,8 @@ open http://localhost:9000/dashboard?id=order-service
 
 ### Step 4.1: Add Comprehensive Security Stage
 
+> **Note:** Switch to **Jenkins Pipeline Integration** mode before proceeding with this step.
+
 **Prompt to Bob:**
 ```
 Use the information from Security Analysis Report and SonarQube Analysis Report to create Security Stage to jenkinsfile
@@ -456,6 +492,8 @@ grep -A 50 "stage('Security Scan')" Jenkinsfile
 
 ### Step 5.1: Create CVE Analysis Prompt
 
+> **Note:** Ensure you are in **Code mode** before proceeding with this step.
+
 **Prompt to Bob:**
 ```
 Write prompt for CVE analysis on pipeline as a txt file in pipeline/cve-analysis-prompt.txt
@@ -488,6 +526,8 @@ head -100 pipeline/cve-analysis-prompt.txt
 
 ### Step 5.2: Add the CVE Analysis Prompt to the Pipeline
 
+> **Note:** Switch to **Jenkins Pipeline Integration** mode before proceeding with this step.
+
 **Prompt to Bob:**
 ```text
 Use pipeline/cve-analysis-prompt.txt to add a CVE analysis step to the Jenkins pipeline.
@@ -517,67 +557,69 @@ git diff Jenkinsfile
 
 ---
 
-## Part 6: Review and Validation
+## Part 6: Push and Watch
 
-### Step 6.1: Review Generated Reports
+### Step 6.1: Restore Original Code
 
-**Security Analysis Report:**
-```bash
-# Open in Bob or your editor
-cat Security_Analysis_Report.md
+Before pushing to git, we need to restore the original code by removing the injected vulnerabilities.
+
+> **Note:** Ensure you are in **Code mode** before proceeding with this step.
+
+**Prompt to Bob:**
+```
+Bob run script restore_vulnerabilities.sh
 ```
 
-**Key Sections to Review:**
-- Executive Summary (page 1)
-- Critical Findings (Hardcoded credentials)
-- Risk Assessment Matrix
-- Remediation Roadmap (4 phases)
-- Compliance Impact (PCI DSS violations)
+**What Bob does:**
+- Executes `labs/sre/lab3/restore_vulnerabilities.sh`
+- Restores the original `OrderService.java` from the backup file
+- Removes the injected vulnerabilities
+- Cleans up backup files
 
-**SonarQube Analysis Report:**
-```bash
-# Open in Bob or your editor
-cat SonarQube_Analysis_Report.md
+**Expected Output:**
+```
+🔄 Restoring original OrderService.java...
+✅ Original code restored
+📍 Restored: order-service/src/main/java/com/example/orders/service/OrderService.java
 ```
 
-**Key Sections to Review:**
-- Quality Gate Status (FAILED)
-- Metrics Overview (11 issues, 130 min debt)
-- Critical Findings (BLOCKER, CRITICAL issues)
-- Comparison with Bob's Analysis (100% correlation)
-- Remediation Plan (3 phases)
+### Step 6.2: Commit and Push Changes
 
-### Step 6.2: Verify Pipeline Changes
-
-**Check Enhanced Security Stage:**
-```bash
-# View the security stage
-sed -n '/stage.*Security/,/^        }/p' Jenkinsfile
+**Prompt to Bob:**
+```
+git add Jenkinsfile .bob/ labs/sre/lab3/
+git commit -m "Lab 3 — Security Analysis stage with vulnerability scanning and CVE analysis"
+git push
 ```
 
-**Expected Components:**
-- Multi-layer security scanning (6 layers: Secret Scanning, SonarQube, Dependency Scan, Code Patterns, Configuration Checks, Risk Assessment)
-- Risk assessment logic (CRITICAL/HIGH/MEDIUM/LOW)
-- Automated security metrics tracking
-- Comprehensive report generation (SECURITY_REPORT.txt and detailed artifacts)
-- Deployment gates (BLOCKS deployment on CRITICAL issues)
+In Jenkins, click **Build Now** on your pipeline and watch the console.
 
-### Step 6.3: Test the Pipeline Using the Pipeline Execution Guide
+**Expected:**
 
-After completing all previous steps in this lab, use the dedicated guide at:
+- `Checkout` and `PR Review` stages turn green
+- `Security Scan` stage runs with multiple security checks:
+  - Secret scanning detects hardcoded credentials
+  - SonarQube analysis identifies security hotspots
+  - Dependency vulnerability scan runs
+  - Code pattern checks flag insecure practices
+  - Configuration security checks validate K8s/Docker configs
+  - Risk assessment calculates overall security posture
+- Security reports are generated and archived as build artifacts:
+  - `Security_Analysis_Report.md` - Bob's comprehensive security analysis
+  - `SonarQube_Analysis_Report.md` - SonarQube findings
+  - `CVE_ANALYSIS_REPORT.md` - CVE analysis (if vulnerabilities detected)
+  - `SECURITY_REPORT.txt` - Pipeline security summary
+- Pipeline may turn **UNSTABLE (yellow)** or **FAILURE (red)** depending on severity of findings
+- Build page lists all security reports under **Build Artifacts**
 
-- `labs/lab3/PIPELINE_EXECUTION_GUIDE.md`
+Open the archived artifacts from the build page to review:
+- Bob's detailed security analysis with remediation guidance
+- SonarQube's quality gate status and security hotspots
+- CVE analysis with risk assessment and deployment recommendations
 
-This guide provides the full end-to-end process for running and validating the Jenkins pipeline, including:
+**Note:** The security stage is designed to block deployment if CRITICAL issues are detected. Review the console output and security reports to understand what needs to be fixed before the next deployment.
 
-1. Accessing Jenkins
-2. Configuring or updating the `order-service-pipeline` job
-3. Adding the SonarQube token as a Jenkins credential
-4. Triggering the pipeline manually, by git push, or by API
-5. Monitoring console output and stage execution
-6. Reviewing SonarQube, Bob, CVE, and pipeline security reports
-7. Interpreting the final security risk and deployment decision
-8. Taking remediation actions and re-running the pipeline if needed
+For detailed pipeline execution and troubleshooting, refer to `labs/sre/lab3/PIPELINE_EXECUTION_GUIDE.md`.
 
 **Recommended workflow after finishing this lab:**
 ```bash
