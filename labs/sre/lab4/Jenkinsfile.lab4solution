@@ -1,18 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════
-// FIS Bob-a-thon — Base Pipeline (Jenkinsfile)
+// FIS Bob-a-thon — Lab 4 Solution (Jenkinsfile.lab4solution)
 //
-// Starting point for the 5-lab workshop. Provisions a Kubernetes
-// agent pod with three containers — build-tools (Maven + JDK17),
-// oc-tools (OpenShift CLI), and bob (IBM Bob CLI) — sharing a
-// workspace-volume emptyDir mounted at /workspace on all three,
-// with HOME set to /workspace so Bob can read .bob/custom_modes.yaml
-// from the checkout.
+// Cumulative state after Lab 4: base pipeline + Lab 1 PR review
+// stage + Lab 2 unit test analysis + Lab 4 linting/compliance
+// stages using Hadolint, Checkov, KubeLinter, and Bob.
 //
-// This file has a single Checkout stage. Each lab adds one more
-// stage beneath it; see labs/LAB<N>_*.md for instructions.
+// This file is intentionally written from the Lab 1 / Lab 2 pattern
+// and may overwrite any prior placeholder content in the Lab 4 file.
 //
 // Before running: if your OpenShift project is NOT named `jenkins`,
-// update the `bob` container image URL below.
+// update the `bob` and `lint-tools` container image URLs below.
 // ═══════════════════════════════════════════════════════════════════
 
 pipeline {
@@ -36,6 +33,16 @@ spec:
       value: /workspace
   - name: oc-tools
     image: quay.io/openshift/origin-cli:latest
+    command: ['sleep', 'infinity']
+    workingDir: /workspace
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /workspace
+    env:
+    - name: HOME
+      value: /workspace
+  - name: lint-tools
+    image: image-registry.openshift-image-registry.svc:5000/jenkins/lint-tools:latest
     command: ['sleep', 'infinity']
     workingDir: /workspace
     volumeMounts:
@@ -69,6 +76,10 @@ spec:
         }
     }
 
+    environment {
+        GITHUB_API = 'https://api.github.com'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -85,21 +96,276 @@ spec:
         }
 
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
-        //    Add a stage here that runs Bob in a "senior developer"
-        //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
+        stage('PR Review') {
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Bob — PR Review'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        sh '''
+                            git config --global --add safe.directory "$WORKSPACE"
+                            git diff origin/main...HEAD > git-diff.txt || : > git-diff.txt
+                        '''
+
+                        def analysis = askBob(
+                            "Read git-diff.txt and produce the senior-developer PR overview.",
+                            'solution-pipeline-git-diff-overview'
+                        )
+
+                        echo analysis
+                        echo '════════════════════════════════════════════════════════'
+
+                        writeFile file: 'bob-pr-review.md', text: analysis
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-pr-review.md', allowEmptyArchive: true
+                }
+            }
+        }
 
         // ── Lab 2: Unit Testing ──────────────────────────────────
-        //    Add a mvn test stage + Bob test-failure analysis.
-        //    See labs/LAB2_UNIT_TESTING.md.
+        stage('Unit Tests') {
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Running Unit Tests'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        sh 'mvn -f order-service/pom.xml test'
+                    }
+                }
+            }
+            post {
+                always {
+                    junit testResults: 'order-service/target/surefire-reports/*.xml',
+                          allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Bob Test Analysis') {
+            when {
+                expression {
+                    fileExists('order-service/target/surefire-reports')
+                }
+            }
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Bob — Test Failure Analysis'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        def reports = sh(
+                            script: 'find order-service/target/surefire-reports -name "*.txt" -exec cat {} + || true',
+                            returnStdout: true
+                        ).trim()
+
+                        def prompt = """
+Analyze the test failures from the surefire reports under order-service/target/surefire-reports/
+and the relevant source files under order-service/src/.
+
+Provide:
+1. Root cause of each failure
+2. Whether failures are related
+3. Suggested fixes with code examples
+4. Priority of fixes
+
+Test Reports:
+${reports}
+"""
+
+                        def analysis = askBob(prompt, 'solution-pipeline-test-failure-analyzer')
+
+                        echo analysis
+                        echo '════════════════════════════════════════════════════════'
+
+                        writeFile file: 'bob-test-analysis.md', text: analysis
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-test-analysis.md', allowEmptyArchive: true
+                }
+            }
+        }
 
         // ── Lab 3: Security Scanning ─────────────────────────────
-        //    Add a scanner stage + Bob CVE/vuln analysis.
-        //    See labs/LAB3_SECURITY_SCANNING.md.
+        //    Intentionally omitted in this rewritten cumulative
+        //    solution because the existing Lab 3 solution file was
+        //    not used as input for this implementation.
 
         // ── Lab 4: Linting ───────────────────────────────────────
-        //    Add a lint stage + Bob lint analysis + parse and post
-        //    Jenkins report as a PR comment.
-        //    See labs/LAB4_LINTING.md.
+        stage('Run Linters') {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Running Linting and Compliance Scans'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        container('lint-tools') {
+                            sh '''
+                                mkdir -p lint-results
+
+                                hadolint order-service/Dockerfile > lint-results/hadolint.txt || true
+                                checkov -d order-service/deploy-flawed -o cli > lint-results/checkov.txt || true
+                                kube-linter lint order-service/deploy-flawed > lint-results/kubelinter.txt || true
+
+                                echo "=== Lint result files ==="
+                                ls -la lint-results
+                            '''
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'lint-results/*.txt', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Bob Lint Analysis') {
+            when {
+                expression {
+                    fileExists('lint-results/hadolint.txt') ||
+                    fileExists('lint-results/checkov.txt') ||
+                    fileExists('lint-results/kubelinter.txt')
+                }
+            }
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Bob — Linting and Compliance Analysis'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        def prompt = """
+Read the lint output files in lint-results/ and the relevant source files under order-service/.
+
+Inputs:
+- lint-results/hadolint.txt
+- lint-results/checkov.txt
+- lint-results/kubelinter.txt
+- order-service/Dockerfile
+- order-service/deploy-flawed/
+
+Create two outputs in your response:
+1. A concise executive summary suitable for the Jenkins console
+2. A fuller linting report suitable for a markdown artifact
+
+Goals:
+- group findings by severity
+- de-duplicate overlapping findings across tools
+- identify the highest-priority remediations
+- recommend concrete fixes
+"""
+
+                        def analysis = askBob(prompt, 'pipeline-lint-reporter')
+
+                        echo analysis
+                        echo '════════════════════════════════════════════════════════'
+
+                        writeFile file: 'bob-lint-report.md', text: analysis
+
+                        def prComment = askBob(
+                            """Read bob-lint-report.md and produce a concise pull-request comment in markdown.
+Keep it short and actionable. Include:
+- overall summary
+- top 3 fix-first items
+- note that the full report is archived in Jenkins as bob-lint-report.md
+""",
+                            'pipeline-lint-reporter'
+                        )
+
+                        writeFile file: 'bob-lint-pr-comment.md', text: prComment
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-lint-report.md,bob-lint-pr-comment.md', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Post Lint PR Comment') {
+            when {
+                expression {
+                    fileExists('bob-lint-pr-comment.md') && env.CHANGE_ID
+                }
+            }
+            options {
+                timeout(time: 5, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Posting Lint Summary to Pull Request'
+                    echo '════════════════════════════════════════════════════════'
+
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh '''
+                                python3 - <<'PY'
+import json
+import os
+import urllib.request
+
+repo = os.environ.get('CHANGE_URL', '').split('/pull/')[0].replace('https://github.com/', '')
+comment_body = open('bob-lint-pr-comment.md', 'r', encoding='utf-8').read()
+
+if not repo or not os.environ.get('CHANGE_ID'):
+    print('Skipping PR comment: missing CHANGE_URL or CHANGE_ID')
+    raise SystemExit(0)
+
+owner, name = repo.split('/', 1)
+url = f"{os.environ['GITHUB_API']}/repos/{owner}/{name}/issues/{os.environ['CHANGE_ID']}/comments"
+
+data = json.dumps({"body": comment_body}).encode('utf-8')
+req = urllib.request.Request(
+    url,
+    data=data,
+    method='POST',
+    headers={
+        'Authorization': f"token {os.environ['GITHUB_TOKEN']}",
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+    }
+)
+
+with urllib.request.urlopen(req) as response:
+    print(f"Posted PR comment, status={response.status}")
+PY
+                            '''
+                        }
+                    }
+                }
+            }
+        }
 
         // ── Lab 5: DCR & Reporting ───────────────────────────────
         //    Add a DCR generation stage; Bob pushes the result to
@@ -114,3 +380,21 @@ spec:
         }
     }
 }
+
+def askBob(String prompt, String mode = null) {
+    container('bob') {
+        def promptFile = ".bob-prompt-${System.currentTimeMillis()}.txt"
+        writeFile file: promptFile, text: prompt
+
+        def modeFlag = mode ? "--chat-mode ${mode}" : ""
+        def analysis = sh(
+            script: """bob ${modeFlag} -p "\$(cat ${promptFile})" --hide-intermediary-output""",
+            returnStdout: true
+        ).trim()
+
+        sh "rm -f ${promptFile}"
+        return analysis
+    }
+}
+
+// Made with Bob

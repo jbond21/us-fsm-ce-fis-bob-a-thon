@@ -18,45 +18,29 @@
 
 ---
 
-## Overview of Lab 4
+## Overview
 
-You'll add a multi-tool linting and compliance workflow to the pipeline using the same prompt-then-mode loop you practiced in the earlier labs.
+In this lab, you'll add a multi-tool linting and compliance workflow to the pipeline. You'll use the [SonarLint](https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode) IDE extension to find and fix Java issues in the IDE. You'll use [Hadolint](https://github.com/hadolint/hadolint) to find issues in the `Dockerfile` and [Checkov](https://www.checkov.io/) to find issues in the deployment manifests. You'll use [KubeLinter](https://docs.kubelinter.io/) to find issues in the Kubernetes workload. All the while using IBM Bob to interpret results and provide recommendations.
 
-This lab intentionally combines an IDE warm-up with three pipeline scanners:
+This lab intentionally makes use of slightly flawed deployment files with predictable findings. That allows us to focus on using AI to:
 
-- [SonarLint](https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode) in the IDE for immediate Java findings
-- [Hadolint](https://github.com/hadolint/hadolint) in the pipeline for [`order-service/Dockerfile`](order-service/Dockerfile)
-- [Checkov](https://www.checkov.io/) in the pipeline for the deployment manifests under [`order-service/deploy-flawed/`](order-service/deploy-flawed)
-- [KubeLinter](https://docs.kubelinter.io/) in the pipeline for Kubernetes workload best practices in [`order-service/deploy-flawed/`](order-service/deploy-flawed)
-
-Instead of making every learner invent their own manifests, this repo includes slightly flawed deployment files with predictable findings. That keeps the lab focused on Bob’s strengths:
-
-- interpreting SonarLint findings in the IDE
-- anticipating likely pipeline findings before Jenkins runs
-- analyzing real lint output in CI
+- interpret SonarLint findings in the IDE
+- anticipate likely pipeline findings before Jenkins runs
 - recommending fixes
-- producing a consolidated lint report
-- preparing a PR-comment-ready summary
+- produce a consolidated lint report
+- prepare a PR-comment-ready summary
 
 ### What you'll build in Lab 4
 
-1. **An IDE warm-up with SonarLint and Bob** — immediate feedback on the Java code without waiting for the pipeline.
+1. **An IDE-side Bob mode for lint remediation** (`iac-lint-fix-advisor`) — a mode that reads the Dockerfile and deployment manifests, predicts likely pipeline findings, and helps propose minimal fixes.
 
-2. **An IDE-side Bob mode for lint remediation** (`iac-lint-fix-advisor`) — a mode that reads the Dockerfile and deployment manifests, predicts likely pipeline findings, and helps propose minimal fixes.
+1. **A pipeline Bob mode for lint reporting** (`pipeline-lint-reporter`) — a read-only mode that reads the raw output from multiple linters and turns it into a Jenkins-friendly report.
 
-3. **A pipeline Bob mode for lint reporting** (`pipeline-lint-reporter`) — a read-only mode that reads the raw output from multiple linters and turns it into a Jenkins-friendly report.
+1. **A new set of pipeline stages** — one stage runs the linters, one stage asks Bob to summarize the results, and one stage posts a condensed comment to the PR.
 
-4. **A new set of pipeline stages** — one stage runs the linters, one stage asks Bob to summarize the results, and one stage posts a condensed comment to the PR.
-
-5. **A final Bob-enriched lint report** — archived in Jenkins as a build artifact and summarized in the PR.
+1. **A final Bob-enriched lint report** — archived in Jenkins as a build artifact and summarized in the PR.
 
 By the end, Jenkins will not just say that linting found problems — Bob will explain what matters, which issues overlap across tools, what to fix first, and how to remediate them.
-
-### What you'll reuse from earlier labs
-
-- **The [`askBob()`](labs/sre/lab1/Jenkinsfile.lab1solution:153) helper** — already in your Jenkinsfile from Lab 1.
-- **The Jenkins Pipeline Integration workflow** — the same prompt style you used in earlier labs to add stages to [`Jenkinsfile`](Jenkinsfile).
-- **The custom-mode pattern** — one mode for IDE work, one read-only mode for pipeline output.
 
 ---
 
@@ -67,11 +51,8 @@ By the end, Jenkins will not just say that linting found problems — Bob will e
 - [ ] The workshop environment includes the dedicated `lint-tools` image described in [`setup/LINT_TOOLS_SETUP.md`](setup/LINT_TOOLS_SETUP.md)
 - [ ] Recommended VS Code extensions are installed:
   - [SonarLint](https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode)
-  - Java support such as the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
 
-> **Important:** This lab assumes the Jenkins agent pod can use a `lint-tools` container with Hadolint, Checkov, and KubeLinter preinstalled.
-
-> **Optional:** [`order-service/pom.xml`](order-service/pom.xml) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration. You can mention it as an extra Java-linting path, but it is not part of the core SRE lab flow.
+> **Optional:** [`order-service/pom.xml`](order-service/pom.xml) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration. You can mention it as an extra Java-linting path, but it is not part of the core lab flow.
 
 ---
 
