@@ -24,6 +24,10 @@
 In this lab, you'll add a multi-tool linting and compliance workflow to the pipeline. All the while using IBM Bob to interpret results and provide recommendations.
 
 - You'll use the Checkstyle for Java linter to find and fix Java code quality issues in the IDE.
+
+> [!NOTE]
+> [`order-service/pom.xml`](order-service/pom.xml:74-88) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration with Google's style checks. This lab leverages that existing configuration for both IDE and pipeline linting.
+
 - You'll use [Hadolint](https://github.com/hadolint/hadolint) to find issues in the `Dockerfile`.
 - You'll use [Checkov](https://www.checkov.io/) to find issues in the deployment manifests.
 - You'll use [KubeLinter](https://docs.kubelinter.io/) to find issues in the Kubernetes workload. 
@@ -36,7 +40,9 @@ This lab intentionally makes use of slightly flawed deployment files with predic
 - produce a consolidated lint report
 - prepare a PR-comment-ready summary
 
-### What you'll build in Lab 4
+### What you'll build
+
+By the end of this lab, you will use Bob to not just interact with linters — but it will explain what matters, which issues overlap across tools, what to fix first, and how to remediate them.
 
 1. **A Bob mode for lint remediation** (`iac-lint-fix-advisor`) — a mode that reads the Dockerfile and deployment manifests, predicts likely pipeline findings, and helps propose minimal fixes.
 
@@ -46,52 +52,46 @@ This lab intentionally makes use of slightly flawed deployment files with predic
 
 4. **A final Bob-enriched lint report** — archived in Jenkins as a build artifact and summarized in a PR comment.
 
-By the end, Bob will not just say that linting found problems — but it will explain what matters, which issues overlap across tools, what to fix first, and how to remediate them.
+### Before you start
 
----
-
-## Before you start
-
-- [ ] Lab 1 complete at minimum (your Jenkinsfile already has [`askBob()`](labs/sre/lab1/Jenkinsfile.lab1solution:153))
+- [ ] You should have completed Lab 1 at a minimum (your Jenkinsfile already has [`askBob()`](labs/sre/lab1/Jenkinsfile.lab1solution:153))
 - [ ] You're on your working branch (for example `user1-labs`)
 
-> **Note:** [`order-service/pom.xml`](order-service/pom.xml:74-88) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration with Google's style checks. This lab leverages that existing configuration for both IDE and pipeline linting.
-
 ---
 
-## Part 1 — Checkstyle for Java Linting
+## Part 1 — Code Linting with Checkstyle for Java
 
-Before touching the pipeline, start in the Bob IDE with a high level analysis.
+Before adding linters to our pipeline, lets start in the Bob IDE with some high level linting tasks at the code level.
 
-1. If we were starting in a new application, we could have Bob review our application and help us identify linters already in place and recommendations for additional linters.
+1. If we were starting in a new project / application, we could actually have Bob review our application and help us identify linters already in place and provide recommendations for additional linters to consider including.
 
-1. Start a new task in Bob and ensure you are in the **Ask** mode. Then prompts Bob with the following:
+1. Start a new task in Bob and ensure you are in the **Ask** mode. Then prompt Bob with the following:
 
-    ```text
+    ```text copy
     Analyze the files in my @/order-service  application and recommend what linters I should use in my build and deploy pipeline
     ```
 
-1. Bob will review what linters are in place and what gaps might exist based on the files in the application.
+1. Bob will review what linters are in place and what gaps might exist based on the files in the application. Review Bob's recommendations.
 
-1. Lets narrow in on a specific linter. Start a new task in Bob and ensure you are in the **Ask** mode. Then prompts Bob with the following:
+1. Lets narrow in on a specific linter. Start a new task in Bob and ensure you are in the **Ask** mode. Then prompt Bob with the following:
 
-```text
-Read @order-service/src/main/java/com/example/orders/service/OrderService.java.
-Give me a concise view of what kinds of issues Checkstyle will likely flag here, which ones matter most, and what would you recommend fixing first?
-```
+    ```text copy
+    Read @order-service/src/main/java/com/example/orders/service/OrderService.java.
+    Give me a concise view of what kinds of issues Checkstyle will likely flag here, which ones matter most, and what would you recommend fixing first?
+    ```
 
-1. Bob itself understands different linting frameworks and can be used to get intuition about what issues Checkstyle will likely flag here, which ones matter most, and what it recommends fixing first.
+1. Bob itself understands different linting frameworks and can be used to get intuition about what issues Checkstyle will likely flag here, which ones matter most, and what it recommends fixing first. Review Bob's insights.
 
-1. Next, lets actually run Checkstyle from the command line to generate a report with all findings:
+1. Next, lets actually run Checkstyle from the command line to generate a report with all findings. From the terminal window, execute the following:
 
-    ```bash
+    ```bash copy
     cd order-service
     mvn checkstyle:check
     ```
 
 1. This will generate a full report at `order-service/target/checkstyle-result.xml`. Lets ask Bob to analyze the output. In **Ask** mode, prompt Bob with the following:
 
-    ```text
+    ```text copy
     I ran `mvn checkstyle:check` in the order-service directory. Read the output and explain:
     1. What are the most critical violations?
     2. Which ones could impact production reliability?
@@ -100,44 +100,46 @@ Give me a concise view of what kinds of issues Checkstyle will likely flag here,
 
     > **Note:** Bob will request permission to read the target directory and will find the correct output report xml file.
 
-1. Bob was not only able to find and read the report, it was able to provide immediate feedback for which are the most critical issues, which impact reliability and a prioritization for fixing the issues.
+1. Review the findings from Bob.
 
-> **Note:** The prompts we are using here can be adapted based on different perspectives and end users. 
+Bob was not only able to find and read the report, it was able to provide immediate feedback for which are the most critical issues, which impact reliability and a prioritization for fixing the issues. We can use these insights to get ahead of any linting issues before our applications even hit our pipelines.
+
+> **Note:** The prompts we are using can be adapted based on different perspectives, goals and end users.
 
 ---
 
-## Part 2 — Inspect the provided pipeline lint targets in the IDE
+## Part 2 — Deployment Artifact Linting
 
-Before writing any pipeline code, use Bob in the IDE to inspect the files that the pipeline linters will scan:
+Beyond linting of the code artifacts, we can use Bob to inspect the deployment artifact files that the pipeline linters will scan. The following files have been created with some "flaws" for the purposes of this lab.
 
 - [`order-service/Dockerfile`](order-service/Dockerfile)
 - [`order-service/deploy-flawed/deployment.yaml`](order-service/deploy-flawed/deployment.yaml)
 - [`order-service/deploy-flawed/service.yaml`](order-service/deploy-flawed/service.yaml)
 - [`order-service/deploy-flawed/route.yaml`](order-service/deploy-flawed/route.yaml)
 
-Start a new task and switch to **Ask** mode. Try a prompt like:
+1. Start a new task and switch to **Ask** mode. Try a prompt Bob with the following:
 
-```text
-Read @order-service/Dockerfile and the manifests under @order-service/deploy-flawed/.
-What issues are likely to be flagged by Hadolint, Checkov, or KubeLinter?
-Group them by file and explain which ones are most important to fix first.
-```
+    ```text
+    Read @order-service/Dockerfile and the manifests under @order-service/deploy-flawed/.
+    What issues are likely to be flagged by Hadolint, Checkov, or KubeLinter?
+    Group them by file and explain which ones are most important to fix first.
+    ```
 
-This gives you immediate Bob-driven feedback before Jenkins is involved.
+1. Bob gives you immediate feedback and points out issues even before the linters have been run. Bob should identify issues, such as:
 
-You should see Bob point out issues such as:
+    - use of `latest` in container images
+    - plaintext secrets or credentials in env vars
+    - missing probes
+    - missing resource requests and limits
+    - weak or incomplete `securityContext`
+    - overly permissive route or service settings
 
-- use of `latest` in container images
-- plaintext secrets or credentials in env vars
-- missing probes
-- missing resource requests and limits
-- weak or incomplete `securityContext`
-- overly permissive route or service settings
+1. That prediction step is useful for two reasons:
 
-That prediction step is useful for two reasons:
+    1. it helps you understand what the pipeline scanners are likely to find
+    2. it gives you a baseline to compare with the actual lint output later
 
-1. it helps you understand what the pipeline scanners are likely to find
-2. it gives you a baseline to compare with the actual lint output later
+While we could fix these issues now, we will leave these "flaws" in place to see how we can use Bob + various linters to identify the issues and suggest the appropriate fixes.
 
 ---
 
