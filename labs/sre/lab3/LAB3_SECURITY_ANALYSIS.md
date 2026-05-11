@@ -39,7 +39,7 @@
 
 ## Lab Overview
 
-You'll inject security vulnerabilities into the order-service, analyze them with Bob's real-time findings and a comprehensive security review mode, run automated SonarQube scans, and integrate security checks into your Jenkins pipeline.
+You'll inject security vulnerabilities into the order-service, analyze them with Bob's real-time findings and a comprehensive security review mode, run automated SonarQube scans, integrate security checks into your Jenkins pipeline, and learn proper Git workflows for managing experimental changes.
 
 ### What you'll build in Lab 3
 
@@ -51,9 +51,9 @@ You'll inject security vulnerabilities into the order-service, analyze them with
 
 4. **Enhanced Jenkins pipeline** — add a comprehensive security stage to your Jenkinsfile that runs SonarQube scans and generates security reports on every build.
 
-5. **CVE analysis prompt** — create a reusable prompt for analyzing Common Vulnerabilities and Exposures (CVEs) and integrate it into your pipeline for automated security assessments.
+5. **Git workflow best practices** — use `git restore` to discard experimental vulnerability injections and maintain a clean working directory before pushing changes.
 
-By the end, every push triggers automated security scanning in your Jenkins pipeline, and you've practiced using Bob's security analysis capabilities across multiple tools and workflows.
+By the end, every push triggers automated security scanning in your Jenkins pipeline, and you've practiced using Bob's security analysis capabilities across multiple tools and workflows, including proper Git hygiene for managing temporary code changes.
 
 ---
 
