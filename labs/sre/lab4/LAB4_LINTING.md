@@ -3,18 +3,6 @@
 ## Table of Contents
 
 - [Overview of Lab 4](#overview)
-  - [What you'll build in Lab 4](#what-youll-build-in-lab-4)
-  - [What you'll reuse from earlier labs](#what-youll-reuse-from-earlier-labs)
-- [Before you start](#before-you-start)
-- [Part 1 — Warm up in the IDE with Checkstyle and Bob](#part-1--warm-up-in-the-ide-with-checkstyle-and-bob)
-- [Part 2 — Inspect the provided pipeline lint targets in the IDE](#part-2--inspect-the-provided-pipeline-lint-targets-in-the-ide)
-- [Part 3 — Create the `iac-lint-fix-advisor` IDE mode](#part-3--create-the-iac-lint-fix-advisor-ide-mode)
-- [Part 4 — Use the mode to improve one or two findings locally](#part-4--use-the-mode-to-improve-one-or-two-findings-locally)
-- [Part 5 — Create the `pipeline-lint-reporter` mode](#part-5--create-the-pipeline-lint-reporter-mode)
-- [Part 6 — Build the linting stages in Jenkins](#part-6--build-the-linting-stages-in-jenkins)
-- [Part 7 — Push and watch](#part-7--push-and-watch)
-- [Part 8 — Optional: post a Bob-generated lint summary to GitHub from the IDE](#part-8--optional-post-a-bob-generated-lint-summary-to-github-from-the-ide)
-- [Part 9 — Optional: Add Error Prone for compile-time bug detection](#part-9--optional-add-error-prone-for-compile-time-bug-detection)
 - [Stuck?](#stuck)
 
 ---
@@ -23,14 +11,15 @@
 
 In this lab, you'll add a multi-tool linting and compliance workflow to the pipeline. All the while using IBM Bob to interpret results and provide recommendations.
 
-- You'll use the Checkstyle for Java linter to find and fix Java code quality issues in the IDE.
-
 > [!NOTE]
-> [`order-service/pom.xml`](order-service/pom.xml:74-88) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration with Google's style checks. This lab leverages that existing configuration for both IDE and pipeline linting.
+>
+> - [`order-service/pom.xml`](order-service/pom.xml:74-88) already includes [Checkstyle](https://checkstyle.sourceforge.io/) configuration with Google's style checks. This lab leverages that existing configuration for both IDE and pipeline linting.
+> - This lab makes use of the jenkins project / namespace. If you are using a different namespace, please update the Jenkinsfile appropriately.
 
+- You'll use the Checkstyle for Java linter to find and fix Java code quality issues in the IDE.
 - You'll use [Hadolint](https://github.com/hadolint/hadolint) to find issues in the `Dockerfile`.
 - You'll use [Checkov](https://www.checkov.io/) to find issues in the deployment manifests.
-- You'll use [KubeLinter](https://docs.kubelinter.io/) to find issues in the Kubernetes workload. 
+- You'll use [KubeLinter](https://docs.kubelinter.io/) to find issues in the Kubernetes workload.
 
 This lab intentionally makes use of slightly flawed deployment files with predictable findings. That allows us to focus on using AI to:
 
@@ -44,13 +33,17 @@ This lab intentionally makes use of slightly flawed deployment files with predic
 
 By the end of this lab, you will use Bob to not just interact with linters — but it will explain what matters, which issues overlap across tools, what to fix first, and how to remediate them.
 
-1. **A Bob mode for lint remediation** (`iac-lint-fix-advisor`) — a mode that reads the Dockerfile and deployment manifests, predicts likely pipeline findings, and helps propose minimal fixes.
+- **A Bob mode for lint reporting** (`pipeline-lint-analyzer`) — a read-only mode that reads the raw output from multiple linters and turns it into a Jenkins-friendly report.
 
-2. **A Bob mode for lint reporting** (`pipeline-lint-reporter`) — a read-only mode that reads the raw output from multiple linters and turns it into a Jenkins-friendly report.
+- **A new set of pipeline stages** — one stage runs the linters (including Checkstyle), one stage asks Bob to summarize the results, and one stage posts a condensed comment to the PR.
 
-3. **A new set of pipeline stages** — one stage runs the linters (including Checkstyle), one stage asks Bob to summarize the results, and one stage posts a condensed comment to the PR.
+- **A final Bob-enriched lint report** — archived in Jenkins as a build artifact and summarized in a PR comment.
 
-4. **A final Bob-enriched lint report** — archived in Jenkins as a build artifact and summarized in a PR comment.
+**Key Concepts** you will learn:
+
+- Linting layers: code quality, container security, infrastructure security, Kubernetes best practices
+- De-duplication: recognizing when multiple tools flag the same underlying issue
+- Risk-based prioritization: security > reliability > maintainability > style
 
 ### Before you start
 
@@ -59,7 +52,7 @@ By the end of this lab, you will use Bob to not just interact with linters — b
 
 ---
 
-## Part 1 — Code Linting with Checkstyle for Java
+## Part 1 — Code Linting with Checkstyle
 
 Before adding linters to our pipeline, lets start in the Bob IDE with some high level linting tasks at the code level.
 
@@ -100,7 +93,12 @@ Before adding linters to our pipeline, lets start in the Bob IDE with some high 
 
     > **Note:** Bob will request permission to read the target directory and will find the correct output report xml file.
 
-1. Review the findings from Bob.
+1. Review the findings from Bob. Notice how Bob:
+    - Groups by severity
+    - Explains the impact of each issue
+    - Provides specific line numbers
+    - Suggests concrete fixes
+    - Prioritizes what matters most
 
 Bob was not only able to find and read the report, it was able to provide immediate feedback for which are the most critical issues, which impact reliability and a prioritization for fixing the issues. We can use these insights to get ahead of any linting issues before our applications even hit our pipelines.
 
@@ -145,14 +143,14 @@ While we could fix these issues now, we will leave these "flaws" in place to see
 
 ## Part 3 — Create the Bob Linter mode and Pipeline Stage
 
-Now, we will create a reusable Bob mode that specializes in lint analysis, insights and remediation recommendations. While we could create a mode to use in our IDE, we are going to focus on creating a mode that can be used in a CI/CD pipeline. The pipeline needs: a read-only mode that can synthesize raw lint output from multiple tools and turn it into a concise report.
+Now, we will create a reusable Bob mode that specializes in lint analysis, insights and remediation recommendations. While we could create a mode to use in our IDE, we are going to focus on creating a mode that can be used in a CI/CD pipeline. The pipeline needs a read-only mode that can synthesize raw lint output from multiple tools and turn it into a concise report.
 
 > Note: While we could use the mode in the Bob IDE, we want to minimize any requirements for installing linters to the lab participant machines, so we are just going to test in the pipeline.
 
-1. Start a new task and switch to **Mode Writer** mode. Then ask Bob to create a new mode with a name `linting-advisor` that it should append to our `@.bob/custom_modes.yaml` file. Use this as a starter prompt:
+1. Start a new task and switch to **Mode Writer** mode. Then ask Bob to create a new mode with a name `pipeline-lint-analyzer` that it should append to our `@.bob/custom_modes.yaml` file. Use this as a starter prompt:
 
     ```text copy
-    Write a custom mode with slug `linting-advisor`. Append it to @.bob/custom_modes.yaml — don't overwrite anything else.
+    Write a custom mode with slug `pipeline-lint-analyzer`. Append it to @.bob/custom_modes.yaml — don't overwrite anything else.
 
     Job: read lint output from Checkstyle, Hadolint, Checkov, and KubeLinter, plus the relevant application source files and application deployment files.
     Produce a short Jenkins-friendly report that:
@@ -163,7 +161,7 @@ Now, we will create a reusable Bob mode that specializes in lint analysis, insig
     - stays concise and practical
 
     Output: plain text or Markdown suitable for a Jenkins artifact and easy to summarize in a PR comment.
-    Use sections:
+    Use the following sections:
     - Executive Summary
     - Highest Priority Findings
     - Findings by Tool
@@ -175,29 +173,40 @@ Now, we will create a reusable Bob mode that specializes in lint analysis, insig
     Tool groups: read only.
     ```
 
-1. This mode will do the heavy lifting in the pipeline. So next, lets add the linting and analysis stages to the pipeline.
+1. In Part 1 of this lab, you ran Checkstyle manually and saw how Bob can interpret its findings. Now we'll automate this in the pipeline along with other linters. So next, lets add the linting and analysis stages to the pipeline.
 
 1. Start a new task and switch to the provided **Jenkins Pipeline Integration** mode.
 
 1. Ask Bob to update [`Jenkinsfile`](Jenkinsfile) with a lint workflow after the earlier stages. Use a prompt like:
 
     ```text
-    Update @Jenkinsfile to add linting and reporting stages after the existing earlier lab stages.
+    Update @Jenkinsfile to add linting and analysis stages after the existing stages.
 
     Requirements:
     - Run Checkstyle on the Java code: `mvn -f order-service/pom.xml checkstyle:check`
-    - Copy the Checkstyle XML report to `lint-results/checkstyle.xml`
-    - Run Hadolint on @order-service/Dockerfile
-    - Run Checkov on @order-service/deploy-flawed/
-    - Run KubeLinter on @order-service/deploy-flawed/
-    - Save each tool's output into a `lint-results/` directory in the workspace
-    - Continue the pipeline even if the linters find issues
-    - Call askBob with the `pipeline-lint-reporter` mode to analyze the raw lint outputs and the relevant files under @order-service/
-    - Save the full analysis to `bob-lint-report.md`
-    - Save a condensed PR comment body to `bob-lint-pr-comment.md`
-    - Archive the lint outputs and Bob-generated report files
+    - Copy the XML report from `order-service/target/checkstyle-result.xml` to `lint-results/checkstyle.xml`
+    - Run Hadolint on @order-service/Dockerfile and save output to `lint-results/hadolint.txt`
+    - Run Checkov on @order-service/deploy-flawed/ and save output to `lint-results/checkov.txt`
+    - Run KubeLinter on @order-service/deploy-flawed/ and save output to `lint-results/kubelinter.txt`
+    - Continue the pipeline even if the linters find issues (use catchError)
+    - Archive the lint-results files in the Run Linters stage post block
+
+    For the Bob Lint Analysis stage:
+    - Add a `when` condition to only run if at least one lint result file exists
+    - In the prompt, let Bob read the files directly - don't embed file contents in the prompt. Tell Bob to read:
+        - lint-results/checkstyle.xml
+        - lint-results/hadolint.txt
+        - lint-results/checkov.txt
+        - lint-results/kubelinter.txt
+        - order-service/src/
+        - order-service/Dockerfile
+        - order-service/deploy-flawed/
+    - Make a call using askBob using the `pipeline-lint-analyzer` mode to group findings by severity, de-duplicate overlapping findings, identify highest-priority remediations, and recommend concrete fixes
+    - Save Bob's analysis to `bob-lint-report.md`
+    - Make a second askBob call that reads `bob-lint-report.md` and produces a concise PR comment
+    - Save the PR comment to `bob-lint-pr-comment.md`
+    - Archive both markdown files in the post block
     - Print a short summary to the console
-    - Post the PR comment to GitHub using a Jenkins-provided token
     ```
 
 1. A couple of things to note about how we are asking Bob to build this into our pipeline:
@@ -249,21 +258,63 @@ Now, we will create a reusable Bob mode that specializes in lint analysis, insig
         - the other lint tools run inside the `lint-tools` container
         - raw outputs are written under `lint-results/`
         - Bob prints a short summary in the console
-        - [`bob-lint-report.md`](labs/sre/lab4/bob-lint-report.md) is archived as a build artifact
-        - the pipeline posts a condensed lint summary comment to the PR
+        - bob-lint-report.md is archived as a build artifact
         - the build may end **UNSTABLE** if findings exist, but should still complete
 
 1. Open the pipeline run artifacts, you should see a consolidated report that is far more useful than the raw scanner output alone.
 
 ---
 
-## Stuck?
+## Part 5 — Optional: Advanced Linting Challenges
+
+If you have completed the lab and want to explore different linting challenges, here are some ideas:
+
+### Challenge 1: Add a Custom Checkstyle Rule
+
+1. Create a custom Checkstyle configuration that enforces your team's naming conventions
+2. Update `pom.xml` to use your custom config instead of `google_checks.xml`
+3. Run the pipeline and see how Bob interprets your custom rules
+
+### Challenge 2: Create a Lint Threshold Gate
+
+1. Modify the pipeline to fail if critical issues exceed a threshold
+2. Use Bob to categorize findings by severity
+3. Parse Bob's output to count critical issues
+4. Fail the build if count > 5
+
+### Challenge 3: Generate a Trend Report
+
+1. Archive lint results from multiple builds
+2. Create a Bob mode that compares current vs. previous results
+3. Generate a trend report showing improvement or regression
+4. Post the trend to the PR comment
+
+### Challenge 4: Auto-fix Simple Issues
+
+1. Use Bob to generate fix patches for simple issues (import ordering, formatting)
+2. Apply the patches automatically in the pipeline
+3. Commit the fixes back to the branch
+4. Re-run linters to verify fixes worked
+
+---
+
+## Troubleshooting
 
 - **Checkstyle fails with `command not found`.** Checkstyle runs via Maven, not as a standalone command. Use `mvn checkstyle:check` in the Maven container, not the lint-tools container.
 - **Hadolint, Checkov, or KubeLinter fail with `command not found`.** The image was built incorrectly or the wrong image is referenced in the Jenkins pod YAML. Verify the image from [`setup/lint-tools/Dockerfile`](setup/lint-tools/Dockerfile) was pushed and is being used.
 - **Checkov output is huge and noisy.** Narrow the scan target to [`order-service/deploy-flawed/`](order-service/deploy-flawed) rather than the whole repo.
 - **KubeLinter reports nothing useful.** Make sure you are linting the deployment manifests, especially [`order-service/deploy-flawed/deployment.yaml`](order-service/deploy-flawed/deployment.yaml).
 - **`Jenkinsfile` not working?** Use the reference solution in [`labs/sre/lab4/Jenkinsfile.lab4solution`](labs/sre/lab4/Jenkinsfile.lab4solution) as your reset point once it is available in the repo.
+- **Hadolint, Checkov, or KubeLinter fail with `command not found`**
+  - Cause: The lint-tools image wasn't built correctly or isn't being used
+  - Fix: Verify the image from `setup/lint-tools/Dockerfile` was pushed
+  - Check: `oc get imagestream lint-tools -n jenkins`
+  - Verify: Jenkinsfile references the correct image URL
+- **Pipeline succeeds but no lint report is generated**
+  - Cause: Bob analysis stage didn't run
+  - Check: Verify at least one lint-results/*.txt file exists
+  - Check: Look at the `when` condition in "Bob Lint Analysis" stage
+  - Debug: Add `sh 'ls -la lint-results'` to see what files were created
 
 ---
 

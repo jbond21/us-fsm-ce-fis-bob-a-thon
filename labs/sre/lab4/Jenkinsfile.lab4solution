@@ -76,10 +76,6 @@ spec:
         }
     }
 
-    environment {
-        GITHUB_API = 'https://api.github.com'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -219,28 +215,49 @@ ${reports}
             steps {
                 script {
                     echo '════════════════════════════════════════════════════════'
-                    echo '  Running Linting and Compliance Scans'
+                    echo '  Running Linters'
                     echo '════════════════════════════════════════════════════════'
-
+                    
+                    // Create lint-results directory
+                    sh 'mkdir -p lint-results'
+                    
+                    // Run Checkstyle
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        echo '  → Running Checkstyle...'
+                        sh 'mvn -f order-service/pom.xml checkstyle:check || true'
+                        sh 'cp order-service/target/checkstyle-result.xml lint-results/checkstyle.xml || true'
+                    }
+                    
+                    // Run Hadolint
                     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                         container('lint-tools') {
-                            sh '''
-                                mkdir -p lint-results
-
-                                hadolint order-service/Dockerfile > lint-results/hadolint.txt || true
-                                checkov -d order-service/deploy-flawed -o cli > lint-results/checkov.txt || true
-                                kube-linter lint order-service/deploy-flawed > lint-results/kubelinter.txt || true
-
-                                echo "=== Lint result files ==="
-                                ls -la lint-results
-                            '''
+                            echo '  → Running Hadolint...'
+                            sh 'hadolint order-service/Dockerfile > lint-results/hadolint.txt || true'
                         }
                     }
+                    
+                    // Run Checkov
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        container('lint-tools') {
+                            echo '  → Running Checkov...'
+                            sh 'checkov -d order-service/deploy-flawed/ --compact --quiet > lint-results/checkov.txt || true'
+                        }
+                    }
+                    
+                    // Run KubeLinter
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                        container('lint-tools') {
+                            echo '  → Running KubeLinter...'
+                            sh 'kube-linter lint order-service/deploy-flawed/ > lint-results/kubelinter.txt || true'
+                        }
+                    }
+                    
+                    echo '════════════════════════════════════════════════════════'
                 }
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'lint-results/*.txt', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'lint-results/*', allowEmptyArchive: true
                 }
             }
         }
@@ -248,9 +265,10 @@ ${reports}
         stage('Bob Lint Analysis') {
             when {
                 expression {
-                    fileExists('lint-results/hadolint.txt') ||
-                    fileExists('lint-results/checkov.txt') ||
-                    fileExists('lint-results/kubelinter.txt')
+                    return fileExists('lint-results/checkstyle.xml') ||
+                           fileExists('lint-results/hadolint.txt') ||
+                           fileExists('lint-results/checkov.txt') ||
+                           fileExists('lint-results/kubelinter.txt')
                 }
             }
             options {
@@ -259,113 +277,86 @@ ${reports}
             steps {
                 script {
                     echo '════════════════════════════════════════════════════════'
-                    echo '  Bob — Linting and Compliance Analysis'
+                    echo '  Bob — Lint Analysis'
                     echo '════════════════════════════════════════════════════════'
-
+                    
                     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        // Build prompt telling Bob to read the files directly
                         def prompt = """
-Read the lint output files in lint-results/ and the relevant source files under order-service/.
+Analyze the linting results from multiple tools and provide a consolidated report.
 
-Inputs:
+Read and analyze the following lint result files:
+- lint-results/checkstyle.xml
 - lint-results/hadolint.txt
 - lint-results/checkov.txt
 - lint-results/kubelinter.txt
+
+Also review the source code and configurations:
+- order-service/src/
 - order-service/Dockerfile
 - order-service/deploy-flawed/
 
-Create two outputs in your response:
-1. A concise executive summary suitable for the Jenkins console
-2. A fuller linting report suitable for a markdown artifact
+Your analysis should:
+1. Group findings by severity (Critical, High, Medium, Low)
+2. De-duplicate overlapping findings from different tools
+3. Identify the highest-priority remediations
+4. Recommend concrete fixes with code examples
 
-Goals:
-- group findings by severity
-- de-duplicate overlapping findings across tools
-- identify the highest-priority remediations
-- recommend concrete fixes
+Produce a comprehensive markdown report.
 """
-
-                        def analysis = askBob(prompt, 'pipeline-lint-reporter')
-
-                        echo analysis
-                        echo '════════════════════════════════════════════════════════'
-
+                        
+                        // Ask Bob to analyze the lint results
+                        def analysis = askBob(prompt, 'pipeline-lint-analyzer')
+                        
+                        echo ''
+                        echo '  ✅ Lint analysis complete'
+                        
+                        // Save full analysis
                         writeFile file: 'bob-lint-report.md', text: analysis
+                        
+                        // Generate PR comment
+                        def prCommentPrompt = """
+Read bob-lint-report.md and produce a concise PR comment summarizing the key findings.
 
-                        def prComment = askBob(
-                            """Read bob-lint-report.md and produce a concise pull-request comment in markdown.
-Keep it short and actionable. Include:
-- overall summary
-- top 3 fix-first items
-- note that the full report is archived in Jenkins as bob-lint-report.md
-""",
-                            'pipeline-lint-reporter'
-                        )
+The comment should:
+- Be brief (max 10-15 lines)
+- Highlight critical and high-severity issues only
+- Include a count of findings by severity
+- Provide 2-3 top priority action items
+- Use markdown formatting suitable for a GitHub PR comment
 
+Keep it actionable and focused on what developers need to fix first.
+"""
+                        
+                        def prComment = askBob(prCommentPrompt, 'pipeline-lint-analyzer')
+                        
+                        // Save PR comment
                         writeFile file: 'bob-lint-pr-comment.md', text: prComment
+                        
+                        // Print summary to console
+                        echo ''
+                        echo '  📊 Summary:'
+                        if (analysis.contains('Critical')) {
+                            echo '    🔴 Critical issues found'
+                        }
+                        if (analysis.contains('High')) {
+                            echo '    🟠 High-severity issues found'
+                        }
+                        echo '    📄 Full report: bob-lint-report.md'
+                        echo '    💬 PR comment: bob-lint-pr-comment.md'
                     }
+                    
+                    echo '════════════════════════════════════════════════════════'
                 }
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'bob-lint-report.md,bob-lint-pr-comment.md', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'bob-lint-report.md,bob-lint-pr-comment.md',
+                                   allowEmptyArchive: true
                 }
             }
         }
 
-        stage('Post Lint PR Comment') {
-            when {
-                expression {
-                    fileExists('bob-lint-pr-comment.md') && env.CHANGE_ID
-                }
-            }
-            options {
-                timeout(time: 5, unit: 'MINUTES')
-            }
-            steps {
-                script {
-                    echo '════════════════════════════════════════════════════════'
-                    echo '  Posting Lint Summary to Pull Request'
-                    echo '════════════════════════════════════════════════════════'
-
-                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                            sh '''
-                                python3 - <<'PY'
-import json
-import os
-import urllib.request
-
-repo = os.environ.get('CHANGE_URL', '').split('/pull/')[0].replace('https://github.com/', '')
-comment_body = open('bob-lint-pr-comment.md', 'r', encoding='utf-8').read()
-
-if not repo or not os.environ.get('CHANGE_ID'):
-    print('Skipping PR comment: missing CHANGE_URL or CHANGE_ID')
-    raise SystemExit(0)
-
-owner, name = repo.split('/', 1)
-url = f"{os.environ['GITHUB_API']}/repos/{owner}/{name}/issues/{os.environ['CHANGE_ID']}/comments"
-
-data = json.dumps({"body": comment_body}).encode('utf-8')
-req = urllib.request.Request(
-    url,
-    data=data,
-    method='POST',
-    headers={
-        'Authorization': f"token {os.environ['GITHUB_TOKEN']}",
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json'
-    }
-)
-
-with urllib.request.urlopen(req) as response:
-    print(f"Posted PR comment, status={response.status}")
-PY
-                            '''
-                        }
-                    }
-                }
-            }
-        }
 
         // ── Lab 5: DCR & Reporting ───────────────────────────────
         //    Add a DCR generation stage; Bob pushes the result to
