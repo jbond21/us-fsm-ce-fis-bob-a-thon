@@ -46,7 +46,6 @@ You'll pull the ticket down with the Jira MCP server you configured this morning
 ### What you'll reuse from the repo
 
 - **The `software-security-reviewer` mode** in `.bob/custom_modes.yaml`, with its rules in `.bob/rules-software-security-reviewer/` — same security review used elsewhere in this repo, applied here pre-merge instead of in CI.
-- **The pre-existing `OrderService.java`** has its own pile of issues (hardcoded API key, MD5, `java.util.Random`, `printStackTrace`). Your diff only touches part of that file; the security lap surfaces the rest as follow-up tickets.
 
 ---
 
@@ -187,18 +186,16 @@ The first two laps covered standards and quality. The third lap is about exploit
 In a new task, switch to **Software Security Reviewer** and paste:
 
 ```
-Review the uncommitted changes plus any pre-existing code in OrderService.java the diff context touches. Focus on:
+Review the uncommitted refund changes. Focus on:
 - Money-movement endpoints without authorization
 - PII / cardholder data exposure in logs or error responses
 - Weak cryptography (MD5, SHA-1, java.util.Random for security-sensitive values)
-- Hardcoded secrets in surrounding code
+- Hardcoded secrets, URLs, or thresholds
 
 Output the standard CRITICAL / HIGH / MEDIUM / LOW findings with code patches. Save the result to bob-security-review.md.
 ```
 
-This lap widens the lens beyond your diff. The pre-existing `OrderService.java` has hardcoded `LEGACY_API_KEY` and `BACKUP_DB_PASSWORD`, MD5 in `generateOrderVerificationCode()`, `Random` in `generateTrackingNumber()`, and `printStackTrace()` in two catch blocks. The security mode finds them all and proposes patches.
-
-You don't have to fix every pre-existing issue in this PR — but you now have a saved review markdown to file as follow-up tickets, and you'll post it on the PR in Part 7 so reviewers see the full picture.
+The security mode applies a different lens than laps 1 and 2 — same diff, but graded on exploitability rather than style or domain correctness. Save the markdown; you'll post it on the PR in Part 7.
 
 ---
 
