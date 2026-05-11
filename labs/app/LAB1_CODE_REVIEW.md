@@ -8,7 +8,7 @@
   - [What you'll reuse from the repo](#what-youll-reuse-from-the-repo)
 - [Before you start](#before-you-start)
 - [Part 1 — Capture your team's standards as Bob rules](#part-1--capture-your-teams-standards-as-bob-rules)
-- [Part 2 — Build the refund feature in Code mode](#part-2--build-the-refund-feature-in-code-mode)
+- [Part 2 — Pull the ticket, move it In Progress, build the feature](#part-2--pull-the-ticket-move-it-in-progress-build-the-feature)
 - [Part 3 — Pre-commit gauntlet, lap 1: built-in `/review`](#part-3--pre-commit-gauntlet-lap-1-built-in-review)
 - [Part 4 — Pre-commit gauntlet, lap 2: standards-aware review with a custom mode](#part-4--pre-commit-gauntlet-lap-2-standards-aware-review-with-a-custom-mode)
 - [Part 5 — Pre-commit gauntlet, lap 3: security review](#part-5--pre-commit-gauntlet-lap-3-security-review)
@@ -98,25 +98,39 @@ These rules apply everywhere Bob runs in this workspace. You don't have to resta
 
 ---
 
-## Part 2 — Pull the ticket from Jira and build the feature
+## Part 2 — Pull the ticket, move it In Progress, build the feature
 
-Remember the refund ticket you created in the morning intro lab? Time to pull it down and implement it.
+Remember the refund ticket you created in the morning intro lab? Time to pull it down, mark it In Progress, and implement it.
 
-Switch to **🤖 Advanced** mode (so MCP tools are available), start a new task, and paste — replacing `<your-ticket-key>` with the actual key Jira assigned to your refund ticket:
+**Fetch the ticket.** Switch to **🤖 Advanced** mode (so MCP tools are available), start a new task, and paste — replacing `<your-ticket-key>` with the actual key Jira assigned:
 
 ```
-Use jira_get_issue to fetch <your-ticket-key>. Then switch to Code mode and implement the feature described in the acceptance criteria. Update the Order model, OrderService, OrderController, and add tests.
+Use jira_get_issue to fetch <your-ticket-key>. Read me the acceptance criteria.
 ```
 
-Bob calls `jira_get_issue` on the Atlassian MCP server, reads the description and acceptance criteria back, then proposes the switch to **💻 Code** mode and delivers the feature against the ticket. Approve the mode switch when prompted.
+Bob calls `jira_get_issue` on the Atlassian MCP server and reads the description back.
 
-When Bob finishes:
+**Move the ticket to In Progress.** Before writing code, mark the ticket as work-in-progress — same thing you'd do manually at the start of any sprint task. In the same task, paste:
 
-```bash
-cd order-service && mvn test
+```
+Move <your-ticket-key> to "In Progress" status.
 ```
 
-The build should pass. **Don't commit yet.** The interesting part of this lab is what the spec didn't ask for — audit logging, idempotency on retries, authorization, validation that the refund amount doesn't exceed the original — and what each review lap catches. Real Jira tickets don't spell these out; that's what code review is for.
+Bob picks the Jira transition tool. Because that tool isn't in your `alwaysAllow` list, Bob asks for approval before calling it — approve it once.
+
+Now **open your Jira board in the browser** and confirm the ticket is sitting in the **In Progress** column. Take a moment to look — this is the IDE-to-tracker loop closing in real time, no manual click-through required.
+
+**Build the feature.** Back in Bob, hand off to Code mode:
+
+```
+Switch to Code mode and implement the feature described in the ticket. Update the Order model, OrderService, OrderController, and add tests.
+```
+
+Bob proposes the mode switch; approve it and let it deliver the feature against the ticket's acceptance criteria.
+
+Bob should automatically run tests, but if it doesn't just tell Bob to test.
+
+**Don't commit yet.** The interesting part of this lab is what the spec didn't ask for — audit logging, idempotency on retries, authorization, validation that the refund amount doesn't exceed the original — and what each review lap catches. Real Jira tickets don't spell these out; that's what code review is for.
 
 ---
 
@@ -175,7 +189,7 @@ In a new task, switch to **Orders Code Reviewer** and paste:
 Review the uncommitted refund changes against our standards.
 ```
 
-This pass should surface things `/review` glossed over — missing audit log on the refund, no `@Transactional`, a `customerName` in a log line, no idempotency guard, no validation that refund amount ≤ original order amount. Apply the fixes you agree with (in Code mode — Orders Code Reviewer is read-only).
+This pass could surface things `/review` glossed over — missing audit log on the refund, no `@Transactional`, a `customerName` in a log line, no idempotency guard, no validation that refund amount ≤ original order amount. Apply the fixes you agree with (in Code mode — Orders Code Reviewer is read-only).
 
 ---
 
