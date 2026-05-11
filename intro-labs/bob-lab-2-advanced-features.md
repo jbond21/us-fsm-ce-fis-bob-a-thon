@@ -434,7 +434,17 @@ Time to put MCP into practice. You'll configure the **Atlassian MCP server** so 
 >
 > Most engineering teams already track work in Jira. Wiring Bob into it means you can search tickets, summarize an issue, or comment on a story without leaving your IDE. The pattern you use here applies to any MCP server — GitHub, Confluence, ServiceNow, Slack, internal APIs — they're all configured the same way.
 
-### Step 1: Open the Project MCP Config
+### Step 1: Log In to Jira
+
+Before wiring Bob into Jira, confirm you can reach Jira yourself with the credentials your instructor handed out:
+
+1. Open your Jira URL in a browser (the value labeled **JIRA_URL** on your credential sheet)
+2. Sign in with your Jira **username** (your workshop email) and password
+3. Note your **project key** — it's the prefix in any issue key (e.g. `KAN-1` → project key is `KAN`). You'll need it when Bob creates a ticket later in Step 7.
+
+If you can't log in, ask your instructor before continuing — every step below assumes a working Jira session and a known API token.
+
+### Step 2: Open the Project MCP Config
 
 This workshop uses **project-level** MCP config so the server registration is part of the repo. The file is already in place at the repo root:
 
@@ -453,7 +463,7 @@ Open it in your editor. It contains an empty `mcpServers` object:
 
 > 📌 **Why project-level?** Bob loads `.bob/mcp.json` from whatever workspace it has open. Committing it to the repo means every Bob instance — your IDE locally and the bob-cli container in the Jenkins pipeline (SRE track) — picks up the same server registrations from `git checkout`. No one has to hand-edit a global config.
 
-### Step 2: Add the Atlassian Server Block
+### Step 3: Add the Atlassian Server Block
 
 Replace the contents with:
 
@@ -486,9 +496,9 @@ Replace the contents with:
 
 Save the file.
 
-### Step 3: Provide Your Credentials via `.env`
+### Step 4: Provide Your Credentials via `.env`
 
-The bash launcher in Step 2 sources `.env` from the repo root at startup, so the credentials live there. A `.env.example` template ships at the repo root — copy it:
+The bash launcher in Step 3 sources `.env` from the repo root at startup, so the credentials live there. A `.env.example` template ships at the repo root — copy it:
 
 ```bash
 cp .env.example .env
@@ -506,7 +516,7 @@ JIRA_API_TOKEN=your-token-here
 
 > ⚠️ **Security Reminder:** API tokens are secrets. Don't paste yours into chat, screenshots, or commits. If exposed, rotate it at id.atlassian.com.
 
-### Step 4: Restart Bob
+### Step 5: Restart Bob
 
 Bob reads `.bob/mcp.json` and `.env` once at startup. Quit Bob completely and reopen the workspace.
 
@@ -518,7 +528,7 @@ Bob reads `.bob/mcp.json` and `.env` once at startup. Quit Bob completely and re
 
 If you see **Failed**, double-check that `.env` is at the repo root and that all three values are filled in with no quotes or extra spaces.
 
-### Step 5: Use the Jira Tools in Advanced Mode
+### Step 6: Use the Jira Tools in Advanced Mode
 
 Switch to **Advanced mode** (MCP tools aren't available in Plan, Code, or Ask).
 
@@ -528,7 +538,7 @@ Switch to **Advanced mode** (MCP tools aren't available in Plan, Code, or Ask).
 List the MCP tools you have access to from the atlassian server.
 ```
 
-### Step 6: Create a Ticket from the IDE
+### Step 7: Create a Ticket from the IDE
 
 Bob can **create** tickets from within the IDE. The ticket you create here is the same one the App team will pull down and implement in their Lab 1.
 
