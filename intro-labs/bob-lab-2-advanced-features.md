@@ -522,31 +522,15 @@ If you see **Failed**, double-check that `.env` is at the repo root and that all
 
 Switch to **Advanced mode** (MCP tools aren't available in Plan, Code, or Ask).
 
-**Try these prompts:**
+**Try this prompt:**
 
 ```text
 List the MCP tools you have access to from the atlassian server.
 ```
 
-```text
-Use jira_search to find the 5 most recent issues assigned to me.
-```
-
-```text
-Show me the description and the latest 3 comments on issue PROJ-123.
-```
-
-(Replace `PROJ-123` with a real issue key from your search results.)
-
-**What to Observe:**
-
-- Bob announces which MCP tool it's about to call before calling it
-- Tools in `alwaysAllow` (e.g. `jira_search`) run without an approval prompt
-- Tools NOT in `alwaysAllow` (e.g. transitioning a ticket) prompt you for one-time approval
-
 ### Step 6: Create a Ticket from the IDE
 
-Reading tickets is half the picture — Bob can also **create** them. You'll use this in the afternoon: the ticket you create here is the same one the App team will pull down and implement in Lab 1.
+Bob can **create** tickets from within the IDE. The ticket you create here is the same one the App team will pull down and implement in their Lab 1.
 
 Still in **Advanced** mode, paste:
 
