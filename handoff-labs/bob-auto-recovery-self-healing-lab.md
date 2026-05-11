@@ -1,11 +1,11 @@
 # Lab: Auto-Recovery and Self-Healing with Bob in Jenkins Pipelines
 
-**Duration:** ~45 minutes  
-**Level:** Intermediate to Advanced  
-**Prerequisites:** 
-- Ideally completed SRE Labs 1-2 (PR Review and Unit Testing)
-- Understanding of Jenkins pipelines
-- Familiarity with the order-service application
+**Duration:** ~45 minutes
+**Level:** Intermediate to Advanced
+**Prerequisites:**
+- Jenkins pipeline knowledge
+- Maven familiarity
+- Access to Jenkins environment with Bob CLI
 
 ---
 
@@ -595,13 +595,6 @@ Provide a comprehensive post-mortem and recommendations."""
 - **Improve developer experience** - Fewer interruptions, more focus time
 - **Increase deployment confidence** - Automated safety nets catch issues early
 - **Learn from failures** - Build institutional knowledge into modes
-
-### Next Steps
-
-1. **Expand recovery patterns** - Add more auto-fix capabilities based on your team's common failures
-2. **Integrate with monitoring** - Connect self-healing to observability platforms
-3. **Create team-specific modes** - Customize for your tech stack and patterns
-4. **Share and iterate** - Collaborate with other teams to improve recovery strategies
 
 ---
 

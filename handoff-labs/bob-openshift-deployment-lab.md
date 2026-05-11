@@ -1,12 +1,12 @@
 # Lab: OpenShift Deployment Automation with Bob in Jenkins
 
-**Duration:** ~60 minutes  
-**Level:** Advanced  
-**Prerequisites:** 
-- Completed Labs 1-2 (PR Review and Unit Testing)
-- Access to OpenShift cluster
-- Understanding of Jenkins pipelines
-- Familiarity with the order-service application
+**Duration:** ~60 minutes
+**Level:** Advanced
+**Prerequisites:**
+- OpenShift cluster access with `oc` CLI
+- Jenkins pipeline knowledge
+- Container/Kubernetes understanding
+- Access to Jenkins environment with Bob CLI
 
 ---
 
