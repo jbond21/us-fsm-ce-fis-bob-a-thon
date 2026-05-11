@@ -461,13 +461,11 @@ Replace the contents with:
 {
   "mcpServers": {
     "atlassian": {
-      "command": "uvx",
-      "args": ["mcp-atlassian"],
-      "env": {
-        "JIRA_URL": "${JIRA_URL}",
-        "JIRA_USERNAME": "${JIRA_USERNAME}",
-        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
-      },
+      "command": "bash",
+      "args": [
+        "-c",
+        "set -a; source .env; set +a; exec uvx mcp-atlassian"
+      ],
       "disabled": false,
       "alwaysAllow": [
         "jira_get_issue",
@@ -481,15 +479,16 @@ Replace the contents with:
 
 **What's Happening:**
 
-- **`command: "uvx"`** — `uvx` is `uv`'s "run a published PyPI tool" mode. It pulls `mcp-atlassian` from PyPI on first use and runs it as a subprocess of Bob.
-- **`env`** — credentials use `${VAR}` placeholders so Bob substitutes from the surrounding environment at startup. Actual secrets never live in this committed file.
+- **`command: "bash"`** with the `-c` script — `bash` runs as a thin launcher. It enables auto-export (`set -a`), sources `.env` from the workspace root, turns auto-export off (`set +a`), then `exec`s `uvx mcp-atlassian` so the Jira credentials land in the MCP server's environment.
+- **`uvx mcp-atlassian`** — `uvx` is `uv`'s "run a published PyPI tool" mode. It pulls `mcp-atlassian` from PyPI on first use and runs it as a subprocess.
+- **No `env` block, no `${VAR}` substitution** — credentials never appear in this committed file. The bash launcher sources them from `.env` at MCP-server launch time.
 - **`alwaysAllow`** — Jira tools Bob can call without prompting for approval each time. Starting with three read/comment-leaning tools; destructive ones (transition, delete) stay off this list.
 
 Save the file.
 
 ### Step 3: Provide Your Credentials via `.env`
 
-The `${VAR}` placeholders need real values. A `.env.example` template ships at the repo root — copy it to a `.env`:
+The bash launcher in Step 2 sources `.env` from the repo root at startup, so the credentials live there. A `.env.example` template ships at the repo root — copy it:
 
 ```bash
 cp .env.example .env
@@ -582,7 +581,7 @@ Tell me the ticket key Jira assigned.
 ### What You've Practiced
 
 - ✅ Registered a real MCP server in project-level config
-- ✅ Wired credentials through `.env` substitution instead of inline values
+- ✅ Sourced credentials from `.env` via a bash launcher instead of inline values
 - ✅ Used `alwaysAllow` to scope which tools run without approval
 - ✅ Invoked external service tools from Advanced mode
 - ✅ Created a real Jira ticket from inside Bob — the same one you'll pull down in the afternoon
