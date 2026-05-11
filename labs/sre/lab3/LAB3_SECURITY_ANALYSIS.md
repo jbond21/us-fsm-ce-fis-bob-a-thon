@@ -603,9 +603,18 @@ If you wish to integrate the Software Security Reviewer mode into your pipeline,
 
 ## Part 5: Push and Watch
 
-### Step 5.1: Restore Original Code
+### Step 5.1: Commit and Push Changes
 
-Before pushing to git, we need to restore the original code by discarding the vulnerability injection changes.
+**Prompt to Bob:**
+```
+git add Jenkinsfile .bob/ labs/sre/lab3/
+git commit -m "Lab 3 — Security Analysis stage with vulnerability scanning and CVE analysis"
+git push
+```
+
+### Step 5.2: Restore Original Code
+
+After pushing the Jenkinsfile changes, we need to restore the original code by discarding the vulnerability injection changes.
 
 > **Note:** Ensure you are in **Code mode** before proceeding with this step.
 
@@ -632,15 +641,6 @@ Use git restore to discard changes to OrderService.java and restore it to the la
 - ✅ Clean working directory - removes experimental changes
 - ✅ Educational value - teaches proper Git workflow for discarding changes
 - ✅ Appropriate for lab environment - vulnerabilities were injected but not committed
-
-### Step 5.2: Commit and Push Changes
-
-**Prompt to Bob:**
-```
-git add Jenkinsfile .bob/ labs/sre/lab3/
-git commit -m "Lab 3 — Security Analysis stage with vulnerability scanning and CVE analysis"
-git push
-```
 
 In Jenkins, click **Build Now** on your pipeline and watch the console.
 
