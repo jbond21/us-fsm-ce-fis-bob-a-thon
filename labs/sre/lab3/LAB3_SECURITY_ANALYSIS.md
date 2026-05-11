@@ -20,21 +20,19 @@
   - [Step 1.2: Run the Vulnerability Injection Script](#step-12-run-the-vulnerability-injection-script)
   - [Step 1.3: Review Bob Findings After Injection](#step-13-review-bob-findings-after-injection)
 - [Part 2: Security Analysis with Software Security Reviewer Mode](#part-2-security-analysis-with-software-security-reviewer-mode)
-  - [Step 2.1: Import the Software Security Reviewer Mode](#step-21-import-the-software-security-reviewer-mode)
-  - [Step 2.2: Perform Comprehensive Security Analysis](#step-22-perform-comprehensive-security-analysis)
-  - [Step 2.3: Review Security Findings](#step-23-review-security-findings)
+  - [Step 2.1: Understanding Software Security Reviewer Mode](#step-21-understanding-software-security-reviewer-mode)
+  - [Step 2.2: Import the Software Security Reviewer Mode](#step-22-import-the-software-security-reviewer-mode)
+  - [Step 2.3: Switch to Software Security Reviewer Mode](#step-23-switch-to-software-security-reviewer-mode)
+  - [Step 2.4: Generate Comprehensive Security Analysis Report](#step-24-generate-comprehensive-security-analysis-report)
 - [Part 3: SonarQube Security Scanning](#part-3-sonarqube-security-scanning)
-  - [Step 3.1: Create SonarQube Token](#step-31-create-sonarqube-token)
-  - [Step 3.2: Run SonarQube Scan](#step-32-run-sonarqube-scan)
-  - [Step 3.3: Review SonarQube Results](#step-33-review-sonarqube-results)
-- [Part 4: Enhance Jenkins Pipeline](#part-4-enhance-jenkins-pipeline)
-  - [Step 4.1: Add Comprehensive Security Stage](#step-41-add-comprehensive-security-stage)
-- [Part 5: CVE Analysis Prompt](#part-5-cve-analysis-prompt)
-  - [Step 5.1: Create CVE Analysis Prompt](#step-51-create-cve-analysis-prompt)
-  - [Step 5.2: Test CVE Analysis](#step-52-test-cve-analysis)
-- [Part 6: Push and Watch](#part-6-push-and-watch)
-  - [Step 6.1: Restore Original Code](#step-61-restore-original-code)
-  - [Step 6.2: Commit and Push Changes](#step-62-commit-and-push-changes)
+  - [Step 3.1: Create SonarQube Token and Project](#step-31-create-sonarqube-token-and-project)
+  - [Step 3.2: Run SonarQube Scan and Generate Analysis Report](#step-32-run-sonarqube-scan-and-generate-analysis-report)
+  - [Step 3.3: Review the SonarQube Analysis Report](#step-33-review-the-sonarqube-analysis-report)
+- [Part 4: Add Unified Security & CVE Analysis Stage](#part-4-add-unified-security--cve-analysis-stage)
+  - [Step 4.1: Add Comprehensive Security Analysis Stage](#step-41-add-comprehensive-security-analysis-stage)
+- [Part 5: Push and Watch](#part-5-push-and-watch)
+  - [Step 5.1: Restore Original Code](#step-51-restore-original-code)
+  - [Step 5.2: Commit and Push Changes](#step-52-commit-and-push-changes)
 - [Lab Summary](#lab-summary)
 
 ---
@@ -81,7 +79,7 @@ Bob run script inject_vulnerabilities_modify_existing.sh
 ```
 
 **What Bob does:**
-- Executes `pipeline/inject_vulnerabilities_modify_existing.sh`
+- Executes `labs/sre/lab3/inject_vulnerabilities_modify_existing.sh`
 - Modifies `order-service/src/main/java/com/example/orders/service/OrderService.java`
 - Injects 6 types of vulnerabilities:
   1. Hardcoded credentials (BACKUP_DB_PASSWORD, LEGACY_API_KEY)
@@ -90,14 +88,12 @@ Bob run script inject_vulnerabilities_modify_existing.sh
   4. Stack trace exposure (printStackTrace)
   5. Weak random (java.util.Random)
   6. Information exposure (detailed error messages)
-- Creates backup file: `OrderService.java.backup`
 
 **Expected Output:**
 ```
 🔧 Modifying existing OrderService.java with vulnerabilities...
 ✅ Vulnerabilities injected into OrderService.java
 📍 Modified: order-service/src/main/java/com/example/orders/service/OrderService.java
-📍 Backup:   order-service/src/main/java/com/example/orders/service/OrderService.java.backup
 ```
 
 
@@ -112,16 +108,37 @@ Now that vulnerabilities have been injected, let's see what Bob detects in real-
 2. **Check Bob Findings:**
    - Click **"Bob Findings"** at the bottom of the screen
    - Bob will analyze the file and identify security issues in real-time
-   - You should see inline warnings and highlights for the injected vulnerabilities
+   - **You should see 4 critical findings** displayed in the Bob Findings panel
 
 3. **Review the inline findings:**
-   - Bob will highlight issues like:
-     - 🔴 Hardcoded credentials (lines 19-20)
-     - 🔴 Insecure logging patterns
-     - 🔴 Weak cryptography (MD5)
-     - 🟡 Stack trace exposure
-     - 🟡 Weak random generation
-     - 🟡 Information disclosure
+   
+   Bob Findings intelligently prioritizes and displays the **most critical security issues** that require immediate attention:
+   
+   **Expected: 4 Critical Findings in OrderService.java**
+   - 🔴 **Scan (Secrets): Secret Keyword:19** - Hardcoded credential detected
+   - 🔴 **Scan (Secrets): Secret Keyword:20** - Hardcoded credential detected
+   - 🔴 **Scan (Vulnerabilities): Integer.toHexString...** - Weak cryptography implementation
+   - 🔴 **Scan (Vulnerabilities): Detected MD5 hash...** - Insecure hash algorithm usage
+
+**Why 4 findings instead of 6?**
+
+While the script injected 6 types of vulnerabilities, Bob Findings focuses on **critical security issues** that pose the highest risk:
+
+| Vulnerability Type | Detected by Bob Findings? | Reason |
+|-------------------|---------------------------|---------|
+| Hardcoded credentials | ✅ Yes (2 findings) | **CRITICAL** - Direct security breach risk |
+| Weak cryptography (MD5) | ✅ Yes (2 findings) | **CRITICAL** - Cryptographically broken algorithm |
+| Insecure logging (System.out) | ⚠️ Lower priority | Code smell, not critical vulnerability |
+| Stack trace exposure | ⚠️ Lower priority | Context-dependent risk |
+| Weak random (java.util.Random) | ⚠️ Lower priority | May be flagged differently |
+| Information disclosure | ⚠️ Lower priority | Context-dependent risk |
+
+**This is expected behavior!** Bob Findings prioritizes critical security issues (secrets and cryptographic vulnerabilities) over code quality issues. The comprehensive Security Analysis Report in Part 2 will capture all issues, while Bob Findings focuses on what developers need to fix immediately.
+
+**Key Insight:**
+- **Bob Findings (4 items)** = Real-time critical security alerts for developers
+- **Security Analysis Report (17 items)** = Comprehensive code & configuration audit with compliance mapping
+- **SonarQube (15 items)** = Automated code quality and security analysis
 
 This gives you a preview of what Bob detects at the code level before we perform a comprehensive security analysis in Part 2.
 
@@ -129,25 +146,58 @@ This gives you a preview of what Bob detects at the code level before we perform
 
 ## Part 2: Security Analysis with Software Security Reviewer Mode
 
-### Step 2.1: Import the Software Security Reviewer Mode
+### Step 2.1: Understanding Software Security Reviewer Mode
 
-Bob has a specialized **Software Security Reviewer** mode that provides comprehensive security analysis. Let's import it:
+Before importing the mode, take a moment to understand what it does and how it differs from Bob Findings.
+
+**Option 1: Ask Bob to explain (Recommended)**
+
+**Prompt to Bob:**
+```
+Read labs/sre/lab3/software-security-reviewer.yaml and explain what the Software Security Reviewer mode does and how it differs from Bob Findings. What types of analysis does it perform?
+```
+
+**What Bob explains:**
+- **Software Security Reviewer** is a specialized mode for comprehensive application security audits
+- It goes beyond code-level analysis to include infrastructure, configuration, and compliance
+- Performs multi-layer security assessment across the entire application stack
+- Generates detailed reports with remediation roadmaps and compliance mapping
+
+**Option 2: Review the file yourself**
+
+Navigate to `labs/sre/lab3/software-security-reviewer.yaml` and review the mode configuration to understand its capabilities.
+
+**Key Differences:**
+
+| Feature | Bob Findings | Software Security Reviewer |
+|---------|--------------|---------------------------|
+| **Scope** | Single file, real-time | Full application audit |
+| **Analysis Depth** | Code-level vulnerabilities | Code + Infrastructure + Compliance |
+| **When to Use** | During development | Security audits, pre-deployment reviews |
+| **Output** | Inline warnings | Comprehensive security report |
+| **Focus** | Critical issues (4 items) | All security layers (17+ items) |
+
+Now let's import and use this powerful mode.
+
+### Step 2.2: Import the Software Security Reviewer Mode
+
+Let's import the specialized **Software Security Reviewer** mode:
 
 1. **Locate the mode file:**
-   - Navigate to: `labs/lab3/software-security-reviewer.yaml`
+   - Navigate to: `labs/sre/lab3/software-security-reviewer.yaml`
 
 2. **Import the mode into Bob:**
    - Click the **Settings icon** (⚙️) in the top right corner of Bob
    - Click **"Modes"** in the settings menu
    - Click **"Import"** button
-   - Select the file: `labs/lab3/software-security-reviewer.yaml`
+   - Select the file: `labs/sre/lab3/software-security-reviewer.yaml`
    - Click **"Import"** to confirm
 
 3. **Verify the mode was imported:**
    - You should see **"🛡️🔐 Software Security Reviewer"** in your modes list
    - Close the settings panel
 
-### Step 2.2: Switch to Software Security Reviewer Mode
+### Step 2.3: Switch to Software Security Reviewer Mode
 
 1. **Change Bob's mode:**
    - Click the current mode indicator at the top of Bob (e.g., "💻 Code")
@@ -157,7 +207,7 @@ Bob has a specialized **Software Security Reviewer** mode that provides comprehe
 2. **Verify mode switch:**
    - The mode indicator should show: **"🛡️🔐 Software Security Reviewer"**
 
-### Step 2.3: Generate Comprehensive Security Analysis Report
+### Step 2.4: Generate Comprehensive Security Analysis Report
 
 Now let's have Bob perform a full security audit of the order-service application.
 
@@ -167,7 +217,9 @@ Evaluate order-service for vulnerabilities, insecure patterns, misconfigurations
 ```
 
 **What Bob does:**
-- Creates a TODO list to track the security analysis process
+
+> **Note:** Bob's approach may vary. Sometimes Bob creates a TODO list to track the analysis process, other times it proceeds directly to scanning. Both approaches are valid.
+
 - Scans all application files (Java code, configuration, Dockerfile, K8s manifests)
 - Identifies security vulnerabilities and insecure patterns
 - Analyzes compliance gaps (PCI DSS, OWASP Top 10)
@@ -176,39 +228,36 @@ Evaluate order-service for vulnerabilities, insecure patterns, misconfigurations
 
 **Expected Output:**
 
-A detailed security analysis report containing:
+Bob will generate a comprehensive security analysis report: `SECURITY_ANALYSIS_REPORT.md`
+
+> **Troubleshooting:** If Bob completes the analysis but doesn't create the report file, use this follow-up prompt:
+> ```
+> Create the SECURITY_ANALYSIS_REPORT.md file with all the findings you just analyzed
+> ```
 
 **Executive Summary:**
-- 🔴 **CRITICAL RISK RATING** - Application must not be deployed
-- **25 total findings:** 9 Critical, 9 High, 7 Medium
-- Deployment blocking recommendation
 
-**Critical Findings (9):**
-1. Hardcoded credentials in source code (OrderService.java)
-2. API keys logged in plain text
-3. No authentication on API endpoints
-4. Insecure Direct Object Reference (IDOR)
-5-9. Hardcoded credentials in infrastructure (Dockerfile, K8s manifests)
+| Severity | Count |
+|----------|-------|
+| 🔴 CRITICAL | 3 |
+| 🟠 HIGH | 4 |
+| 🟡 MEDIUM | 5 |
+| 🔵 LOW | 3 |
+| ⚪ INFO | 2 |
+| **TOTAL** | **17** |
 
-**High-Priority Vulnerabilities (9):**
-10. Sensitive customer data logged
-11. MD5 hash for verification codes
-12-13. Stack trace exposure
-14. Information disclosure in error messages
-15. No rate limiting
-16. Actuator endpoints exposed
-17. No database encryption
-18. No TLS for database connection
-19. Order status logged
+**Risk Rating:** 🔴 **CRITICAL** - Application must not be deployed
 
-**Medium-Priority Issues (7):**
-20. Weak random number generator
-21. Missing input validation
-22. Outdated Spring Boot version
-23. Container runs as root
-24. No security headers
-25. No CORS configuration
-26. No audit logging
+**Report Includes:**
+- Detailed findings with CVSS scores, CWE mappings, and code examples
+- Specific remediation steps for each vulnerability
+- OWASP Top 10 (2021) compliance matrix
+- PCI-DSS compliance status
+- Prioritized remediation roadmap (4 phases over 6 weeks)
+- Supply chain & infrastructure security recommendations
+- CI/CD pipeline security gates
+
+**Review the full report** to understand each finding, its impact, and remediation steps.
 
 **Additional Sections:**
 - 📊 Threat model diagram
@@ -224,9 +273,9 @@ The Software Security Reviewer mode builds upon Bob's inline findings to provide
 
 | Feature | Bob Findings (Inline) | Software Security Reviewer |
 |---------|----------------------|---------------------------|
-| **Scope** | Single file analysis | Full application (code + infrastructure) |
+| **Scope** | Single file analysis | Full application code analysis |
 | **Detection** | Real-time as you code | Comprehensive audit on demand |
-| **Findings** | 6 code-level issues | 25 issues across all layers |
+| **Findings** | 4 critical code issues | 17 issues across code & config |
 | **Context** | Line-by-line warnings | Application-wide security posture |
 | **Output** | Inline highlights | Detailed report with remediation |
 
@@ -239,15 +288,15 @@ The Software Security Reviewer mode builds upon Bob's inline findings to provide
    - ✅ Perfect for developer workflow
 
 2. **Software Security Reviewer** (Part 2):
-   - ✅ Expands to infrastructure security (Dockerfile, K8s manifests)
+   - ✅ Expands to full code and configuration analysis
    - ✅ Adds compliance mapping (PCI DSS, OWASP, CWE)
    - ✅ Provides threat modeling and attack scenarios
    - ✅ Includes prioritized remediation roadmap
    - ✅ Perfect for security audits and reviews
 
 **Together, they provide:**
-- 🔍 **Real-time detection** (Bob Findings) + **Comprehensive analysis** (Security Reviewer)
-- 💻 **Code-level issues** + **Infrastructure vulnerabilities**
+- 🔍 **Real-time detection** (Bob Findings: 4 critical items) + **Comprehensive analysis** (Security Reviewer: 17 total findings)
+- 💻 **Critical code issues** + **Full code & configuration security**
 - ⚡ **Developer feedback** + **Security team reporting**
 - 🎯 **Immediate fixes** + **Strategic remediation planning**
 
@@ -255,108 +304,169 @@ The Software Security Reviewer mode builds upon Bob's inline findings to provide
 
 ## Part 3: SonarQube Security Scanning
 
-### Step 3.1: Create SonarQube Token
+> **Important:** Before starting Part 3, click **"Start New Task"** in Bob to begin a fresh conversation. This ensures Bob focuses on the SonarQube scanning workflow without context from the previous security analysis.
+
+### Step 3.1: Create SonarQube Token and Project
 
 > **Note:** Switch back to **Code Mode** before proceeding with this step.
 
+**SonarQube Information:**
+- **URL:** `https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com`
+- **Demo User Credentials:**
+  - Username: `demo`
+  - Password: `Demo123lab123@`
+
+> **Note:** You don't need to visit the SonarQube UI for this lab. All interactions will be done via API commands through Bob.
+
+> **⚠️ IMPORTANT:** Before executing the command below, replace `${USER}` with your actual username (e.g., `testuser1`, `testuser2`, etc.) in the prompt. This ensures your SonarQube project is uniquely identified.
+
 **Prompt to Bob:**
 ```
-Run the following to create a token for SonarQube: curl -u demo:Demo123lab123@ -X POST "https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com/api/user_tokens/generate?name=order-service-scan-$(date +%s)" 2>/dev/null
+Execute the following to create a SonarQube token and project for ${USER}:
+
+TOKEN=$(curl -s -u demo:Demo123lab123@ -X POST "https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com/api/user_tokens/generate?name=token-$(date +%s)" | jq -r .token); PROJECT_KEY=order-service-${USER}-$(date +%s); curl -u demo:Demo123lab123@ -X POST "https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com/api/projects/create?project=$PROJECT_KEY&name=Order%20Service%20${USER}"; echo ""; echo "TOKEN=$TOKEN"; echo "PROJECT_KEY=$PROJECT_KEY"; echo "Project created in SonarQube!"
+```
+
+**Example with username replaced:**
+```
+Execute the following to create a SonarQube token and project for testuser1:
+
+TOKEN=$(curl -s -u demo:Demo123lab123@ -X POST "https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com/api/user_tokens/generate?name=token-$(date +%s)" | jq -r .token); PROJECT_KEY=order-service-testuser1-$(date +%s); curl -u demo:Demo123lab123@ -X POST "https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com/api/projects/create?project=$PROJECT_KEY&name=Order%20Service%20testuser1"; echo ""; echo "TOKEN=$TOKEN"; echo "PROJECT_KEY=$PROJECT_KEY"; echo "Project created in SonarQube!"
 ```
 
 **What Bob does:**
-- Executes the curl command to generate a SonarQube token
-- Authenticates using the demo user credentials
-- Creates a uniquely named token with timestamp
+1. Generates a unique SonarQube authentication token
+2. Creates a unique project key with timestamp (e.g., `order-service-testuser1-1778261688`)
+3. Creates the project in SonarQube via API
+4. Displays the token and project key for the next step
 
 **Expected Output:**
 ```json
 {
-  "login": "demo",
-  "name": "order-service-scan-1775587069",
-  "token": "generated token",
-  "createdAt": "2026-04-07T14:37:49-0400",
-  "type": "USER_TOKEN"
+  "project": {
+    "key": "order-service-testuser1-1778261688",
+    "name": "Order Service testuser1",
+    "qualifier": "TRK",
+    "visibility": "public"
+  }
 }
+
+TOKEN=squ_dc8b45225f4ebdcd40cc73a4a19d2b3b14f76755
+PROJECT_KEY=order-service-testuser1-1778261688
+Project created in SonarQube!
 ```
 
-**Save the token** - you'll need it for the next step.
+**Save both the TOKEN and PROJECT_KEY** - you'll need them for the next step.
 
-**Note:** The demo user credentials are:
-- Username: `demo`
-- Password: `Demo123lab123@`
+**Benefits of User-Specific Projects:**
+- ✅ Each user gets their own isolated project
+- ✅ Timestamped project keys prevent conflicts in multi-user environments
+- ✅ Users can track their own analysis history
+- ✅ Results won't overwrite each other
 
-### Step 3.2: Run SonarQube Scan
+### Step 3.2: Run SonarQube Scan and Generate Analysis Report
 
 **Prompt to Bob:**
 ```
-Scan order-service with SonarQube and generate an analysis report
+Scan order-service with the newly created SonarQube project and generate a comprehensive analysis report
 ```
 
 **What Bob does:**
-1. Uses the SonarQube URL from Step 3.1
-2. Uses the generated token from Step 3.1
-3. Automatically fills in the URL and token in the Maven command
-4. Runs the scan with `-DskipTests` (tests fail due to injected vulnerabilities)
-5. Fetches issues from SonarQube API
-6. Retrieves project metrics
-7. Generates comprehensive report: `SonarQube_Analysis_Report.md`
 
-**Bob will execute:**
+Bob performs a comprehensive 5-step analysis process:
+
+**1. Runs SonarQube Scan**
+
+Bob will first attempt to run the scan with tests:
 ```bash
 cd order-service && mvn clean compile sonar:sonar \
-  -Dsonar.projectKey=order-service \
+  -Dsonar.projectKey=order-service-testuser1-1778261688 \
+  -Dsonar.projectName="Order Service testuser1" \
   -Dsonar.host.url=https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com \
-  -Dsonar.login=<GENERATED_TOKEN> \
-  -DskipTests
+  -Dsonar.token=squ_dc8b45225f4ebdcd40cc73a4a19d2b3b14f76755
 ```
 
-Where:
-- `https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com` = The SonarQube cluster URL
-- `<GENERATED_TOKEN>` = The token generated in Step 3.1 (e.g., `squ_4fbcce9dfc4e594d2e00f9265a9daa338b558a9b`)
+**Expected:** The tests will fail due to the injected vulnerabilities (they broke the `validateStatusTransition` method).
 
-**Bob automatically fills in these values from the previous step.**
-
-**Expected Output (Initial Test Failure):**
-```
-The tests are failing as expected (the injected vulnerabilities broke the validation logic).
-Let me skip the tests and run the SonarQube scan directly.
-```
-
-Bob will then run:
+Bob will recognize the test failure and automatically correct itself by adding `-DskipTests`:
 ```bash
 cd order-service && mvn clean compile sonar:sonar \
-  -Dsonar.projectKey=order-service \
+  -Dsonar.projectKey=order-service-testuser1-1778261688 \
+  -Dsonar.projectName="Order Service testuser1" \
   -Dsonar.host.url=https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com \
-  -Dsonar.login=<GENERATED_TOKEN>  \
+  -Dsonar.token=squ_dc8b45225f4ebdcd40cc73a4a19d2b3b14f76755 \
   -DskipTests
 ```
+- Uses the **PROJECT_KEY** and **TOKEN** from Step 3.1
+- Bob automatically fills in these values from the previous step
+- Skips tests to allow the scan to complete
+- Uploads analysis results to your user-specific SonarQube project
 
-**Expected Scan Results:**
+**2. Fetches Issues from SonarQube API**
+```bash
+curl -s -u demo:Demo123lab123@ \
+  "https://sonarqube.../api/issues/search?componentKeys=order-service&resolved=false&ps=500"
+```
+- Retrieves all 10 unresolved issues
+- Gets full details: rule, severity, location, message
+
+**3. Fetches Security Hotspots**
+```bash
+curl -s -u demo:Demo123lab123@ \
+  "https://sonarqube.../api/hotspots/search?projectKey=order-service&ps=500"
+```
+- Retrieves 5 security hotspots
+- Gets vulnerability probability ratings
+
+**4. Fetches Project Metrics**
+```bash
+curl -s -u demo:Demo123lab123@ \
+  "https://sonarqube.../api/measures/component?component=order-service&metricKeys=..."
+```
+- Gets quality gate metrics and ratings
+- Retrieves bugs, vulnerabilities, code smells, coverage, technical debt
+
+**5. Generates Comprehensive Analysis Report**
+
+Creates `SONARQUBE_ANALYSIS_REPORT.md` with:
+- Executive summary with quality gate status
+- Detailed breakdown of all 15 issues (10 issues + 5 security hotspots)
+- Security hotspots analysis with remediation code
+- Bugs and code smells with fixes
+- Comparison with manual security review (83% correlation)
+- Remediation priority matrix
+- CI/CD integration recommendations
+- Quality gate configuration
+
+**Expected Console Output:**
 ```
 [INFO] ANALYSIS SUCCESSFUL
-[INFO] Analysis report uploaded
-[INFO] Dashboard: http://localhost:9000/dashboard?id=order-service
+[INFO] Analysis report uploaded to SonarQube
+
+Fetching issues from SonarQube API...
+Retrieved 10 issues
+
+Fetching security hotspots...
+Retrieved 5 security hotspots
+
+Fetching project metrics...
+Quality Gate: PASSED
+
+Generating comprehensive analysis report...
+✅ Report created: SONARQUBE_ANALYSIS_REPORT.md
 ```
 
-**Note:** The test failures are intentional. The injected vulnerabilities broke the `validateStatusTransition` method, causing tests that expect validation to fail. This is expected behavior and demonstrates how security issues can impact functionality.
+**Note:** Bob goes beyond just running the scan - it automatically fetches detailed data via API and creates a comprehensive markdown report with remediation guidance. This provides much more value than viewing results in the SonarQube UI!
 
-**Metrics:**
-- Lines of Code: 295
-- Bugs: 2
-- Vulnerabilities: 1
-- Code Smells: 8
-- Security Hotspots: 4
-- Technical Debt: 130 minutes
+### Step 3.3: Review the SonarQube Analysis Report
 
-**Key Issues Detected:**
-1. 🔴 **BLOCKER** - java:S2068 - Hardcoded password (Line 19)
-2. 🔴 **CRITICAL** - java:S2119 - Insecure Random (Line 116)
-3. 🟠 **MAJOR** - java:S106 - System.out usage (Lines 47, 60, 82, 133)
-4. 🟠 **MAJOR** - java:S112 - Generic exceptions (Line 128)
+Open and review the generated `SONARQUBE_ANALYSIS_REPORT.md` to see:
 
+**Summary of Findings (15 total):**
+- 10 code issues (bugs, vulnerabilities, code smells)
+- 5 security hotspots requiring review
 
-### Step 3.3: Compare Bob vs SonarQube Findings
+**Key Correlation with Manual Analysis:**
 
 **Key Observation:**
 ✅ **100% Correlation** - All 6 vulnerabilities identified by Bob were confirmed by SonarQube:
@@ -375,158 +485,155 @@ cd order-service && mvn clean compile sonar:sonar \
 
 ---
 
-## Part 4: Enhance Jenkins Pipeline
-
-### Step 4.1: Add Comprehensive Security Stage
+## Part 4: Add SonarQube Security Analysis Stage
 
 > **Note:** Switch to **Jenkins Pipeline Integration** mode before proceeding with this step.
 
+### Step 4.1: Add SonarQube Security Analysis Stage
+
 **Prompt to Bob:**
 ```
-Use the information from Security Analysis Report and SonarQube Analysis Report to create Security Stage to jenkinsfile
+Add a security analysis stage to the Jenkinsfile that:
+1. Runs mandatory SonarQube security scanning
+2. Optionally integrates dependency scanning with Trivy
+3. Performs CVE analysis if vulnerabilities are found
+4. Calculates overall risk level and makes deployment decision
+5. Generates consolidated security reports
 ```
 
 **What Bob does:**
-- Reads existing `Jenkinsfile`
-- Enhances Stage 6 (Security Analysis) with comprehensive multi-layer security checks
-- Adds 6 security scan layers:
-  1. **Secret Scanning** - Detects hardcoded passwords, API keys, tokens, and credentials
-  2. **SonarQube Static Analysis** - Automated token generation, quality metrics, and security hotspots
-  3. **Dependency Vulnerability Scan** - Uses Trivy to scan for CRITICAL/HIGH vulnerabilities
-  4. **Code Pattern Security Checks** - Detects insecure logging, stack trace exposure, weak crypto, weak PRNG
-  5. **Configuration Security Checks** - Scans Kubernetes manifests and Dockerfiles for security issues
-  6. **Risk Assessment & Reporting** - Calculates overall risk level and generates comprehensive reports
-- Implements risk-based deployment gates (CRITICAL/HIGH/MEDIUM/LOW)
-- Generates detailed security artifacts and reports
-- **BLOCKS deployment** if CRITICAL issues are detected
 
-**Enhanced Security Stage Features:**
+Creates a unified `Security Analysis & CVE Assessment` stage with 4 phases:
 
-**6 Security Check Layers:**
-```groovy
-// 6.1: Secret Scanning
-grep -r "password=|api_key=|token=" --include="*.java" --include="*.properties" --include="*.yaml"
+**Phase 1: Mandatory SonarQube Security Scanning**
 
-// 6.2: SonarQube Static Analysis
-# Auto-generates token, runs analysis, fetches metrics and security hotspots
-mvn sonar:sonar -Dsonar.projectKey=order-service
+Uses the same SonarQube setup from Part 3 (Step 3.1 and 3.2):
 
-// 6.3: Dependency Vulnerability Scan
-trivy fs --severity CRITICAL,HIGH order-service/
+1. **Runs SonarQube Scan** (required - must be configured with `SONAR_TOKEN` and `SONAR_PROJECT_KEY`)
+   ```bash
+   cd order-service && mvn clean compile sonar:sonar \
+     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+     -Dsonar.projectName="Order Service ${USER}" \
+     -Dsonar.host.url=https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com \
+     -Dsonar.token=${SONAR_TOKEN} \
+     -DskipTests
+   ```
+   - Uses the **PROJECT_KEY** and **TOKEN** created in Part 3
+   - Skips tests to allow the scan to complete
+   - Uploads analysis results to SonarQube
 
-// 6.4: Code Pattern Security Checks
-grep -r "System.out.println|printStackTrace|MD5|java.util.Random" order-service/
+2. **Fetches Issues from SonarQube API**
+   - Retrieves all unresolved issues
+   - Gets full details: rule, severity, location, message
 
-// 6.5: Configuration Security Checks
-# Scans K8s manifests for hardcoded credentials
-# Checks Dockerfile for missing USER directive
+3. **Fetches Security Hotspots**
+   - Retrieves security hotspots
+   - Gets vulnerability probability ratings
 
-// 6.6: Risk Assessment & Reporting
-# Calculates SECURITY_RISK level and generates comprehensive reports
-```
+4. **Fetches Project Metrics**
+   - Gets quality gate metrics and ratings
+   - Retrieves bugs, vulnerabilities, code smells, coverage, technical debt
+
+5. **Generates Comprehensive Analysis Report**
+   - Creates `SONARQUBE_ANALYSIS_REPORT.md` with:
+     - Executive summary with quality gate status
+     - Detailed breakdown of all issues
+     - Security hotspots analysis with remediation code
+     - Bugs and code smells with fixes
+     - Remediation priority matrix
+     - CI/CD integration recommendations
+
+- Pipeline fails if SonarQube is not configured
+
+**Phase 2: Optional Dependency Scanning**
+- **Dependency scan** with Trivy (if available)
+- Gracefully skips if Trivy is not installed
+
+**Phase 3: Intelligent CVE Analysis**
+- Checks if any vulnerabilities were found in reports
+- **If vulnerabilities detected:** Runs detailed CVE analysis using Bob
+  - Assesses severity and exploitability
+  - Determines deployment impact
+  - Provides remediation guidance
+  - Generates `CVE_ANALYSIS_REPORT.md`
+- **If no vulnerabilities:** Skips detailed analysis, creates clean report
+
+**Phase 4: Risk Assessment & Deployment Decision**
+- Calculates overall risk level from all reports: CRITICAL/HIGH/MEDIUM/LOW
+- Makes deployment decision:
+  - 🔴 **CRITICAL:** Blocks deployment (pipeline fails)
+  - 🟠 **HIGH:** Marks pipeline unstable, requires review
+  - 🟡 **MEDIUM:** Proceeds with caution
+  - 🟢 **LOW:** Approved for deployment
+- Generates `SECURITY_SUMMARY.md` with consolidated findings
+- Archives all security artifacts
+
+**Key Benefits:**
+
+✅ **Mandatory SonarQube Integration** - Ensures consistent security scanning across all builds
+✅ **Generic & Intelligent** - Uses Bob's AI for CVE assessment
+✅ **Conditional Analysis** - Only runs detailed CVE analysis when needed
+✅ **Comprehensive Risk Assessment** - Considers ALL security reports together
+✅ **Flexible Tool Integration** - Optional Trivy support for dependency scanning
+✅ **Clear Deployment Decisions** - Automated risk-based gates
+
+**Generated Reports:**
+- `SONARQUBE_ANALYSIS_REPORT.md` - Code quality and security (mandatory)
+- `CVE_ANALYSIS_REPORT.md` - CVE-specific analysis (if vulnerabilities found)
+- `SECURITY_SUMMARY.md` - Executive summary with deployment decision
+- `dependency-scan.txt` - Dependency vulnerabilities (if Trivy available)
 
 **Security Risk Levels:**
-- **🔴 CRITICAL:** Any critical issues detected → **BLOCKS deployment** (Pipeline fails)
-- **🟠 HIGH:** High-severity issues detected → Pipeline marked unstable, review required
-- **🟡 MEDIUM:** Security hotspots require review → Pipeline continues, manual review recommended
-- **🟢 LOW:** No critical/high issues → Pipeline continues normally
+- **🔴 CRITICAL:** Blocks deployment (pipeline fails)
+- **🟠 HIGH:** Pipeline marked unstable, review required
+- **🟡 MEDIUM:** Proceeds with caution, issues should be addressed soon
+- **🟢 LOW:** Safe to deploy
 
-**Generated Artifacts:**
-- `SECURITY_REPORT.txt` - Comprehensive security summary
-- `security-secrets.txt` - Hardcoded secrets detected (if any)
-- `security-hotspots.txt` - SonarQube security hotspots (if any)
-- `security-dependencies.txt` - Dependency vulnerabilities (if any)
+**Note on Software Security Reviewer Mode:**
 
-**Security Metrics Tracked:**
-- `SECURITY_CRITICAL` - Count of critical security issues
-- `SECURITY_HIGH` - Count of high-severity issues
-- `SECURITY_MEDIUM` - Count of medium-severity issues
-- `SECURITY_HOTSPOTS` - Count of SonarQube security hotspots
-- `SECURITY_RISK` - Overall risk level (CRITICAL/HIGH/MEDIUM/LOW)
+While this lab focuses on SonarQube as the mandatory security scanning tool, Bob's Software Security Reviewer mode (covered in Part 2) can be integrated into your pipeline for more comprehensive security analysis. However, this would require additional customization to fit your specific needs and workflow. The Software Security Reviewer mode is best used for:
+- Pre-deployment security audits
+- Compliance assessments (PCI DSS, OWASP)
+- Threat modeling and attack scenario analysis
+- Custom security requirements beyond standard code scanning
 
+If you wish to integrate the Software Security Reviewer mode into your pipeline, you can customize the security stage to include Bob-based analysis alongside SonarQube scanning.
 
 ---
 
-## Part 5: CVE Analysis Prompt
+## Part 5: Push and Watch
 
-### Step 5.1: Create CVE Analysis Prompt
+### Step 5.1: Restore Original Code
+
+Before pushing to git, we need to restore the original code by discarding the vulnerability injection changes.
 
 > **Note:** Ensure you are in **Code mode** before proceeding with this step.
 
 **Prompt to Bob:**
 ```
-Write prompt for CVE analysis on pipeline as a txt file in pipeline/cve-analysis-prompt.txt
+Use git restore to discard changes to OrderService.java and restore it to the last committed version
 ```
 
 **What Bob does:**
-- Creates `pipeline/cve-analysis-prompt.txt`
-- Comprehensive prompt template for CVE analysis
-- Includes input data structure, analysis requirements, output format
-- Provides example analysis
-- Integration instructions for Jenkins
-
-**Prompt Features:**
-- CVE prioritization framework
-- Risk assessment methodology
-- Remediation guidance templates
-- False positive analysis
-- Deployment decision matrix
-- PCI DSS compliance focus
-- Example CVE analysis
-
-
-### Step 5.2: Add the CVE Analysis Prompt to the Pipeline
-
-> **Note:** Switch to **Jenkins Pipeline Integration** mode before proceeding with this step.
-
-**Prompt to Bob:**
-```text
-Use pipeline/cve-analysis-prompt.txt to add a CVE analysis step to the Jenkins pipeline.
-```
-
-**What Bob does:**
-- Reads `pipeline/cve-analysis-prompt.txt`
-- Updates `Jenkinsfile` to include a CVE analysis step in the security workflow
-- Ensures the pipeline can use scan results as input for CVE evaluation
-- Generates a CVE analysis report when applicable
-- Incorporates the CVE findings into the pipeline security decision
-
-**Expected Pipeline Behavior:**
-- If no critical or high CVEs are detected, the pipeline skips detailed CVE analysis or records a clean result
-- If critical or high CVEs are detected, the pipeline runs CVE analysis using the prompt
-- The pipeline generates `CVE_ANALYSIS_REPORT.md`
-- CVE findings contribute to the final security summary and deployment decision
-
-
----
-
-## Part 6: Push and Watch
-
-### Step 6.1: Restore Original Code
-
-Before pushing to git, we need to restore the original code by removing the injected vulnerabilities.
-
-> **Note:** Ensure you are in **Code mode** before proceeding with this step.
-
-**Prompt to Bob:**
-```
-Bob run script restore_vulnerabilities.sh
-```
-
-**What Bob does:**
-- Executes `labs/sre/lab3/restore_vulnerabilities.sh`
-- Restores the original `OrderService.java` from the backup file
-- Removes the injected vulnerabilities
-- Cleans up backup files
+- Runs `git restore order-service/src/main/java/com/example/orders/service/OrderService.java`
+- Discards all uncommitted changes to OrderService.java
+- Restores the file to its state from the last commit (HEAD)
+- Does not create a new commit - simply reverts working directory changes
 
 **Expected Output:**
 ```
-🔄 Restoring original OrderService.java...
-✅ Original code restored
-📍 Restored: order-service/src/main/java/com/example/orders/service/OrderService.java
+✅ OrderService.java restored to last committed version
+✅ Vulnerabilities removed
 ```
 
-### Step 6.2: Commit and Push Changes
+**Why git restore?**
+- ✅ Simple and direct - discards uncommitted changes
+- ✅ No commit history pollution - changes were never committed
+- ✅ Clean working directory - removes experimental changes
+- ✅ Educational value - teaches proper Git workflow for discarding changes
+- ✅ Appropriate for lab environment - vulnerabilities were injected but not committed
+
+### Step 5.2: Commit and Push Changes
 
 **Prompt to Bob:**
 ```
