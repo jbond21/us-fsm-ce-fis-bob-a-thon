@@ -6,6 +6,8 @@
 - Completed Lab 1: Bob Fundamentals
 - Bob application running
 - Command-line terminal access
+- `uv` installed ([install instructions](https://docs.astral.sh/uv/getting-started/installation/)) — required for the Jira MCP section
+- Jira credentials handed out by your instructor (URL, username, API token) — required for the Jira MCP section
 
 > 📌 **Documentation:** [Bob IDE](https://bob.ibm.com/docs/ide) | [BobShell](https://bob.ibm.com/docs/shell)
 
@@ -16,10 +18,11 @@
 2. [BobShell Fundamentals](#bobshell-fundamentals)
 3. [BobShell in Practice](#bobshell-in-practice)
 4. [Understanding MCP](#understanding-mcp)
-5. [Custom Modes](#custom-modes)
-6. [Practical Applications](#practical-applications)
-7. [Troubleshooting](#troubleshooting)
-8. [Key Takeaways](#key-takeaways)
+5. [Setting Up the Jira MCP Server](#setting-up-the-jira-mcp-server)
+6. [Custom Modes](#custom-modes)
+7. [Practical Applications](#practical-applications)
+8. [Troubleshooting](#troubleshooting)
+9. [Key Takeaways](#key-takeaways)
 
 ---
 
@@ -420,6 +423,136 @@ bob "Review the code changes in this PR and check for: security issues, performa
 ```
 
 > 📌 **Learn More:** [MCP Documentation](https://bob.ibm.com/docs/ide/configuration/mcp/understanding-mcp)
+
+---
+
+## Setting Up the Jira MCP Server
+
+Time to put MCP into practice. You'll configure the **Atlassian MCP server** so Bob can read and act on Jira tickets directly from your IDE — same registration mechanic you just learned, applied to a real-world service.
+
+> **🎯 Why This Matters**
+>
+> Most engineering teams already track work in Jira. Wiring Bob into it means you can search tickets, summarize an issue, or comment on a story without leaving your IDE. The pattern you use here applies to any MCP server — GitHub, Confluence, ServiceNow, Slack, internal APIs — they're all configured the same way.
+
+### Step 1: Open the Project MCP Config
+
+This workshop uses **project-level** MCP config so the server registration is part of the repo. The file is already in place at the repo root:
+
+```
+.bob/mcp.json
+```
+
+Open it in your editor. It contains an empty `mcpServers` object:
+
+```json
+{
+    "mcpServers": {
+    }
+}
+```
+
+> 📌 **Why project-level?** Bob loads `.bob/mcp.json` from whatever workspace it has open. Committing it to the repo means every Bob instance — your IDE locally and the bob-cli container in the Jenkins pipeline (SRE track) — picks up the same server registrations from `git checkout`. No one has to hand-edit a global config.
+
+### Step 2: Add the Atlassian Server Block
+
+Replace the contents with:
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "uvx",
+      "args": ["mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "${JIRA_URL}",
+        "JIRA_USERNAME": "${JIRA_USERNAME}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      },
+      "disabled": false,
+      "alwaysAllow": [
+        "jira_get_issue",
+        "jira_search",
+        "jira_add_comment"
+      ]
+    }
+  }
+}
+```
+
+**What's Happening:**
+
+- **`command: "uvx"`** — `uvx` is `uv`'s "run a published PyPI tool" mode. It pulls `mcp-atlassian` from PyPI on first use and runs it as a subprocess of Bob.
+- **`env`** — credentials use `${VAR}` placeholders so Bob substitutes from the surrounding environment at startup. Actual secrets never live in this committed file.
+- **`alwaysAllow`** — Jira tools Bob can call without prompting for approval each time. Starting with three read/comment-leaning tools; destructive ones (transition, delete) stay off this list.
+
+Save the file.
+
+### Step 3: Provide Your Credentials via `.env`
+
+The `${VAR}` placeholders need real values. A `.env.example` template ships in the repo — copy it to a `.env` at the repo root:
+
+```bash
+cp intro-labs/jira-mcp/.env.example .env
+```
+
+Open `.env` and replace the placeholders with the credentials your instructor handed out:
+
+```bash
+JIRA_URL=https://your-org.atlassian.net
+JIRA_USERNAME=your.email@example.com
+JIRA_API_TOKEN=your-token-here
+```
+
+`.env` is gitignored at the repo root, so your token won't be committed.
+
+> ⚠️ **Security Reminder:** API tokens are secrets. Don't paste yours into chat, screenshots, or commits. If exposed, rotate it at id.atlassian.com.
+
+### Step 4: Restart Bob
+
+Bob reads `.bob/mcp.json` and `.env` once at startup. Quit Bob completely and reopen the workspace.
+
+**Verify the server started:**
+
+1. Open Settings → MCP
+2. Look for `atlassian` in the server list
+3. Status should show **Connected** (green)
+
+If you see **Failed**, double-check that `.env` is at the repo root and that all three values are filled in with no quotes or extra spaces.
+
+### Step 5: Use the Jira Tools in Advanced Mode
+
+Switch to **Advanced mode** (MCP tools aren't available in Plan, Code, or Ask).
+
+**Try these prompts:**
+
+```text
+List the MCP tools you have access to from the atlassian server.
+```
+
+```text
+Use jira_search to find the 5 most recent issues assigned to me.
+```
+
+```text
+Show me the description and the latest 3 comments on issue PROJ-123.
+```
+
+(Replace `PROJ-123` with a real issue key from your search results.)
+
+**What to Observe:**
+
+- Bob announces which MCP tool it's about to call before calling it
+- Tools in `alwaysAllow` (e.g. `jira_search`) run without an approval prompt
+- Tools NOT in `alwaysAllow` (e.g. transitioning a ticket) prompt you for one-time approval
+
+### What You've Practiced
+
+- ✅ Registered a real MCP server in project-level config
+- ✅ Wired credentials through `.env` substitution instead of inline values
+- ✅ Used `alwaysAllow` to scope which tools run without approval
+- ✅ Invoked external service tools from Advanced mode
+
+> 📌 **Standalone Reference:** [`intro-labs/jira-mcp/jira-mcp-setup.md`](jira-mcp/jira-mcp-setup.md) — the same walkthrough as a standalone doc with deeper troubleshooting.
 
 ---
 
