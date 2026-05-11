@@ -2,8 +2,15 @@
 
 ## Table of Contents
 
-- [Overview of Lab 4](#overview)
-- [Stuck?](#stuck)
+- [Overview](#overview)
+  - [What you'll build](#what-youll-build)
+  - [Before you start](#before-you-start)
+- [Part 1 — Code Linting with Checkstyle](#part-1--code-linting-with-checkstyle)
+- [Part 2 — Deployment Artifact Linting](#part-2--deployment-artifact-linting)
+- [Part 3 — Create the Bob Linter mode and Pipeline Stage](#part-3--create-the-bob-linter-mode-and-pipeline-stage)
+- [Part 4 — Push and watch](#part-4--push-and-watch)
+- [Part 5 — Optional: Advanced Linting Challenges](#part-5--optional-advanced-linting-challenges)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
