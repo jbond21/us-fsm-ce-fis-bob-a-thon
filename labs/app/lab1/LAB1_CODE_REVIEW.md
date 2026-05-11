@@ -233,17 +233,9 @@ The security mode applies a different lens than laps 1 and 2 — same diff, but 
 
 ## Stuck?
 
-- **`/review` says "no changes detected".** It reviews uncommitted changes by default. If you committed early, run `/review main` to compare your branch against `main` instead.
-
 - **The `orders-code-reviewer` mode doesn't appear in the dropdown.** Custom modes load at IDE startup. Restart Bob IDE. Confirm the mode exists: `grep "orders-code-reviewer" .bob/custom_modes.yaml`.
 
-- **Commit message generator doesn't include the Jira ticket prefix.** The rule in `.bob/rules/coding-standards.md` may be too vague. Open it and make the format explicit: `<type>(orders): [ORD-XXXX] <description>`. Click the sparkle again — Bob re-reads the rules every time.
-
 - **The custom mode produces a wall of text instead of structured findings.** The rules in `.bob/rules-orders-code-reviewer/` aren't constraining output enough. Re-open Mode Writer and tighten — explicit BLOCKER/MAJOR/MINOR sections, file:line citation required, one-line verdict at the end.
-
-- **`gh pr comment` fails with "must specify --body or --body-file".** The security review markdown wasn't saved. Re-run the Part 5 prompt with an explicit instruction to write the output to `bob-security-review.md`, then verify with `ls -lh bob-security-review.md`.
-
-- **`/create-pr` fails with auth errors.** Run `gh auth status` to confirm you're logged in. If not, `gh auth login` and try again.
 
 - **You want to start over.** The lab makes only additive changes. Reset with `git checkout -- order-service/ .bob/ && rm -f .bob/rules/coding-standards.md bob-security-review.md && rm -rf .bob/rules-orders-code-reviewer/`. The `orders-code-reviewer` mode entry will still be in `.bob/custom_modes.yaml` — remove it by hand or with another Mode Writer prompt.
 
