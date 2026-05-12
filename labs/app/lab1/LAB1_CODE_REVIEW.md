@@ -12,6 +12,7 @@
 - [Part 3 — Pre-commit gauntlet, lap 1: built-in `/review`](#part-3--pre-commit-gauntlet-lap-1-built-in-review)
 - [Part 4 — Pre-commit gauntlet, lap 2: standards-aware review with a custom mode](#part-4--pre-commit-gauntlet-lap-2-standards-aware-review-with-a-custom-mode)
 - [Part 5 — Pre-commit gauntlet, lap 3: security review](#part-5--pre-commit-gauntlet-lap-3-security-review)
+- [Part 6 — Optional: Advanced Code Review Challenges](#part-6--optional-advanced-code-review-challenges)
 - [Stuck?](#stuck)
 
 ---
@@ -226,6 +227,49 @@ Output the standard CRITICAL / HIGH / MEDIUM / LOW findings with code patches. S
 The security mode applies a different lens than laps 1 and 2 — same diff, but graded on exploitability rather than style or domain correctness. Save the markdown; you'll post it on the PR in Part 7.
 
 ---
+## Part 6 — Optional: Advanced Code Review Challenges
+
+If you have completed the lab and want to explore different code review workflows and Bob capabilities, here are some ideas:
+
+### Challenge 1: Create a Git Commit Message Writer Mode
+1. Use Mode Writer to create a `commit-message-writer` mode
+2. Configure it to read `.bob/rules/coding-standards.md` for commit format requirements
+3. Have it analyze uncommitted changes and generate conventional commit messages
+4. Include Jira ticket reference, type (feat/fix/refactor), and meaningful body text
+5. Test it by asking: "Generate a commit message for my refund changes"
+
+### Challenge 2: Create a JIRA Ticket Writer Mode
+1. Build a `jira-ticket-writer` mode that generates well-structured ticket descriptions
+2. Configure it to include acceptance criteria, technical notes, and testing considerations
+3. Have it analyze existing code to suggest related tickets (tech debt, improvements)
+4. Test by asking: "Analyze OrderService and suggest 3 improvement tickets"
+
+### Challenge 3: Create a Unit Test Writer Mode
+1. Design a `test-writer` mode specialized in JUnit 5 and Mockito
+2. Configure it to follow your team's test naming conventions
+3. Have it identify untested edge cases and generate parameterized tests
+4. Test on the refund endpoint: "Write tests for all failure scenarios"
+
+### Challenge 4: Automate Review Findings Export
+1. Use Bob to parse the Bob Findings panel and export to JSON
+2. Create a script that posts findings as GitHub PR review comments
+3. Use the `gh` CLI to add inline comments at specific file:line locations
+4. Bonus: Add labels to the PR based on finding severity (needs-security-review, has-blockers)
+
+### Challenge 6: Create a Pre-Commit Hook Integration
+1. Write a Git pre-commit hook that runs `/review` automatically
+2. Block commits if BLOCKER findings exist
+3. Save review results to `.bob/review-history/` with timestamps
+4. Add a bypass flag for emergencies: `git commit --no-verify`
+
+### Challenge 7: Implement Review Ratcheting
+1. Establish a baseline: run all three review modes and save finding counts
+2. Create a script that fails CI if new findings exceed the baseline
+3. Use Bob to categorize findings as "new" vs "existing technical debt"
+4. Gradually lower the baseline threshold as you fix existing issues
+
+---
+
 
 ## Stuck?
 
