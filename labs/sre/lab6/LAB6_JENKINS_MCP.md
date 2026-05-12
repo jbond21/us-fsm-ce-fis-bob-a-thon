@@ -114,17 +114,7 @@ Next, lets setup the MCP server. The `.bob/mcp.json` file already exists at the 
         {
         "mcpServers": {
             "atlassian": {
-            "command": "bash",
-            "args": [
-                "-c",
-                "set -a; source .env; set +a; exec uvx mcp-atlassian"
-            ],
-            "disabled": false,
-            "alwaysAllow": [
-                "jira_get_issue",
-                "jira_search",
-                "jira_add_comment"
-            ]
+                .....
             },
             "jenkins": {
             "command": "bash",
@@ -156,7 +146,7 @@ Next, we have to add the credentials to our environment file. If you completed t
     > - The URL should include `https://` but no trailing slash
     > - `.env` is gitignored, so your token won't be committed
 
-1. Sae the `.env` file. and restart Bob (Bob reads `.bob/mcp.json` and `.env` once at startup). 
+1. Save the `.env` file. and restart Bob (Bob reads `.bob/mcp.json` and `.env` once at startup). 
 
 Let's verify the MCP server started.
 
