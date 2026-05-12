@@ -180,7 +180,7 @@ Now, we will create a reusable Bob mode that specializes in lint analysis, insig
     ```
 
     > [!TIP]
-    > This prompt is a good starting point that has been tested with the pipeline, but feel free to extend the prompt above a bit with your own preferences.
+    > This prompt is a good starting point that has been tested with the pipeline, but feel free to extend the prompt above with your own preferences.
 
 1. In Part 1 of this lab, you ran Checkstyle manually and saw how Bob can interpret its findings. Now we'll automate this in the pipeline along with other linters. So next, lets add the linting and analysis stages to the pipeline.
 
