@@ -6,14 +6,13 @@
   - [What you'll build in Lab 5](#what-youll-build-in-lab-5)
   - [What you'll reuse from Labs 1 & 2](#what-youll-reuse-from-labs-1--2)
 - [Before you start](#before-you-start)
-- [Part 1 — Register the Jira MCP server in `.bob/mcp.json`](#part-1--register-the-jira-mcp-server-in-bobmcpjson)
-  - [Key characteristics of this MCP registration](#key-characteristics-of-this-mcp-registration)
-  - [Edit `.bob/mcp.json` directly](#edit-bobmcpjson-directly)
-- [Part 2 — Create the `pipeline-dcr-jira-reporter` custom mode](#part-2--create-the-pipeline-dcr-jira-reporter-custom-mode)
-  - [Key characteristics of this mode](#key-characteristics-of-this-mode)
-- [Part 3 — Add the `DCR` stage to your Jenkinsfile](#part-3--add-the-dcr-stage-to-your-jenkinsfile)
-- [Part 4 — Push and watch](#part-4--push-and-watch)
-- [Part 5 — Make it idempotent (optional)](#part-5--make-it-idempotent-optional)
+- [Part 1 — Create the `pipeline-dcr-jira-reporter` custom mode](#part-1--create-the-pipeline-dcr-jira-reporter-custom-mode)
+- [Part 2 — Dogfood the mode against your own Jira](#part-2--dogfood-the-mode-against-your-own-jira)
+- [Part 3 — Iterate if needed](#part-3--iterate-if-needed)
+- [Part 4 — Swap `.bob/mcp.json` to the cluster-friendly form](#part-4--swap-bobmcpjson-to-the-cluster-friendly-form)
+- [Part 5 — Add the `DCR` stage to your Jenkinsfile](#part-5--add-the-dcr-stage-to-your-jenkinsfile)
+- [Part 6 — Push and watch](#part-6--push-and-watch)
+- [Part 7 — Make it idempotent (optional)](#part-7--make-it-idempotent-optional)
 - [Stuck?](#stuck)
 
 ---
@@ -24,11 +23,13 @@ You'll do three things in Lab 5: generate a **Deployment Change Request (DCR)** 
 
 Up to this point, every Bob mode you've created has been a **read-only analyst** — Bob looks at code/tests/diffs and writes a summary. In this lab Bob actually **does something with an external system**. The mechanism is [MCP (Model Context Protocol)](https://modelcontextprotocol.io): Bob talks to a Jira server through a small adapter process declared in `.bob/mcp.json`, and the custom mode you write tells Bob which Jira tools it's allowed to call.
 
+The pattern: build the mode in the IDE, prove it works against your own Jira instance from the morning intro lab, then swap configuration and ship it to CI.
+
 ### What you'll build in Lab 5
 
-1. **A Jira MCP server registration** in `.bob/mcp.json` — declarative config that Bob's pipeline pod picks up at startup. No Jenkins UI changes, no image rebuild.
+1. **A custom Bob mode for DCR + Jira reporting** (`pipeline-dcr-jira-reporter`) — a pipeline mode with the `mcp` tool group enabled and a tight `alwaysAllow` list of Jira tools so the mode can file the DCR without prompting for approval mid-build. You'll dogfood this mode locally against your own Jira before pushing it to CI.
 
-2. **A custom Bob mode for DCR + Jira reporting** (`pipeline-dcr-jira-reporter`) — a pipeline mode with the `mcp` tool group enabled and a tight `alwaysAllow` list of Jira tools so the mode can file the DCR without prompting for approval mid-build.
+2. **A cluster-friendly `.bob/mcp.json`** — once the mode is solid, swap the bash-launcher MCP registration from the morning intro lab for one that reads credentials from the pod's environment. The mode itself doesn't change.
 
 3. **A `DCR` stage** in your Jenkinsfile — runs after Unit Tests, gathers the change material (commits since `main`, diff stats, test results, artifacts from earlier stages), hands it to Bob in the new mode, and Bob both writes a `deployment-change-request.md` artifact **and** creates a new Jira ticket containing the DCR.
 
@@ -46,50 +47,17 @@ By the end, every push produces a structured DCR in Jenkins **and** a fresh Jira
 
 - [ ] Labs 1 and 2 complete (PR Review + Unit Tests stages already in your Jenkinsfile)
 - [ ] You're on your working branch (e.g. `user1-labs`)
+- [ ] Your `.bob/mcp.json` still has the `atlassian` bash-launcher entry from the morning intro lab, and `.env` at the repo root with your Jira credentials. We'll dogfood the mode against your own Jira before swapping to the CI form.
 
 ---
 
-## Part 1 — Swap `.bob/mcp.json` to the cluster-friendly Jira registration
+## Part 1 — Create the `pipeline-dcr-jira-reporter` custom mode
 
-You already have an `atlassian` server in `.bob/mcp.json` from the morning intro lab — the one with a `bash -c` launcher that sources `.env` from the workspace root. That works fine in your local IDE because `.env` sits next to the repo on your machine. It does **not** work in the Jenkins pipeline pod: there's no `.env` file inside the `bob-cli` container, and we don't want one — secrets in CI come from Kubernetes, not files on disk.
-
-The fix is to replace the bash launcher with a direct `uvx mcp-atlassian` invocation and let the `env` block read the credentials straight from the container's environment. The cluster has already injected `JIRA_URL`, `JIRA_USERNAME`, and `JIRA_API_TOKEN` into the `bob-cli` pod as env vars (same `secretKeyRef` pattern as `BOBSHELL_API_KEY`).
-
-Open `.bob/mcp.json` and replace your existing `atlassian` entry with this:
-
-```json
-"atlassian": {
-  "command": "uvx",
-  "args": ["mcp-atlassian"],
-  "env": {
-    "JIRA_URL": "${JIRA_URL}",
-    "JIRA_USERNAME": "${JIRA_USERNAME}",
-    "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
-  },
-  "disabled": false,
-  "alwaysAllow": ["jira_get_issue", "jira_search", "jira_add_comment", "..."]
-}
-```
-
-### Key characteristics of this MCP registration:
-
-- **Server name**: `atlassian` (same as the intro lab — the mode's `alwaysAllow` list and any explicit `mcp__atlassian__*` tool calls reference this string)
-- **Transport**: `stdio` (the default — `uvx` launches the server as a subprocess of bob)
-- **Credentials**: pulled from the container's environment via `${VAR}` substitution, **not** baked into `mcp.json` and **not** read from a `.env` file on disk
-- **`disabled: false`**: explicit because the file is committed to git and a future maintainer reading it shouldn't have to guess
-- **`alwaysAllow` list**: By default, Bob requires human approval for all MCP tool calls. When we run Bob on a remote cluster, we aren't able to provide approval to Bob. Anything not in `alwaysAllow` will require the model's tool call to surface a prompt that nobody is around to answer in a CI run, so the Jira write effectively no-ops — which is sometimes what you want. Treat this list as the contract.
-
-> 📌 **Will this still work in your local IDE?** Yes. Bob auto-loads `.env` from the workspace root before resolving `${VAR}` references, so the same registration picks up your local Jira creds in the IDE and the cluster-injected env vars in CI. One config, two environments — no more bash launcher needed.
-
----
-
-## Part 2 — Create the `pipeline-dcr-jira-reporter` custom mode
-
-The MCP registration is just plumbing. The **behavior** comes from a custom mode that knows how to assemble a DCR from pipeline outputs and is allowed to talk to the Jira MCP server.
+The mode is the **behavior**: it knows how to assemble a DCR from pipeline outputs and is allowed to talk to the Jira MCP server.
 
 Start a new task and switch to **Mode Writer** mode. The prompt below is a starter — read through it to understand what we are trying to add. Anything you want every DCR to follow (section structure, ticket title format, labels, what to do when Jira is down) belongs in this prompt rather than the per-stage call.
 
-The `inputs` section is the list of files that the mode will use to generate the report, they are defined in the pipeline stage in Part 4 of this lab. 
+The `inputs` section is the list of files that the mode will use to generate the report, they are defined in the pipeline stage in Part 5 of this lab. 
 
 ```
 Write a custom mode with slug `pipeline-dcr-jira-reporter`. Append it to @.bob/custom_modes.yaml — don't overwrite anything.
@@ -116,15 +84,94 @@ Tool groups:
   - mcp (scoped to the `atlassian` server, restricted to the alwaysAllow tools defined in .bob/mcp.json)
 ```
 
-The title and label format is a hard contract — Part 5 (if you do it) uses the per-branch label to find prior tickets.
+The title and label format is a hard contract — Part 7 (if you do it) uses the per-branch label to find prior tickets.
 
-Mode Writer may not produce rules files by default. If you want stricter guarantees (the exact DCR section structure, the "create exactly once" rule, defensive behavior on Jira failures), ask Mode Writer in a follow-up to expand the mode into rules files.
-
-Since the mode is invoked from the pipeline, **no Bob IDE restart needed** — `.bob/custom_modes.yaml` and `.bob/mcp.json` are read fresh from the workspace on every build.
+Mode Writer may put everything in the mode definition in `.bob/custom_modes.yaml`, or it may split larger constraints into supporting markdown files under `.bob/rules-pipeline-dcr-jira-reporter/`. Either shape works — what matters is the behavior, which you'll validate in Part 2.
 
 ---
 
-## Part 3 — Add the `DCR` stage to your Jenkinsfile
+## Part 2 — Dogfood the mode against your own Jira
+
+Your current `.bob/mcp.json` still uses the bash-launcher form from the morning intro lab, which sources `.env` and points at *your own* Jira instance. That makes the IDE the perfect place to validate the mode before it ever sees CI — any ticket it creates lands in your personal project and can be deleted without consequence.
+
+Set up the same inputs the pipeline will produce. Run these from the repo root:
+
+```bash
+git log origin/main..HEAD --pretty=format:'%h %s' > dcr-commits.txt
+git diff origin/main...HEAD --stat > dcr-diffstat.txt
+printf 'BUILD_NUMBER=local\nBRANCH=%s\nJIRA_PROJECT=KAN\n' "$(git rev-parse --abbrev-ref HEAD)" > dcr-context.txt
+```
+
+These three files are throwaway scratch — they exist only to mirror what the pipeline writes at runtime. We delete them in Part 6 before committing.
+
+Now switch to the new `pipeline-dcr-jira-reporter` mode in Bob's mode picker (or type `/pipeline-dcr-jira-reporter`) and ask Bob to generate the DCR:
+
+```
+Generate the DCR for this branch using dcr-commits.txt, dcr-diffstat.txt, and dcr-context.txt. File the resulting Jira ticket per the mode's rules.
+```
+
+Watch Bob:
+
+1. Read the three input files (plus `bob-pr-review.md` / `bob-test-analysis.md` if you have them from earlier labs)
+2. Assemble the markdown DCR
+3. Call `jira_create_issue` against your own Jira instance
+4. Report back the ticket key
+
+Open the ticket in your own Jira's web UI. Read the description. Check the labels. Decide if it's good.
+
+---
+
+## Part 3 — Iterate if needed
+
+If the first dogfood looked solid — DCR sections are populated, risk assessment is concrete, labels are correct — **skip this part**. Don't add constraints for problems you don't have.
+
+If something is off, switch back to **Mode Writer** and describe the gap concretely. Vague prompts ("make it better") get vague fixes; useful prompts look like:
+
+> When I ran the mode, the Rollback Plan section was just 'revert the merge'. Tighten the rule so Rollback Plan must reference specific commits and services affected, in at least two sentences.
+
+> The Jira ticket title came out as `DCR: feature/refunds build #local` — the slash in the branch name wasn't sanitized. Enforce that branch names are converted to lowercase + hyphens before being used in the title or labels.
+
+Mode Writer will update the mode definition (and may break large constraints out into rules files under `.bob/rules-pipeline-dcr-jira-reporter/` — that's fine, leave whatever shape it produces).
+
+Re-run Part 2's dogfood. Confirm the fix landed. Delete the bad ticket from your Jira board and repeat until the output is solid.
+
+This is the agentic-development loop: write the mode, run it, observe drift, tighten the rules, run it again. The IDE is the cheap place to do this — CI is not.
+
+---
+
+## Part 4 — Swap `.bob/mcp.json` to the cluster-friendly form
+
+Now that your mode is validated, replace the bash-launcher `atlassian` entry with the form that works in the Jenkins pod. The bash launcher works fine in your local IDE because `.env` sits next to the repo on your machine; it does **not** work in the pipeline pod — there's no `.env` file inside the `bob-cli` container, and we don't want one. Secrets in CI come from Kubernetes.
+
+Open `.bob/mcp.json` and replace your existing `atlassian` entry with this:
+
+```json
+"atlassian": {
+  "command": "uvx",
+  "args": ["mcp-atlassian"],
+  "env": {
+    "JIRA_URL": "${JIRA_URL}",
+    "JIRA_USERNAME": "${JIRA_USERNAME}",
+    "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+  },
+  "disabled": false,
+  "alwaysAllow": ["jira_get_issue", "jira_search", "jira_add_comment", "..."]
+}
+```
+
+### Key characteristics of this MCP registration:
+
+- **Server name**: `atlassian` (same as the intro lab — the mode's `alwaysAllow` list and any explicit `mcp__atlassian__*` tool calls reference this string)
+- **Transport**: `stdio` (the default — `uvx` launches the server as a subprocess of bob)
+- **Credentials**: pulled from the container's environment via `${VAR}` substitution, **not** baked into `mcp.json` and **not** read from a `.env` file on disk. The cluster has already injected `JIRA_URL`, `JIRA_USERNAME`, and `JIRA_API_TOKEN` into the `bob-cli` pod as env vars (same `secretKeyRef` pattern as `BOBSHELL_API_KEY`).
+- **`disabled: false`**: explicit because the file is committed to git and a future maintainer reading it shouldn't have to guess
+- **`alwaysAllow` list**: By default, Bob requires human approval for all MCP tool calls. When we run Bob on a remote cluster, we aren't able to provide approval to Bob. Anything not in `alwaysAllow` will require the model's tool call to surface a prompt that nobody is around to answer in a CI run, so the Jira write effectively no-ops — which is sometimes what you want. Treat this list as the contract.
+
+**Heads up:** this swap will break Jira calls from your local IDE — Bob's `${VAR}` substitution in MCP config does not resolve from `.env` on disk. That's expected at this point. You've already finished iterating on the mode; the IDE was a means, CI is the destination.
+
+---
+
+## Part 5 — Add the `DCR` stage to your Jenkinsfile
 
 Start a new task and switch to the **Jenkins Bob Integration** mode (same one you used in Labs 1 and 2). Paste the following prompt:
 
@@ -141,7 +188,17 @@ Add a "DCR" stage to @Jenkinsfile right after the Unit Tests stage. It should be
 
 ---
 
-## Part 4 — Push and watch
+## Part 6 — Push and watch
+
+Before staging anything, delete the dogfood artifacts you created in Part 2. They share names with files the pipeline writes at runtime and should never live on a branch:
+
+```bash
+rm -f dcr-commits.txt dcr-diffstat.txt dcr-context.txt deployment-change-request.md
+```
+
+Run `git status` and confirm the only modified/new files are the ones you actually meant to change (`Jenkinsfile`, `.bob/mcp.json`, `.bob/custom_modes.yaml`, possibly a `.bob/rules-pipeline-dcr-jira-reporter/` directory).
+
+Then:
 
 ```bash
 git add Jenkinsfile .bob/
@@ -160,11 +217,11 @@ Expected:
 - The board is shared with up to 4 other students on the same Jira instance. To find just your tickets, click the board's label filter and pick your branch name (e.g., `user1-labs`) — every DCR ticket gets that label
 - Pipeline ends SUCCESS (or UNSTABLE if Jira was unreachable — but the artifact is still there)
 
-Push a second commit on the same branch and re-build. You'll get a **second** ticket — `DCR: user1-labs build #2` next to `DCR: user1-labs build #1`. That's the lab's first-pass behavior: one ticket per build. If that bothers you (it should — release managers don't want a new ticket every commit), [Part 5](#part-5--make-it-idempotent-optional) is for you.
+Push a second commit on the same branch and re-build. You'll get a **second** ticket — `DCR: user1-labs build #2` next to `DCR: user1-labs build #1`. That's the lab's first-pass behavior: one ticket per build. If that bothers you (it should — release managers don't want a new ticket every commit), [Part 7](#part-7--make-it-idempotent-optional) is for you.
 
 ---
 
-## Part 5 — Make it idempotent (optional)
+## Part 7 — Make it idempotent (optional)
 
 Your pipeline currently creates a **new** Jira ticket on every push. That's fine for a demo, but a release manager looking at the board sees five "DCR: user1-labs build #N" tickets and has to figure out which one matters. The production-grade version is: one ticket per branch, with subsequent builds **commenting on** the original.
 
