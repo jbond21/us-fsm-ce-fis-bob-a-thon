@@ -29,10 +29,11 @@
   - [Step 3.2: Run SonarQube Scan and Generate Analysis Report](#step-32-run-sonarqube-scan-and-generate-analysis-report)
   - [Step 3.3: Review the SonarQube Analysis Report](#step-33-review-the-sonarqube-analysis-report)
 - [Part 4: Add Unified Security & CVE Analysis Stage](#part-4-add-unified-security--cve-analysis-stage)
-  - [Step 4.1: Add Comprehensive Security Analysis Stage](#step-41-add-comprehensive-security-analysis-stage)
+  - [Step 4.1: Add SonarQube Security Analysis Stage](#step-41-add-sonarqube-security-analysis-stage)
 - [Part 5: Push and Watch](#part-5-push-and-watch)
-  - [Step 5.1: Restore Original Code](#step-51-restore-original-code)
-  - [Step 5.2: Commit and Push Changes](#step-52-commit-and-push-changes)
+  - [Step 5.1: Commit and Push Changes](#step-51-commit-and-push-changes)
+  - [Step 5.2: Add SonarQube Token to Jenkins and Run Build](#step-52-add-sonarqube-token-to-jenkins-and-run-build)
+  - [Step 5.3: Restore Original Code](#step-53-restore-original-code)
 - [Lab Summary](#lab-summary)
 
 ---
@@ -75,25 +76,47 @@ Select **Bob Findings** at the bottom of the screen. You will observe that it is
 
 **Prompt to Bob:**
 ```
-Bob run script inject_vulnerabilities_modify_existing.sh
+Bob run script inject_vulnerabilities.sh
 ```
 
 **What Bob does:**
-- Executes `labs/sre/lab3/inject_vulnerabilities_modify_existing.sh`
+- Executes `labs/sre/lab3/inject_vulnerabilities.sh`
 - Modifies `order-service/src/main/java/com/example/orders/service/OrderService.java`
-- Injects 6 types of vulnerabilities:
+- Injects vulnerable dependency into `order-service/pom.xml`
+- Injects 7 types of vulnerabilities:
   1. Hardcoded credentials (BACKUP_DB_PASSWORD, LEGACY_API_KEY)
   2. Insecure logging (System.out.println)
   3. Weak cryptography (MD5)
   4. Stack trace exposure (printStackTrace)
   5. Weak random (java.util.Random)
   6. Information exposure (detailed error messages)
+  7. Vulnerable dependency (Log4j 2.14.1 - CVE-2021-44228)
 
 **Expected Output:**
 ```
-🔧 Modifying existing OrderService.java with vulnerabilities...
-✅ Vulnerabilities injected into OrderService.java
-📍 Modified: order-service/src/main/java/com/example/orders/service/OrderService.java
+🔧 Vulnerability Injection Script
+==================================
+
+🔧 Injecting vulnerabilities into OrderService.java...
+   ✅ Java vulnerabilities injected
+
+🔧 Injecting vulnerable Log4j dependency into pom.xml...
+   ✅ Vulnerable Log4j 2.14.1 dependency injected (CVE-2021-44228)
+
+✅ Vulnerability injection complete!
+
+📍 Modified files:
+   - order-service/src/main/java/com/example/orders/service/OrderService.java
+   - order-service/pom.xml
+
+🔍 Injected vulnerabilities:
+   1. Hardcoded credentials (BACKUP_DB_PASSWORD, LEGACY_API_KEY)
+   2. Insecure logging (System.out.println with sensitive data)
+   3. Weak cryptography (MD5 in generateOrderVerificationCode)
+   4. Stack trace exposure (printStackTrace in multiple methods)
+   5. Weak random (java.util.Random in generateTrackingNumber)
+   6. Information exposure (detailed error messages)
+   7. Vulnerable dependency (Log4j 2.14.1 - CVE-2021-44228)
 ```
 
 
@@ -120,9 +143,9 @@ Now that vulnerabilities have been injected, let's see what Bob detects in real-
    - 🔴 **Scan (Vulnerabilities): Integer.toHexString...** - Weak cryptography implementation
    - 🔴 **Scan (Vulnerabilities): Detected MD5 hash...** - Insecure hash algorithm usage
 
-**Why 4 findings instead of 6?**
+**Why 4 findings instead of 7?**
 
-While the script injected 6 types of vulnerabilities, Bob Findings focuses on **critical security issues** that pose the highest risk:
+While the script injected 7 types of vulnerabilities, Bob Findings focuses on **critical security issues** that pose the highest risk:
 
 | Vulnerability Type | Detected by Bob Findings? | Reason |
 |-------------------|---------------------------|---------|
@@ -132,6 +155,7 @@ While the script injected 6 types of vulnerabilities, Bob Findings focuses on **
 | Stack trace exposure | ⚠️ Lower priority | Context-dependent risk |
 | Weak random (java.util.Random) | ⚠️ Lower priority | May be flagged differently |
 | Information disclosure | ⚠️ Lower priority | Context-dependent risk |
+| Vulnerable dependency (Log4j) | ⚠️ Not in code scan | Detected by dependency scanners (SonarQube/Trivy) |
 
 **This is expected behavior!** Bob Findings prioritizes critical security issues (secrets and cryptographic vulnerabilities) over code quality issues. The comprehensive Security Analysis Report in Part 2 will capture all issues, while Bob Findings focuses on what developers need to fix immediately.
 
@@ -491,19 +515,71 @@ Open and review the generated `SONARQUBE_ANALYSIS_REPORT.md` to see:
 
 ### Step 4.1: Add SonarQube Security Analysis Stage
 
+**Prerequisites:**
+Before adding the security stage, ensure you have:
+- ✅ Completed Part 3 (created SonarQube token and project)
+- ✅ Your SonarQube token saved from Step 3.1
+
+> **Important:** You will add the SonarQube token to Jenkins credentials in Step 5.2. The Jenkinsfile you create in this step will reference the credential ID `sonarqube-token`, which you'll configure before running the build.
+
+#### Initial Prompt to Bob:
+
 **Prompt to Bob:**
 ```
 Add a security analysis stage to the Jenkinsfile that:
-1. Runs mandatory SonarQube security scanning
+1. Runs mandatory SonarQube security scanning using credentials('sonarqube-token')
 2. Optionally integrates dependency scanning with Trivy
 3. Performs CVE analysis if vulnerabilities are found
 4. Calculates overall risk level and makes deployment decision
 5. Generates consolidated security reports
+
+The stage should include an environment section that loads the SonarQube token:
+environment {
+    SONAR_TOKEN = credentials('sonarqube-token')
+    SONAR_HOST_URL = 'https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com'
+}
 ```
 
 **What Bob does:**
 
-Creates a unified `Security Analysis & CVE Assessment` stage with 4 phases:
+Bob will create an initial `Security Analysis` stage with the basic structure. However, this initial implementation may encounter **Groovy CPS serialization issues** when the pipeline runs, which is a common challenge in Jenkins pipeline development.
+
+> **📘 Understanding Jenkins CPS Serialization:**
+>
+> Jenkins pipelines use Continuation Passing Style (CPS) transformation, which requires all variables to be serializable. When parsing JSON responses from APIs (like SonarQube), the JsonSlurper creates non-serializable objects that can cause `NotSerializableException` errors during pipeline execution.
+>
+> This is a **standard Jenkins pipeline development pattern** - initial implementations often need refinement to handle serialization correctly. This is not a limitation of Bob, but rather a characteristic of Jenkins pipeline development that requires iterative refinement.
+
+#### Follow-up Prompt for Production-Ready Implementation:
+
+After the initial stage is created, you'll need to refine it for production use with proper serialization handling.
+
+**Follow-up Prompt to Bob:**
+```
+Fix the Security Analysis stage to ensure proper Groovy serialization and error handling:
+1. Parse all JSON responses immediately and extract only primitive values (String, Integer, Boolean)
+2. Set all JsonSlurper parsed objects to null after extracting values
+3. Add proper error handling with catchError blocks
+4. Ensure Trivy scan handles missing binary gracefully
+5. Make sure all variables stored in securityResults map contain only serializable primitives
+6. Verify the consolidated report builds correctly without serialization errors
+```
+
+**What Bob does in the refinement:**
+
+Creates a production-ready `Security Analysis` stage with the following structure:
+
+**Environment Configuration:**
+```groovy
+environment {
+    SONAR_TOKEN = credentials('sonarqube-token')
+    SONAR_HOST_URL = 'https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com'
+}
+```
+- Loads the SonarQube token from Jenkins credentials (ID: `sonarqube-token`)
+- Sets the SonarQube server URL
+
+**Stage Phases:**
 
 **Phase 1: Mandatory SonarQube Security Scanning**
 
@@ -612,35 +688,98 @@ git commit -m "Lab 3 — Security Analysis stage with vulnerability scanning and
 git push
 ```
 
-### Step 5.2: Restore Original Code
+### Step 5.2: Add SonarQube Token to Jenkins and Run Build
 
-After pushing the Jenkinsfile changes, we need to restore the original code by discarding the vulnerability injection changes.
+Before running the build, you need to add your SonarQube token to Jenkins credentials so the pipeline can authenticate with SonarQube.
+
+**Add SonarQube Token to Jenkins:**
+
+1. **Navigate to Jenkins Credentials:**
+   - Go to Jenkins → **Manage Jenkins** → **Credentials**
+   - Click **Add Credentials**
+
+2. **Create the credential:**
+   - **Kind:** Secret text
+   - **Scope:** Global
+   - **Secret:** Paste your SonarQube token from Step 3.1 (e.g., `squ_dc8b45225f4ebdcd40cc73a4a19d2b3b14f76755`)
+   - **ID:** `sonarqube-token`
+   - **Description:** SonarQube authentication token
+   - Click **Create**
+
+3. **Run the Build:**
+   - Navigate to your pipeline in Jenkins
+   - Click **Build Now**
+   - Watch the console output as the pipeline executes
+
+**Expected:**
+
+- `Checkout` and `PR Review` stages turn green
+- `Security Scan` stage runs with multiple security checks:
+  - Secret scanning detects hardcoded credentials
+  - SonarQube analysis identifies security hotspots
+  - Dependency vulnerability scan runs
+  - Code pattern checks flag insecure practices
+  - Configuration security checks validate K8s/Docker configs
+  - Risk assessment calculates overall security posture
+- Security reports are generated and archived as build artifacts:
+  - `Security_Analysis_Report.md` - Bob's comprehensive security analysis
+  - `SonarQube_Analysis_Report.md` - SonarQube findings
+  - `CVE_ANALYSIS_REPORT.md` - CVE analysis (if vulnerabilities detected)
+  - `SECURITY_REPORT.txt` - Pipeline security summary
+- Pipeline may turn **UNSTABLE (yellow)** or **FAILURE (red)** depending on severity of findings
+- Build page lists all security reports under **Build Artifacts**
+
+Open the archived artifacts from the build page to review:
+- Bob's detailed security analysis with remediation guidance
+- SonarQube's quality gate status and security hotspots
+- CVE analysis with risk assessment and deployment recommendations
+
+**Note:** The security stage is designed to block deployment if CRITICAL issues are detected. Review the console output and security reports to understand what needs to be fixed before the next deployment.
+
+### Step 5.3: Restore Original Code
+
+After the Jenkinsfile changes have been pushed and the build has run, we need to remove the vulnerabilities from OrderService.java and pom.xml that were committed to the repository.
 
 > **Note:** Ensure you are in **Code mode** before proceeding with this step.
 
 **Prompt to Bob:**
 ```
-Use git restore to discard changes to OrderService.java and restore it to the last committed version
+Revert OrderService.java and pom.xml to their original state before vulnerability injection by checking out the version from before the vulnerabilities were added, then commit and push these changes
 ```
 
 **What Bob does:**
-- Runs `git restore order-service/src/main/java/com/example/orders/service/OrderService.java`
-- Discards all uncommitted changes to OrderService.java
-- Restores the file to its state from the last commit (HEAD)
-- Does not create a new commit - simply reverts working directory changes
+1. Identifies the commit before vulnerabilities were injected
+2. Restores the clean versions of the files:
+   - `git checkout <commit-hash> -- order-service/src/main/java/com/example/orders/service/OrderService.java`
+   - `git checkout <commit-hash> -- order-service/pom.xml`
+3. Commits the restored files:
+   - `git add order-service/src/main/java/com/example/orders/service/OrderService.java order-service/pom.xml`
+   - `git commit -m "Restore OrderService.java and pom.xml to clean state - remove injected vulnerabilities"`
+4. Pushes the changes:
+   - `git push`
 
 **Expected Output:**
 ```
-✅ OrderService.java restored to last committed version
-✅ Vulnerabilities removed
+✅ OrderService.java restored to clean version
+✅ pom.xml restored to clean version
+✅ Changes committed and pushed
+✅ Vulnerabilities removed from repository
 ```
 
-**Why git restore?**
-- ✅ Simple and direct - discards uncommitted changes
-- ✅ No commit history pollution - changes were never committed
-- ✅ Clean working directory - removes experimental changes
-- ✅ Educational value - teaches proper Git workflow for discarding changes
-- ✅ Appropriate for lab environment - vulnerabilities were injected but not committed
+**Why this approach?**
+- ✅ **Removes vulnerabilities from Git history** - Creates a new commit that reverts the files
+- ✅ **Maintains audit trail** - Shows the restore action in commit history
+- ✅ **Triggers new Jenkins build** - The push will run the security scan on clean code
+- ✅ **Production-ready workflow** - Demonstrates proper way to revert committed changes
+- ✅ **Educational value** - Teaches Git workflow for undoing committed changes
+
+**Alternative approach using git revert:**
+If you prefer to revert the entire vulnerability injection commit:
+```bash
+git log --oneline  # Find the commit hash of vulnerability injection
+git revert <commit-hash>  # Creates a new commit that undoes the changes
+git push
+```
 
 In Jenkins, click **Build Now** on your pipeline and watch the console.
 
