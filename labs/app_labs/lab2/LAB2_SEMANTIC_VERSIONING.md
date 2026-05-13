@@ -85,12 +85,14 @@ This lab demonstrates **where and how IBM Bob accelerates developer workflows** 
 
 | Task | Manual Time | With Bob | Improvement |
 |------|------------|----------|------------|
-| **Part 0**: Baseline analysis | 60 min | 2 min | 30× faster |
-| **Part 1**: Impact analysis | 30 min | 2 min | 15× faster |
-| **Part 2**: Breaking change detection | Often missed | 3 min | Major |
-| **Part 3**: Dependency research | 2 hrs | 5 min | 24× faster |
-| **Part 4**: Version decision | 20 min | 1 min | 20× faster |
-| **Part 5**: Incident analysis | 2 hrs | 5 min | 24× faster |
+| **Part 0**: Baseline analysis | 60 min | ~2 min* | 30× faster |
+| **Part 1**: Impact analysis | 30 min | ~2 min* | 15× faster |
+| **Part 2**: Breaking change detection | Often missed | ~3 min* | Major |
+| **Part 3**: Dependency research | 2 hrs | ~5 min* | 24× faster |
+| **Part 4**: Version decision | 20 min | ~1 min* | 20× faster |
+| **Part 5**: Incident analysis | 2 hrs | ~5 min* | 24× faster |
+
+*Times with Bob are estimates and will vary based on complexity and prompt quality.
 
 ### 🎯 What Bob Does in Each Part
 
