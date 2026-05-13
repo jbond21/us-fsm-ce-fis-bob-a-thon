@@ -9,6 +9,7 @@
 
 ## Morning Labs (everyone)
 
+- Node
 - [BobShell](https://bob.ibm.com/docs/shell/getting-started/install-and-setup) (the `bob` CLI)
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) — single install, provides both `uv` and `uvx`
 
