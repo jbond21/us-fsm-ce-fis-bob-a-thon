@@ -240,14 +240,26 @@ When Bob wants to make changes, it:
 - Modifications that seem too broad
 - Anything that doesn't match your intent
 
+### Set Up the Workshop Sandbox
+
+> 📁 **Sandbox convention:** Throughout Labs 1 and 2, every scratch file you create with Bob will live under `labs/intro-labs/sandbox/` so the workshop repo stays tidy. You'll delete this directory as the final step of Lab 2.
+
+Before practicing approvals, ask Bob to create the sandbox directory. **In Code mode:**
+
+```text
+Create an empty directory at labs/intro-labs/sandbox/
+```
+
+Approve the action when Bob prompts. All subsequent file-creation exercises in this lab (and the BobShell exercises in Lab 2) will write into this directory.
+
 ### Approval Exercise
 
-Let's practice the approval workflow:
+Now let's practice the approval workflow with an actual file:
 
 **Step 1: Simple File Creation**
 In Code mode, ask Bob:
 ```text
-First, create a directory at labs/intro-labs/sandbox/ — we'll put all scratch files from this lab there to keep the rest of the repo clean. Then create a file at labs/intro-labs/sandbox/hello.txt with the text "Hello from Bob".
+Create a file at labs/intro-labs/sandbox/hello.txt with the text "Hello from Bob"
 ```
 
 **Watch for:**
