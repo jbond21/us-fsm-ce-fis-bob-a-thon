@@ -441,7 +441,7 @@ Before wiring Bob into Jira, confirm you can reach Jira yourself with the creden
 
 1. Open your Jira URL in a browser (the value labeled **JIRA_URL** on your credential sheet)
 2. Sign in with your Jira **username** (your workshop email) and password
-3. Note your **project key** — it's the prefix in any issue key (e.g. `KAN-1` → project key is `KAN`). You'll need it when Bob creates a ticket later in Step 7.
+3. Confirm you can see the workshop Jira project. The project key for this workshop is **`KAN`** — you'll see it as the prefix on every issue (e.g. `KAN-1`, `KAN-12`). Bob will use this project key when creating a ticket in Step 7.
 
 If you can't log in, ask your instructor before continuing — every step below assumes a working Jira session and a known API token.
 
@@ -546,7 +546,7 @@ Bob can **create** tickets from within the IDE. The ticket you create here is th
 Still in **Advanced** mode, paste:
 
 ```text
-Use the atlassian MCP server to create a new Jira issue with these details:
+Use the atlassian MCP server to create a new Jira issue in project KAN with these details:
 
 Summary: Add refund endpoint to order-service
 
@@ -678,7 +678,7 @@ Custom modes configure Bob for specific workflows and tasks. They define:
 
 **To install a custom mode:**
 1. Open Bob Settings
-2. Navigate to **Custom Modes**
+2. Navigate to **Modes**
 3. Click **Import Mode**
 4. Select your mode file (`.json`)
 5. The mode appears in Bob's mode selector
