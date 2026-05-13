@@ -533,6 +533,122 @@ Bob: instant + consistent
 **Improvement:** 20× faster
 
 ---
+
+## 🛠️ Step 4.2: Create Your Custom Slash Command
+
+Before running the final risk assessment, let's create a reusable custom slash command that you can use in future projects.
+
+### 🎯 Goal
+
+Create a `/version-impact` command that analyzes all changes and recommends the correct semantic version bump.
+
+### 📝 What This Command Will Do
+
+When you run `/version-impact`, it will:
+1. Analyze all code changes in your working directory
+2. Identify breaking vs non-breaking changes
+3. Recommend the correct version bump (PATCH/MINOR/MAJOR)
+4. Generate a consumer impact report
+5. List all changes by category
+
+### 🔧 Creating the Command
+
+**Step 1: Ask Bob to create the command definition**
+
+**Prompt to Bob:**
+```text
+Create a custom slash command called /version-impact that:
+
+1. Analyzes all changes in the current working directory
+2. Categorizes changes as:
+   - Breaking changes (require MAJOR version)
+   - New features (require MINOR version)
+   - Bug fixes (require PATCH version)
+3. Recommends the correct semantic version bump
+4. Generates a consumer impact report showing:
+   - What will break for consumers
+   - What new capabilities are available
+   - What bugs are fixed
+5. Lists all changes by file and type
+
+Save the command definition to: .bob/custom_commands/version-impact.yaml
+
+Make it production-ready and reusable for any project.
+```
+
+**Step 2: Test your new command**
+
+Once Bob creates the command file, test it:
+
+```bash
+/version-impact
+```
+
+**Expected output:**
+```
+Version Impact Analysis
+=======================
+
+Recommended Version: 2.0.0 (MAJOR)
+Current Version: 1.0.0
+
+Breaking Changes (MAJOR):
+✗ Status transition validation added
+  - Impact: Requests with invalid transitions will now fail
+  - Affected: All consumers using status updates
+  - Migration: Update client code to follow valid transitions
+
+✗ Jackson serialization behavior changed
+  - Impact: JSON response format may differ
+  - Affected: All consumers parsing JSON responses
+  - Migration: Test and update JSON parsing logic
+
+New Features (MINOR):
+✓ GET /api/orders/summary endpoint
+  - New capability for order summaries
+  - Backward compatible
+
+✓ Optional 'priority' field on Order model
+  - New optional field, existing code unaffected
+  - Backward compatible
+
+Consumer Impact Report:
+- Breaking: 2 changes require consumer updates
+- New Features: 2 additions available for adoption
+- Bug Fixes: 0
+
+Recommendation: Release as version 2.0.0 with migration guide
+```
+
+### 💡 Why Create Custom Commands?
+
+**Benefits:**
+- **Reusability**: Use `/version-impact` in every project
+- **Consistency**: Same analysis criteria every time
+- **Speed**: One command vs multiple prompts
+- **Team Alignment**: Share commands with your team
+- **Best Practices**: Encode your team's standards
+
+**When to create custom commands:**
+- Repetitive analysis tasks
+- Team-specific workflows
+- Company standards enforcement
+- Complex multi-step processes
+
+### 🎓 Learning Moment
+
+You've just learned how to:
+1. Identify a repetitive workflow (version impact analysis)
+2. Define it as a reusable command
+3. Use Bob to generate the command definition
+4. Test and validate the command
+
+This same pattern works for:
+- `/security-check` - Run security scans
+- `/code-review` - Automated code review
+- `/release-notes` - Generate release notes
+- `/migration-guide` - Create migration guides
+
 ---
 
 ## 📊 Step 4.3: Risk Assessment

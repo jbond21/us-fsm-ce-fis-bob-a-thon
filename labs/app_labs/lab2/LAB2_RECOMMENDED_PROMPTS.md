@@ -3,7 +3,7 @@
 This document contains recommended prompts for each decision point in the Interactive Semantic Versioning lab. Use these as reference if you want to see well-structured prompts, or use them directly if you prefer.
 
 
-## ⚡ NEW: Slash Command Alternatives
+## ⚡ Slash Command Alternatives
 
 For faster, more consistent analysis, consider using Bob's built-in slash commands instead of crafting prompts:
 
