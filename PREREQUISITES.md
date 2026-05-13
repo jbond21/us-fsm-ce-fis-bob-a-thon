@@ -11,6 +11,7 @@
 
 - Node
 - [BobShell](https://bob.ibm.com/docs/shell/getting-started/install-and-setup) (the `bob` CLI)
+  - https://bob.ibm.com/docs/shell/getting-started/install-and-setup#using-the-command-palette
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) — single install, provides both `uv` and `uvx`
 
 ## App Team — Afternoon
