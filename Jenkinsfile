@@ -15,6 +15,28 @@
 // update the `bob` container image URL below.
 // ═══════════════════════════════════════════════════════════════════
 
+// Per-instance Jira credential routing. Each pipeline self-selects which
+// jira-creds-{a..n} secret to mount based on the user number parsed
+// from its job name. See setup/JIRA_ACCOUNT_SETUP.md Section 3.3.
+//
+// user1..user14 map 1:1 to creds a..n. user15+ all share user14's
+// instance (jira-creds-n) — we only provisioned 14 Jira accounts.
+//
+// @NonCPS keeps the regex Matcher object inside this method so it never
+// becomes a CPS-serialized local variable (Matcher is not Serializable
+// and would crash the pipeline on checkpoint).
+@NonCPS
+def routeJiraSecret(String jobName) {
+    def m = jobName =~ /user0*(\d+)/
+    if (!m) return 'jira-creds-n'
+    int userNum = m[0][1].toInteger()
+    def letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n']
+    if (userNum >= 1 && userNum <= 14) return "jira-creds-${letters[userNum - 1]}"
+    return 'jira-creds-n'
+}
+
+def jiraSecret = routeJiraSecret(env.JOB_NAME ?: '')
+
 pipeline {
     agent {
         kubernetes {
@@ -71,6 +93,26 @@ spec:
       value: "true"
     - name: HOME
       value: /workspace
+    - name: JIRA_URL
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_URL
+    - name: JIRA_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_USERNAME
+    - name: JIRA_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_API_TOKEN
+    - name: JIRA_PROJECT
+      valueFrom:
+        secretKeyRef:
+          name: ${jiraSecret}
+          key: JIRA_PROJECT
   volumes:
   - name: workspace-volume
     emptyDir: {}
