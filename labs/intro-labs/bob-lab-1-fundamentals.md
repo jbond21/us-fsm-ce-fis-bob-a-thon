@@ -240,14 +240,26 @@ When Bob wants to make changes, it:
 - Modifications that seem too broad
 - Anything that doesn't match your intent
 
+### Set Up the Workshop Sandbox
+
+> 📁 **Sandbox convention:** Throughout Labs 1 and 2, every scratch file you create with Bob will live under `labs/intro-labs/sandbox/` so the workshop repo stays tidy. You'll delete this directory as the final step of Lab 2.
+
+Before practicing approvals, ask Bob to create the sandbox directory. **In Code mode:**
+
+```text
+Create an empty directory at labs/intro-labs/sandbox/
+```
+
+Approve the action when Bob prompts. All subsequent file-creation exercises in this lab (and the BobShell exercises in Lab 2) will write into this directory.
+
 ### Approval Exercise
 
-Let's practice the approval workflow:
+Now let's practice the approval workflow with an actual file:
 
 **Step 1: Simple File Creation**
 In Code mode, ask Bob:
 ```text
-Create a file called hello.txt with the text "Hello from Bob"
+Create a file at labs/intro-labs/sandbox/hello.txt with the text "Hello from Bob"
 ```
 
 **Watch for:**
@@ -316,7 +328,7 @@ I want to add a user profile feature to my application. Help me plan:
 
 **Step 1: Create a configuration file**
 ```text
-Create a config.json file with basic application settings:
+Create labs/intro-labs/sandbox/config.json with basic application settings:
 - app name
 - version
 - environment (development)
@@ -325,13 +337,13 @@ Keep it simple.
 
 **Step 2: Create a utility function**
 ```text
-Create a utils file in [your preferred language] with a function that formats dates.
+Create a utils file inside labs/intro-labs/sandbox/ (in [your preferred language]) with a function that formats dates.
 Keep it minimal and well-commented.
 ```
 
 **Step 3: Connect related files**
 ```text
-Create a main file that imports and uses the utility function from utils.
+Create a main file inside labs/intro-labs/sandbox/ that imports and uses the utility function from the utils file in the same directory.
 ```
 
 ### Exercise 3: Understanding Code
@@ -339,7 +351,7 @@ Create a main file that imports and uses the utility function from utils.
 **Switch to Ask Mode** and try:
 
 ```text
-Explain what each file does in simple terms:
+Explain what each file in labs/intro-labs/sandbox/ does in simple terms:
 - config.json
 - utils file
 - main file
@@ -350,7 +362,7 @@ Explain what each file does in simple terms:
 **Back to Code Mode:**
 
 ```text
-Add error handling to the date formatting function in utils.
+Add error handling to the date formatting function in labs/intro-labs/sandbox/utils.
 Include a comment explaining why error handling is important here.
 ```
 

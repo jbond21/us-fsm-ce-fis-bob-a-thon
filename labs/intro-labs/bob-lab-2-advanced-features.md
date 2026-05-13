@@ -137,8 +137,9 @@ Execute single commands for automation and scripting:
 **Create a test file first:**
 
 ```bash
-# Create a simple Python file
-cat > calculator.py << 'EOF'
+# Create the sandbox dir (if Lab 1 didn't already) and a simple Python file inside it
+mkdir -p labs/intro-labs/sandbox
+cat > labs/intro-labs/sandbox/calculator.py << 'EOF'
 def add(a, b):
     return a + b
 
@@ -151,13 +152,13 @@ EOF
 
 ```bash
 # Explain code in a file
-bob "Explain what calculator.py does"
+bob "Explain what labs/intro-labs/sandbox/calculator.py does"
 
 # Review code
-bob "Review calculator.py and suggest improvements"
+bob "Review labs/intro-labs/sandbox/calculator.py and suggest improvements"
 
 # Generate new code (with auto-approval)
-bob "Create a Python function that calculates factorial" --yolo --hide-intermediary-output > factorial.py
+bob "Create a Python function that calculates factorial" --yolo --hide-intermediary-output > labs/intro-labs/sandbox/factorial.py
 
 # Quick questions
 bob "What is the difference between a list and a tuple in Python?"
@@ -440,7 +441,7 @@ Before wiring Bob into Jira, confirm you can reach Jira yourself with the creden
 
 1. Open your Jira URL in a browser (the value labeled **JIRA_URL** on your credential sheet)
 2. Sign in with your Jira **username** (your workshop email) and password
-3. Note your **project key** — it's the prefix in any issue key (e.g. `KAN-1` → project key is `KAN`). You'll need it when Bob creates a ticket later in Step 7.
+3. Confirm you can see the workshop Jira project. The project key for this workshop is **`KAN`** — you'll see it as the prefix on every issue (e.g. `KAN-1`, `KAN-12`). Bob will use this project key when creating a ticket in Step 7.
 
 If you can't log in, ask your instructor before continuing — every step below assumes a working Jira session and a known API token.
 
@@ -545,7 +546,7 @@ Bob can **create** tickets from within the IDE. The ticket you create here is th
 Still in **Advanced** mode, paste:
 
 ```text
-Use the atlassian MCP server to create a new Jira issue with these details:
+Use the atlassian MCP server to create a new Jira issue in project KAN with these details:
 
 Summary: Add refund endpoint to order-service
 
@@ -677,7 +678,7 @@ Custom modes configure Bob for specific workflows and tasks. They define:
 
 **To install a custom mode:**
 1. Open Bob Settings
-2. Navigate to **Custom Modes**
+2. Navigate to **Modes**
 3. Click **Import Mode**
 4. Select your mode file (`.json`)
 5. The mode appears in Bob's mode selector
@@ -780,6 +781,20 @@ Now that you've mastered Bob's advanced features:
 - [MCP Documentation](https://bob.ibm.com/docs/ide/configuration/mcp/understanding-mcp)
 - [Custom Modes Guide](https://bob.ibm.com/docs/ide/configuration/custom-modes)
 - [Best Practices](https://bob.ibm.com/docs/ide/getting-started/best-practices)
+
+---
+
+## Cleanup
+
+Throughout Labs 1 and 2 you created scratch files under `labs/intro-labs/sandbox/`. Now that you're done with the intro labs, clean it up so the workshop repo stays tidy for the afternoon tracks.
+
+**Switch to Code mode** and ask Bob:
+
+```text
+Delete the labs/intro-labs/sandbox/ directory and everything in it.
+```
+
+Approve the deletion when Bob prompts. Confirm the directory is gone before moving on to the App or SRE track.
 
 ---
 
