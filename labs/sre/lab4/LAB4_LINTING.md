@@ -106,6 +106,25 @@ Before adding linters to our pipeline, lets start in the Bob IDE with some high 
     - Suggests concrete fixes
     - Prioritizes what matters most
 
+1. You just ran `mvn checkstyle:check` and asked Bob to analyze the findings. This is a common pattern that we can encode as a custom slash command. Start a new task, switch to **Code** mode and prompt Bob:
+
+    ```text copy
+    Create a custom slash command at .bob/commands/lint-check.md. The filename becomes the command name, so this defines `/lint-check`.
+
+    When invoked, the command should:
+    1. Run `mvn -f order-service/pom.xml checkstyle:check`
+    2. Read `order-service/target/checkstyle-result.xml`
+    3. Group findings by severity, name the fix-first items, and suggest concrete remediations
+    ```
+
+1. Run your new command in a new task to confirm it works:
+
+    ```text copy
+    /lint-check
+    ```
+
+    You should get the same analysis you got from the manual prompt — but in one step.
+
 Bob was not only able to find and read the report, it was able to provide immediate feedback for which are the most critical issues, which impact reliability and a prioritization for fixing the issues. We can use these insights to get ahead of any linting issues before our applications even hit our pipelines.
 
 > **Note:** The prompts we are using can be adapted based on different perspectives, goals and end users.
