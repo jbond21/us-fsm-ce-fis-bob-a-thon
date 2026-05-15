@@ -3,6 +3,27 @@
 
 ---
 
+## Table of Contents
+
+1. [Executive Summary](#executive-summary)
+2. [Who This Lab Is For](#who-this-lab-is-for)
+3. [Your Role](#your-role)
+4. [Prerequisites](#prerequisites)
+5. [Lab Structure](#lab-structure)
+6. [Part 1: Establish the Baseline](#part-1--establish-the-baseline)
+7. [Part 2: Safe, Backward-Compatible Change (MINOR)](#part-2--safe-backward-compatible-change-minor)
+8. [Part 3: Accidental Breaking Change](#part-3--accidental-breaking-change)
+9. [Part 4: Third-Party Dependency Breaking Change](#part-4--third-party-dependency-breaking-change)
+10. [Part 5: Release Decision & Communication](#part-5--release-decision--communication)
+11. [Part 6: Consumer Impact Simulation (Optional)](#part-6--consumer-impact-simulation-optional)
+12. [Lab Summary](#lab-summary)
+13. [Key Takeaway](#key-takeaway)
+14. [Executive / Platform Showcase Framing](#executive--platform-showcase-framing)
+15. [Next Steps](#next-steps)
+16. [Feedback](#feedback)
+
+---
+
 ## Executive Summary
 
 Experienced application developers do not struggle with writing code—they struggle with **managing change safely**.
@@ -69,63 +90,58 @@ IBM Bob works alongside your team as an **always-on copilot**, continuously anal
 - Java & Maven
 - Access to the order-service repository
 
+## IBM Bob Acceleration Guide
+
+This lab demonstrates **where and how IBM Bob accelerates developer workflows** in semantic versioning tasks.
+
+### 🧠 Core Idea
+
+> Bob transforms multi-hour manual engineering tasks into minutes while improving accuracy and reducing risk.
+
+### ⚡ Time Savings by Lab Section
+
+| Task | Manual Time | With Bob | Improvement |
+|------|------------|----------|------------|
+| **Part 1**: Establish the Baseline | 60 min | ~2 min* | 30× faster |
+| **Part 2**: Safe, Backward-Compatible Change | 30 min | ~2 min* | 15× faster |
+| **Part 3**: Accidental Breaking Change | Often missed | ~3 min* | Major |
+| **Part 4**: Third-Party Dependency Breaking Change | 2 hrs | ~5 min* | 24× faster |
+| **Part 5**: Release Decision & Communication | 20 min | ~1 min* | 20× faster |
+| **Part 6**: Consumer Impact Simulation | 2 hrs | ~5 min* | 24× faster |
+
+*Times with Bob are estimates and will vary based on complexity and prompt quality.
+
+### 🚀 Final Takeaway
+
+> IBM Bob is not just a helper—it is a **force multiplier** that automates analysis, improves accuracy, and prevents costly mistakes.
+
 ---
 
-## Lab Structure
-
-This quick lab consists of 5 parts that can be completed in 60-90 minutes:
-
-- **Part 0**: Establish the Baseline
-- **Part 1**: Safe, Backward-Compatible Change (MINOR)
-- **Part 2**: Accidental Breaking Change
-- **Part 3**: Third-Party Dependency Breaking Change
-- **Part 4**: Release Decision & Communication
-- **Part 5**: Consumer Impact Simulation (Optional)
-
----
-
-## Part 0 — Establish the Baseline
+## Part 1 — Establish the Baseline
 
 **Goal:** Understand what "stable" means to consumers today.
 
-### Step 0.1: Ensure Advanced Mode
+### Step 1.1: Ensure Advanced Mode
 
-**Prompt to Bob:**
-```text
-I am starting Lab 2.3 on Semantic Versioning. Please confirm you are in Advanced Mode. If not, please switch to Advanced Mode now.
-```
+Ensure Bob is in Advanced Mode before starting this lab. Advanced Mode is required for full analysis capabilities.
 
-**Expected Response:**
-Bob should confirm Advanced Mode is active or switch to it.
+If Bob is not in Advanced Mode, switch to it now using the mode selector in the Bob interface.
 
 ---
 
-### Step 0.2: Identify the Public API Surface
+### Step 1.2: Create Baseline Report
 
 **Prompt to Bob:**
 ```text
-Analyze the order-service and identify the public API surface:
+Analyze the order-service and create a baseline report:
 
-1. List all REST endpoints with their HTTP methods
-2. Identify request/response models
-3. Document current behavior and contracts
-4. Note any implicit behaviors consumers might rely on
+1. List all REST endpoints with HTTP methods
+2. Document request/response models
+3. Identify current version (check pom.xml and git tags)
+4. Note any behavioral contracts consumers might rely on
+5. List all dependencies and their versions
 
-Generate a baseline-api-surface.md report.
-```
-
----
-
-### Step 0.3: Review Current Version
-
-**Prompt to Bob:**
-```text
-What is the current version of order-service? Check:
-1. pom.xml version
-2. Any version constants in code
-3. Git tags
-
-Document the current version as our baseline.
+Save as: baseline-report.md
 ```
 
 ---
@@ -139,11 +155,24 @@ Document the current version as our baseline.
 
 ---
 
-## Part 1 — Safe, Backward-Compatible Change (MINOR)
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Part 2, start a new task with Bob:**
+
+This ensures Bob has a clean context for the next section and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Part 2"
+
+---
+
+## Part 2 — Safe, Backward-Compatible Change (MINOR)
 
 **Scenario:** A feature request that should be low risk.
 
-### Step 1.1: Implement New Features
+### Step 2.1: Implement New Features
 
 **Prompt to Bob:**
 ```text
@@ -165,39 +194,190 @@ Make these changes and show me the modified files.
 
 ---
 
-### Step 1.2: Analyze and Validate Changes
+### Step 2.2: Create Custom Slash Command for Change Analysis
 
-**Before using Bob to analyze, make your own decision:**
+**Before creating the command, make your own decision:**
 
-**Your Decision (record this):**
+**Your Decision:**
 - What version bump do you recommend? (PATCH / MINOR / MAJOR)
 - Why?
 
-**Now verify with Bob:**
+---
 
-**Prompt to Bob:**
-```text
-Analyze the changes I just made to order-service. Compare with the baseline from Part 0.
+**Now create a reusable slash command using the Bob UI:**
 
-Categorize changes by:
-1. API changes (new endpoints, modified endpoints, removed endpoints)
-2. Model changes (new fields, modified fields, removed fields)
-3. Behavior changes (logic modifications)
+**Steps to create the command:**
 
-For each change, determine:
-- Is it breaking or non-breaking?
-- What version bump does it require?
-- Why?
+1. **Open the Command Builder:**
+   - Click the lightning bolt icon (⚡) to the right of the mode selector in Bob's interface
 
-Then verify backward compatibility:
-1. Simulate an old client that doesn't know about the new fields
-2. Confirm that:
-   - Old clients can still use existing endpoints
-   - New fields are truly optional
-   - No existing behavior changed
+2. **Add the Command:**
+   - In the "Workspace Commands" section, enter the name: `analyze-changes`
+   - Click the plus (+) button to create the command
 
-Generate a part1-change-analysis.md report with both the analysis and validation results.
+3. **Configure the Command:**
+   - Bob will open an editor for you to define the command
+   - Copy and paste the following complete command definition:
+
+```yaml
+name: analyze-changes
+description: Analyzes code changes and compares with baseline to determine semantic version impact
+version: 1.0.0
+
+prompt: |
+  Analyze the changes made to the service and compare with the baseline from Part 1.
+
+  ## Step 1: Categorize Changes
+  
+  Categorize all changes by:
+  - **API changes**: new endpoints, modified endpoints, removed endpoints
+  - **Model changes**: new fields, modified fields, removed fields
+  - **Behavior changes**: logic modifications, validation changes, error handling changes
+
+  ## Step 2: Determine Impact
+  
+  For each change, determine:
+  - Is it breaking or non-breaking?
+  - What version bump does it require? (PATCH/MINOR/MAJOR)
+  - Why? (Provide clear rationale based on semantic versioning rules)
+
+  ## Step 3: Verify Backward Compatibility
+  
+  Verify backward compatibility by:
+  1. Simulating an old client that doesn't know about new fields
+  2. Confirming that:
+     - Old clients can still use existing endpoints without modification
+     - New fields are truly optional (nullable, have defaults, or are additive only)
+     - No existing behavior changed in a way that breaks consumer expectations
+     - No endpoints were removed or had their contracts modified
+
+  ## Step 4: Generate Report
+  
+  Generate a comprehensive change-analysis.md report that includes:
+  
+  ### Summary
+  - Total number of changes
+  - Recommended version bump (PATCH/MINOR/MAJOR)
+  - Overall risk assessment (Low/Medium/High)
+  
+  ### Detailed Analysis
+  
+  #### API Changes
+  - List each API change with:
+    - Change type (new/modified/removed)
+    - Endpoint path and method
+    - Breaking or non-breaking classification
+    - Impact description
+  
+  #### Model Changes
+  - List each model change with:
+    - Change type (new field/modified field/removed field)
+    - Model and field name
+    - Breaking or non-breaking classification
+    - Impact description
+  
+  #### Behavior Changes
+  - List each behavior change with:
+    - Component affected
+    - Change description
+    - Breaking or non-breaking classification
+    - Impact description
+  
+  ### Backward Compatibility Validation
+  - Results of old client simulation
+  - Confirmation of endpoint compatibility
+  - Confirmation of field optionality
+  - Confirmation of behavior stability
+  
+  ### Recommendation
+  - Final version bump recommendation
+  - Rationale for the recommendation
+  - Any migration steps required (if MAJOR version)
+  - Risk mitigation strategies
+  
+  Save the report as: part1-change-analysis.md
+
+parameters: []
+
+examples:
+  - description: Analyze changes after adding new endpoint and optional field
+    input: ""
+    output: |
+      # Change Analysis Report
+      
+      ## Summary
+      - Total Changes: 2
+      - Recommended Version: 1.1.0 (MINOR)
+      - Risk Assessment: Low
+      
+      ## Detailed Analysis
+      
+      ### API Changes
+      1. **New Endpoint**: GET /api/orders/summary
+         - Type: New
+         - Classification: Non-breaking
+         - Impact: Adds new capability, existing clients unaffected
+      
+      ### Model Changes
+      1. **New Field**: Order.priority
+         - Type: New optional field
+         - Classification: Non-breaking
+         - Impact: Field is nullable, existing clients can ignore it
+      
+      ### Behavior Changes
+      None detected
+      
+      ## Backward Compatibility Validation
+      ✓ Old clients can use all existing endpoints
+      ✓ New fields are optional (nullable)
+      ✓ No existing behavior changed
+      ✓ No endpoints removed or modified
+      
+      ## Recommendation
+      **Version Bump**: 1.0.0 → 1.1.0 (MINOR)
+      
+      **Rationale**:
+      - New functionality added (new endpoint)
+      - New optional field added to model
+      - All changes are backward compatible
+      - No breaking changes detected
+      
+      **Migration Required**: None
+      
+      **Risk Mitigation**: None needed - changes are safe for auto-upgrade
+
+tags:
+  - semantic-versioning
+  - change-analysis
+  - backward-compatibility
+  - version-bump
+
+metadata:
+  author:
+  created:
+  category: analysis
 ```
+
+4. **Save the Command:**
+   - Save the command definition
+   - The command is now available for use
+
+---
+
+**Test your new command:**
+
+Run your newly created command:
+
+```bash
+/analyze-changes
+```
+
+**Expected output:**
+- Categorized list of all changes (API, Model, Behavior)
+- Breaking vs non-breaking classification for each change
+- Recommended version bump with rationale
+- Backward compatibility validation results
+- Generated part1-change-analysis.md report
 
 ---
 
@@ -210,11 +390,24 @@ Generate a part1-change-analysis.md report with both the analysis and validation
 
 ---
 
-## Part 2 — Accidental Breaking Change
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Part 3, start a new task with Bob:**
+
+This ensures Bob has a clean context for the next section and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Part 3"
+
+---
+
+## Part 3 — Accidental Breaking Change
 
 **Scenario:** A refactor that appears harmless but isn't.
 
-### Step 2.1: Inject the Breaking Change
+### Step 3.1: Inject the Breaking Change
 
 **Prompt to Bob:**
 ```text
@@ -230,18 +423,29 @@ Make this change and show me the code.
 
 ---
 
-### Step 2.2: Initial Assessment
+### Step 3.2: Initial Assessment
 
 **Before analyzing with Bob, answer:**
 - Is this change breaking? Why or why not?
 - The method signature didn't change - does that matter?
 - What version bump would you recommend?
 
-**Record your answers in:** `part2-initial-assessment.md`
+---
+
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Step 3.3, start a new task with Bob:**
+
+This ensures Bob has a clean context for the analysis and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Step 3.3"
 
 ---
 
-### Step 2.3: Detect the Breaking Change
+### Step 3.3: Detect the Breaking Change
 
 **Prompt to Bob:**
 ```text
@@ -255,7 +459,7 @@ Compare behavior before and after:
 
 Test this by simulating a consumer that tries to update an order from SHIPPED back to PROCESSING (which might have worked before).
 
-Generate a part2-breaking-analysis.md report.
+Generate a part3-breaking-analysis.md report.
 ```
 
 ---
@@ -269,11 +473,24 @@ Generate a part2-breaking-analysis.md report.
 
 ---
 
-## Part 3 — Third-Party Dependency Breaking Change
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Part 4, start a new task with Bob:**
+
+This ensures Bob has a clean context for the next section and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Part 4"
+
+---
+
+## Part 4 — Third-Party Dependency Breaking Change
 
 **Scenario:** A routine dependency upgrade introduces risk.
 
-### Step 3.1: Analyze Current Dependencies
+### Step 4.1: Analyze Current Dependencies
 
 **Prompt to Bob:**
 ```text
@@ -290,12 +507,12 @@ Focus on:
 - PostgreSQL driver
 - Hibernate
 
-Generate a part3-dependency-inventory.md report.
+Generate a part4-dependency-inventory.md report.
 ```
 
 ---
 
-### Step 3.2: Simulate Dependency Upgrade
+### Step 4.2: Simulate Dependency Upgrade
 
 **Prompt to Bob:**
 ```text
@@ -311,12 +528,12 @@ Simulate a Jackson library upgrade scenario:
 
 Even though our API code doesn't change, explain how this could break consumers.
 
-Create a part3-jackson-upgrade-analysis.md report.
+Create a part4-jackson-upgrade-analysis.md report.
 ```
 
 ---
 
-### Step 3.3: Decide on Release Strategy
+### Step 4.3: Decide on Release Strategy
 
 **Prompt to Bob:**
 ```text
@@ -350,18 +567,31 @@ Analyze trade-offs for each option and recommend the best approach.
 
 ---
 
-## Part 4 — Release Decision & Communication
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Part 5, start a new task with Bob:**
+
+This ensures Bob has a clean context for the next section and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Part 5"
+
+---
+
+## Part 5 — Release Decision & Communication
 
 **Scenario:** You need to ship without slowing the team down.
 
-### Step 4.1: Determine Version and Generate Release Notes
+### Step 5.1: Determine Version and Generate Release Notes
 
 **Prompt to Bob:**
 ```text
-Review all changes from Parts 1-3:
-- Part 1: New endpoint and optional field (MINOR)
-- Part 2: Status transition validation (MAJOR)
-- Part 3: Jackson upgrade (potentially MAJOR)
+Review all changes from Parts 2-4:
+- Part 2: New endpoint and optional field (MINOR)
+- Part 3: Status transition validation (MAJOR)
+- Part 4: Jackson upgrade (potentially MAJOR)
 
 1. What is the final version number we should release?
 2. Explain your reasoning based on semantic versioning rules.
@@ -375,12 +605,12 @@ Then generate concise release notes for this release:
 
 Keep it under 10 bullet points. Focus on consumer impact.
 
-Save as: part4-release-notes.md
+Save as: part5-release-notes.md
 ```
 
 ---
 
-### Step 4.2: Create Migration Guide
+### Step 5.2: Create Migration Guide
 
 **Prompt to Bob:**
 ```text
@@ -392,7 +622,7 @@ Create a migration guide for consumers upgrading to this version:
 4. Estimate migration effort (hours/days)
 5. Suggest a rollout strategy
 
-Save as: part4-migration-guide.md
+Save as: part5-migration-guide.md
 ```
 
 ---
@@ -406,15 +636,28 @@ Save as: part4-migration-guide.md
 
 ---
 
-## Part 5 — Consumer Impact Simulation (Optional)
+### ✅ Checkpoint: Start New Task
+
+**Before proceeding to Part 6, start a new task with Bob:**
+
+This ensures Bob has a clean context for the next section and prevents context overflow.
+
+**How to start a new task:**
+1. Click the "New Task" button in Bob's interface, or
+2. Use the keyboard shortcut (if available), or
+3. Simply type: "Start a new task for Part 6"
+
+---
+
+## Part 6 — Consumer Impact Simulation (Optional)
 
 **Scenario:** A wrong version decision reaches consumers.
 
-### Step 5.1: Simulate Incorrect Versioning
+### Step 6.1: Simulate Incorrect Versioning
 
 **Prompt to Bob:**
 ```text
-Simulate what would happen if we released the breaking changes from Part 2 as a MINOR version (1.1.0 instead of 2.0.0):
+Simulate what would happen if we released the breaking changes from Part 3 as a MINOR version (1.1.0 instead of 2.0.0):
 
 1. Consumers auto-upgrade (they trust MINOR versions)
 2. What breaks in production?
@@ -422,12 +665,12 @@ Simulate what would happen if we released the breaking changes from Part 2 as a 
 4. How long until the issue is detected?
 5. What is the blast radius?
 
-Create a part5-incident-simulation.md report.
+Create a part6-incident-simulation.md report.
 ```
 
 ---
 
-### Step 5.2: Analyze the Incident
+### Step 6.2: Analyze the Incident
 
 **Prompt to Bob:**
 ```text
@@ -460,12 +703,12 @@ Document lessons learned.
 
 In this lab, you experienced how IBM Bob acts as an always-on copilot for release engineering:
 
-1. **Part 0**: Bob established a baseline understanding of your API surface
-2. **Part 1**: Bob verified backward compatibility for new features
-3. **Part 2**: Bob detected behavioral breaking changes invisible at the API level
-4. **Part 3**: Bob analyzed third-party dependency impact
-5. **Part 4**: Bob recommended version numbers and drafted release communications
-6. **Part 5**: Bob simulated the cost of incorrect versioning decisions
+1. **Part 1**: Bob established a baseline understanding of your API surface
+2. **Part 2**: Bob verified backward compatibility for new features
+3. **Part 3**: Bob detected behavioral breaking changes invisible at the API level
+4. **Part 4**: Bob analyzed third-party dependency impact
+5. **Part 5**: Bob recommended version numbers and drafted release communications
+6. **Part 6**: Bob simulated the cost of incorrect versioning decisions
 
 ### Key Quality-of-Life Improvements
 
@@ -482,18 +725,6 @@ In this lab, you experienced how IBM Bob acts as an always-on copilot for releas
 - Confident version decisions
 - Proactive incident prevention
 - Fast, safe release cycles
-
-### Files Created
-
-During this lab, Bob helped you create:
-- `baseline-api-surface.md` - Public API documentation
-- `part1-change-analysis.md` - Backward compatibility analysis
-- `part2-breaking-analysis.md` - Breaking change detection
-- `part3-dependency-inventory.md` - Dependency risk assessment
-- `part3-jackson-upgrade-analysis.md` - Third-party impact analysis
-- `part4-release-notes.md` - Consumer-focused release notes
-- `part4-migration-guide.md` - Migration guidance
-- `part5-incident-simulation.md` - Cost of incorrect versioning
 
 ---
 
