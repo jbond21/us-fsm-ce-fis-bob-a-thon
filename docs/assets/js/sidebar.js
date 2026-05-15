@@ -98,9 +98,35 @@
       return;
     }
     
+    // Build Quick Navigation section for all tracks
+    let html = `
+      <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--cds-ui-03);">
+        <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--cds-text-02); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Quick Navigation</h4>
+        <ul class="sidebar-list" style="margin-bottom: 0;">
+    `;
+    
+    // Add links to all tracks (highlight current track)
+    Object.keys(sidebarConfig).forEach(function(trackKey) {
+      const trackConfig = sidebarConfig[trackKey];
+      const isCurrentTrack = trackKey === currentTrack;
+      const trackClass = isCurrentTrack ? 'active' : '';
+      html += `
+        <li class="sidebar-item ${trackClass}">
+          <a href="lab.html?track=${trackKey}" class="sidebar-link" style="font-size: 0.875rem;">
+            ${trackConfig.title}
+          </a>
+        </li>
+      `;
+    });
+    
+    html += `
+        </ul>
+      </div>
+    `;
+    
     // Build navigation for selected track
     const config = sidebarConfig[currentTrack];
-    let html = `<h3 class="sidebar-title">${config.title}</h3><ul class="sidebar-list">`;
+    html += `<h3 class="sidebar-title">${config.title}</h3><ul class="sidebar-list">`;
     
     config.items.forEach(function(item) {
       const isActive = currentLab === item.path;

@@ -14,6 +14,8 @@
   
   // Determine markdown file path (relative to docs/)
   let markdownPath;
+  let shouldLoadFirstLab = false;
+  
   if (page) {
     // Root level files (e.g., PREREQUISITES.md, README.md)
     markdownPath = `../${page}.md`;
@@ -21,8 +23,8 @@
     // Lab files within a track
     markdownPath = `../labs/${track}/${lab}.md`;
   } else if (track) {
-    // Track README
-    markdownPath = `../labs/${track}/README.md`;
+    // Track specified but no lab - redirect to first lab
+    shouldLoadFirstLab = true;
   }
   
   /**
@@ -32,6 +34,12 @@
     const labContent = document.getElementById('lab-content');
     
     if (!labContent) return;
+    
+    // If track specified but no lab, redirect to first lab in that track
+    if (shouldLoadFirstLab) {
+      redirectToFirstLab(track);
+      return;
+    }
     
     if (!markdownPath) {
       labContent.innerHTML = `
@@ -200,6 +208,34 @@
     const h1 = document.querySelector('#lab-content h1');
     if (h1) {
       document.title = `${h1.textContent} - FIS Bob-a-thon Workshop`;
+    }
+  }
+  
+  /**
+   * Redirect to first lab in a track
+   */
+  function redirectToFirstLab(track) {
+    const firstLabMap = {
+      'intro-labs': 'bob-lab-1-fundamentals',
+      'sre': '00_SETUP',
+      'app': 'lab1/LAB1_CODE_REVIEW',
+      'handoff-labs': 'bob-auto-recovery-self-healing-lab'
+    };
+    
+    const firstLab = firstLabMap[track];
+    if (firstLab) {
+      window.location.href = `lab.html?track=${track}&lab=${firstLab}`;
+    } else {
+      document.getElementById('lab-content').innerHTML = `
+        <div class="bx--inline-notification bx--inline-notification--warning">
+          <div class="bx--inline-notification__details">
+            <p class="bx--inline-notification__title">Track not found</p>
+            <p class="bx--inline-notification__subtitle">
+              The track "${track}" doesn't exist. <a href="index.html">Return to homepage</a> to select a valid track.
+            </p>
+          </div>
+        </div>
+      `;
     }
   }
   
