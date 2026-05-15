@@ -11,18 +11,31 @@
   
   // Auto-detect GitHub username from URL if not configured
   let GITHUB_USER = config.user;
-  if (!GITHUB_USER || GITHUB_USER === 'YOUR_GITHUB_USERNAME') {
-    // Try to extract from GitHub Pages URL (username.github.io/repo-name)
+  
+  // Check if user needs to be auto-detected
+  if (!GITHUB_USER || GITHUB_USER === 'YOUR_GITHUB_USERNAME' || GITHUB_USER.trim() === '') {
+    // Try to extract from GitHub Pages URL
     if (window.location.hostname.includes('github.io')) {
-      const pathParts = window.location.pathname.split('/').filter(p => p);
+      // Extract username from hostname (e.g., jrtorres.github.io -> jrtorres)
       GITHUB_USER = window.location.hostname.split('.')[0];
+      console.log('Auto-detected GitHub username from URL:', GITHUB_USER);
     } else {
+      // Fallback for local development - show helpful error
+      console.error('Cannot auto-detect GitHub username. Please update config.js with your GitHub username.');
       GITHUB_USER = 'YOUR_GITHUB_USERNAME';
     }
   }
   
   const GITHUB_REPO = config.repo || 'us-fsm-ce-fis-bob-a-thon';
   const GITHUB_BRANCH = config.branch || 'main';
+  
+  // Log configuration for debugging
+  console.log('GitHub Pages Configuration:', {
+    user: GITHUB_USER,
+    repo: GITHUB_REPO,
+    branch: GITHUB_BRANCH,
+    baseUrl: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`
+  });
   
   // Base URL for raw content
   const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
