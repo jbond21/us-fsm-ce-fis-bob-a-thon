@@ -6,22 +6,43 @@
 (function() {
   'use strict';
   
+  // Get GitHub configuration from config.js
+  const config = window.GITHUB_CONFIG || {};
+  
+  // Auto-detect GitHub username from URL if not configured
+  let GITHUB_USER = config.user;
+  if (!GITHUB_USER || GITHUB_USER === 'YOUR_GITHUB_USERNAME') {
+    // Try to extract from GitHub Pages URL (username.github.io/repo-name)
+    if (window.location.hostname.includes('github.io')) {
+      const pathParts = window.location.pathname.split('/').filter(p => p);
+      GITHUB_USER = window.location.hostname.split('.')[0];
+    } else {
+      GITHUB_USER = 'YOUR_GITHUB_USERNAME';
+    }
+  }
+  
+  const GITHUB_REPO = config.repo || 'us-fsm-ce-fis-bob-a-thon';
+  const GITHUB_BRANCH = config.branch || 'main';
+  
+  // Base URL for raw content
+  const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+  
   // Get URL parameters
   const params = new URLSearchParams(window.location.search);
   const track = params.get('track');
   const lab = params.get('lab');
   const page = params.get('page');
   
-  // Determine markdown file path (relative to docs/)
+  // Determine markdown file path
   let markdownPath;
   let shouldLoadFirstLab = false;
   
   if (page) {
     // Root level files (e.g., PREREQUISITES.md, README.md)
-    markdownPath = `../${page}.md`;
+    markdownPath = `${RAW_BASE_URL}/${page}.md`;
   } else if (track && lab) {
     // Lab files within a track
-    markdownPath = `../labs/${track}/${lab}.md`;
+    markdownPath = `${RAW_BASE_URL}/labs/${track}/${lab}.md`;
   } else if (track) {
     // Track specified but no lab - redirect to first lab
     shouldLoadFirstLab = true;
@@ -151,6 +172,33 @@
   function fixRelativeLinks() {
     const labContent = document.getElementById('lab-content');
     if (!labContent) return;
+    
+    // Fix image paths to point to GitHub raw content
+    labContent.querySelectorAll('img').forEach(function(img) {
+      const src = img.getAttribute('src');
+      
+      // Skip external images
+      if (!src || src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+        return;
+      }
+      
+      // Convert relative image paths to GitHub raw URLs
+      let newSrc;
+      if (src.startsWith('../')) {
+        // Path relative to repo root
+        newSrc = `${RAW_BASE_URL}/${src.substring(3)}`;
+      } else if (src.startsWith('./')) {
+        // Path relative to current lab
+        newSrc = `${RAW_BASE_URL}/labs/${track}/${src.substring(2)}`;
+      } else if (!src.startsWith('/')) {
+        // Relative path without prefix
+        newSrc = `${RAW_BASE_URL}/labs/${track}/${src}`;
+      }
+      
+      if (newSrc) {
+        img.setAttribute('src', newSrc);
+      }
+    });
     
     // Fix links to other markdown files
     labContent.querySelectorAll('a[href$=".md"]').forEach(function(link) {
