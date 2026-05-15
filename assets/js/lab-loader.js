@@ -1,44 +1,10 @@
 /**
  * Lab Content Loader
- * Fetches and renders markdown content from lab files
+ * Fetches and renders markdown content from lab files using simple relative paths
  */
 
 (function() {
   'use strict';
-  
-  // Get GitHub configuration from config.js
-  const config = window.GITHUB_CONFIG || {};
-  
-  // Auto-detect GitHub username from URL if not configured
-  let GITHUB_USER = config.user;
-  
-  // Check if user needs to be auto-detected
-  if (!GITHUB_USER || GITHUB_USER === 'YOUR_GITHUB_USERNAME' || GITHUB_USER.trim() === '') {
-    // Try to extract from GitHub Pages URL
-    if (window.location.hostname.includes('github.io')) {
-      // Extract username from hostname (e.g., jrtorres.github.io -> jrtorres)
-      GITHUB_USER = window.location.hostname.split('.')[0];
-      console.log('Auto-detected GitHub username from URL:', GITHUB_USER);
-    } else {
-      // Fallback for local development - show helpful error
-      console.error('Cannot auto-detect GitHub username. Please update config.js with your GitHub username.');
-      GITHUB_USER = 'YOUR_GITHUB_USERNAME';
-    }
-  }
-  
-  const GITHUB_REPO = config.repo || 'us-fsm-ce-fis-bob-a-thon';
-  const GITHUB_BRANCH = config.branch || 'main';
-  
-  // Log configuration for debugging
-  console.log('GitHub Pages Configuration:', {
-    user: GITHUB_USER,
-    repo: GITHUB_REPO,
-    branch: GITHUB_BRANCH,
-    baseUrl: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`
-  });
-  
-  // Base URL for raw content
-  const RAW_BASE_URL = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
   
   // Get URL parameters
   const params = new URLSearchParams(window.location.search);
@@ -46,20 +12,22 @@
   const lab = params.get('lab');
   const page = params.get('page');
   
-  // Determine markdown file path
+  // Determine markdown file path using simple relative paths
   let markdownPath;
   let shouldLoadFirstLab = false;
   
   if (page) {
     // Root level files (e.g., PREREQUISITES.md, README.md)
-    markdownPath = `${RAW_BASE_URL}/${page}.md`;
+    markdownPath = `./${page}.md`;
   } else if (track && lab) {
     // Lab files within a track
-    markdownPath = `${RAW_BASE_URL}/labs/${track}/${lab}.md`;
+    markdownPath = `./labs/${track}/${lab}.md`;
   } else if (track) {
     // Track specified but no lab - redirect to first lab
     shouldLoadFirstLab = true;
   }
+  
+  console.log('Loading content from:', markdownPath);
   
   /**
    * Fetch and render markdown content
@@ -186,30 +154,31 @@
     const labContent = document.getElementById('lab-content');
     if (!labContent) return;
     
-    // Fix image paths to point to GitHub raw content
+    // Fix image paths - convert to relative paths from site root
     labContent.querySelectorAll('img').forEach(function(img) {
       const src = img.getAttribute('src');
       
-      // Skip external images
+      // Skip external images and data URIs
       if (!src || src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
         return;
       }
       
-      // Convert relative image paths to GitHub raw URLs
+      // Convert relative image paths
       let newSrc;
       if (src.startsWith('../')) {
-        // Path relative to repo root
-        newSrc = `${RAW_BASE_URL}/${src.substring(3)}`;
+        // Path relative to repo root (e.g., ../assets/image.png)
+        newSrc = `./${src.substring(3)}`;
       } else if (src.startsWith('./')) {
-        // Path relative to current lab
-        newSrc = `${RAW_BASE_URL}/labs/${track}/${src.substring(2)}`;
+        // Path relative to current lab (e.g., ./assets/image.png)
+        newSrc = `./labs/${track}/${src.substring(2)}`;
       } else if (!src.startsWith('/')) {
-        // Relative path without prefix
-        newSrc = `${RAW_BASE_URL}/labs/${track}/${src}`;
+        // Relative path without prefix (e.g., assets/image.png)
+        newSrc = `./labs/${track}/${src}`;
       }
       
       if (newSrc) {
         img.setAttribute('src', newSrc);
+        console.log('Fixed image path:', src, '→', newSrc);
       }
     });
     
@@ -223,12 +192,12 @@
       }
       
       // Convert relative markdown links to lab.html links
-      if (href.startsWith('../')) {
-        // Link to another track
+      if (href.startsWith('../labs/')) {
+        // Link to another track (e.g., ../labs/sre/lab1/LAB1.md)
         const parts = href.split('/');
-        if (parts.length >= 3) {
-          const targetTrack = parts[1];
-          const targetLab = parts.slice(2).join('/').replace('.md', '');
+        if (parts.length >= 4) {
+          const targetTrack = parts[2];
+          const targetLab = parts.slice(3).join('/').replace('.md', '');
           link.setAttribute('href', `lab.html?track=${targetTrack}&lab=${targetLab}`);
         }
       } else if (href.startsWith('./') || !href.startsWith('/')) {
