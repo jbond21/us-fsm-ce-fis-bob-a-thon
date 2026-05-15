@@ -5,7 +5,7 @@
 
 window.GITHUB_CONFIG = {
   // Your GitHub username or organization name
-  user: 'YOUR_GITHUB_USERNAME',
+  user: 'ibm-us-fsm-ce',
   
   // Repository name
   repo: 'us-fsm-ce-fis-bob-a-thon',
