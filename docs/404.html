@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-carbon-theme="white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found - FIS Bob-a-thon Workshop</title>
+  <meta name="description" content="Page not found">
+  
+  <!-- Carbon Design System -->
+  <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css">
+  <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="bx--header" role="banner">
+    <a class="bx--header__name" href="index.html">
+      <span class="bx--header__name--prefix">IBM</span>
+      FIS Bob-a-thon Workshop
+    </a>
+    <div class="bx--header__global">
+      <button id="theme-toggle" class="bx--header__action" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="theme-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle class="sun" cx="10" cy="10" r="4" fill="currentColor"/>
+          <path class="sun" d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.657 4.343l-1.414 1.414M5.757 14.243l-1.414 1.414M15.657 15.657l-1.414-1.414M5.757 5.757L4.343 4.343" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path class="moon" d="M10 2a8 8 0 108 8 6 6 0 01-8-8z" fill="currentColor" style="display:none"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+  
+  <!-- 404 Content -->
+  <div class="bx--content error-page">
+    <div class="bx--row">
+      <div class="bx--col-lg-8 bx--offset-lg-2">
+        <div class="error-content">
+          <h1 class="bx--type-expressive-heading-06">404</h1>
+          <h2 class="bx--type-expressive-heading-04">Page Not Found</h2>
+          <p class="bx--type-body-long-02">
+            The lab or page you're looking for doesn't exist or may have been moved.
+          </p>
+          
+          <div class="error-actions">
+            <a href="index.html" class="bx--btn bx--btn--primary">Return to Homepage</a>
+            <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--secondary">Browse Labs</a>
+          </div>
+          
+          <div class="bx--tile error-suggestions">
+            <h3 class="bx--type-productive-heading-03">Suggested Actions:</h3>
+            <ul class="bx--list--unordered">
+              <li>Check the URL for typos</li>
+              <li>Return to the <a href="index.html">homepage</a> and navigate from there</li>
+              <li>Browse available <a href="lab.html?track=intro-labs">Intro Labs</a></li>
+              <li>Explore the <a href="lab.html?track=sre">SRE Track</a></li>
+              <li>View <a href="lab.html?page=PREREQUISITES">Prerequisites</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="assets/js/theme-toggle.js"></script>
+</body>
+</html>

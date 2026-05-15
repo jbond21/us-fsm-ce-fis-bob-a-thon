@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-carbon-theme="white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab - FIS Bob-a-thon Workshop</title>
+  <meta name="description" content="FIS Bob-a-thon Workshop lab content">
+  
+  <!-- Carbon Design System -->
+  <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css">
+  <!-- Prism.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body>
+  <!-- Header with Theme Toggle -->
+  <header class="bx--header" role="banner">
+    <button class="bx--header__action bx--header__menu-trigger" id="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4h16M2 10h16M2 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <a class="bx--header__name" href="index.html">
+      <span class="bx--header__name--prefix">IBM</span>
+      FIS Bob-a-thon Workshop
+    </a>
+    <nav class="bx--header__nav" aria-label="Main navigation">
+      <a href="index.html" class="bx--header__menu-item">Home</a>
+      <a href="lab.html?page=PREREQUISITES" class="bx--header__menu-item">Prerequisites</a>
+    </nav>
+    <div class="bx--header__global">
+      <button id="theme-toggle" class="bx--header__action" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="theme-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle class="sun" cx="10" cy="10" r="4" fill="currentColor"/>
+          <path class="sun" d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.657 4.343l-1.414 1.414M5.757 14.243l-1.414 1.414M15.657 15.657l-1.414-1.414M5.757 5.757L4.343 4.343" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path class="moon" d="M10 2a8 8 0 108 8 6 6 0 01-8-8z" fill="currentColor" style="display:none"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="page-container">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar" role="navigation" aria-label="Lab navigation">
+      <nav class="sidebar-nav">
+        <div id="sidebar-content">
+          <div class="loading">Loading navigation...</div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" role="main">
+      <div id="lab-content" class="bx--tile lab-content-tile">
+        <div class="loading">
+          <div class="bx--loading bx--loading--small">
+            <svg class="bx--loading__svg" viewBox="0 0 100 100">
+              <circle class="bx--loading__stroke" cx="50%" cy="50%" r="44"/>
+            </svg>
+          </div>
+          <p>Loading lab content...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-groovy.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="assets/js/theme-toggle.js"></script>
+  <script src="assets/js/sidebar.js"></script>
+  <script src="assets/js/lab-loader.js"></script>
+</body>
+</html>

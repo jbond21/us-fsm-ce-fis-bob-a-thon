@@ -1,0 +1,25 @@
+# GitHub Pages Configuration for FIS Bob-a-thon Workshop
+
+title: FIS Bob-a-thon Workshop
+description: Comprehensive workshop for IBM Bob integration into development workflows, CI/CD pipelines, and custom automation scenarios
+baseurl: ""
+url: ""
+
+# Build settings
+markdown: kramdown
+theme: null
+
+# Exclude files from build
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - README.md
+  - .gitignore
+  - .git/
+
+# Include files that start with underscore
+include:
+  - _config.yml
+
+# Made with Bob

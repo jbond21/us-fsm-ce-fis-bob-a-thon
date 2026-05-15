@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-carbon-theme="white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIS Bob-a-thon Workshop</title>
+  <meta name="description" content="Comprehensive workshop for IBM Bob integration into development workflows, CI/CD pipelines, and custom automation scenarios.">
+  
+  <!-- Carbon Design System -->
+  <link rel="stylesheet" href="https://unpkg.com/carbon-components/css/carbon-components.min.css">
+  <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body>
+  <!-- Carbon UI Shell Header -->
+  <header class="bx--header" role="banner">
+    <a class="bx--header__name" href="index.html">
+      <span class="bx--header__name--prefix">IBM</span>
+      FIS Bob-a-thon Workshop
+    </a>
+    <div class="bx--header__global">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="bx--header__action" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="theme-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sun icon for light mode -->
+          <circle class="sun" cx="10" cy="10" r="4" fill="currentColor"/>
+          <path class="sun" d="M10 2v2M10 16v2M18 10h-2M4 10H2M15.657 4.343l-1.414 1.414M5.757 14.243l-1.414 1.414M15.657 15.657l-1.414-1.414M5.757 5.757L4.343 4.343" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <!-- Moon icon for dark mode (hidden by default) -->
+          <path class="moon" d="M10 2a8 8 0 108 8 6 6 0 01-8-8z" fill="currentColor" style="display:none"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="bx--content">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1 class="bx--type-expressive-heading-06">FIS Bob-a-thon Workshop</h1>
+        <p class="bx--type-expressive-heading-03">
+          Master IBM Bob integration for DevOps and Development
+        </p>
+        <p class="bx--type-body-long-02 hero-description">
+          Comprehensive hands-on workshop demonstrating how to integrate IBM Bob into development workflows, 
+          CI/CD pipelines, and custom automation scenarios.
+        </p>
+        <div class="hero-actions">
+          <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--primary bx--btn--lg">Get Started</a>
+          <a href="lab.html?page=PREREQUISITES" class="bx--btn bx--btn--secondary bx--btn--lg">View Prerequisites</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Learning Tracks Grid -->
+    <section class="tracks">
+      <h2 class="bx--type-expressive-heading-05 section-title">Choose Your Learning Track</h2>
+      <p class="bx--type-body-long-02 section-description">
+        Select a track based on your role and experience level. All participants should complete the Intro Labs first.
+      </p>
+      
+      <div class="bx--row">
+        <!-- Intro Labs Card -->
+        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
+          <div class="bx--tile bx--tile--clickable track-card">
+            <div class="track-icon">🎓</div>
+            <h3 class="bx--type-productive-heading-04">Intro Labs</h3>
+            <p class="bx--type-body-long-01">Bob fundamentals for all participants. Learn core capabilities through hands-on exercises.</p>
+            <div class="tags">
+              <span class="bx--tag bx--tag--blue">Beginner</span>
+              <span class="bx--tag bx--tag--outline">1-2 hours</span>
+              <span class="bx--tag bx--tag--red">Required</span>
+            </div>
+            <div class="track-features">
+              <ul class="bx--list--unordered bx--list--unordered--nested">
+                <li>Master Bob's interface and modes</li>
+                <li>Approval workflows</li>
+                <li>Custom modes and MCP servers</li>
+              </ul>
+            </div>
+            <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
+          </div>
+        </div>
+
+        <!-- SRE Track Card -->
+        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
+          <div class="bx--tile bx--tile--clickable track-card">
+            <div class="track-icon">🏗️</div>
+            <h3 class="bx--type-productive-heading-04">SRE Track</h3>
+            <p class="bx--type-body-long-01">Build a complete Jenkins CI/CD pipeline with Bob integration across 6 progressive labs.</p>
+            <div class="tags">
+              <span class="bx--tag bx--tag--green">Intermediate</span>
+              <span class="bx--tag bx--tag--outline">3-5 hours</span>
+            </div>
+            <div class="track-features">
+              <ul class="bx--list--unordered bx--list--unordered--nested">
+                <li>PR/Git diff review</li>
+                <li>Unit testing & security scanning</li>
+                <li>Linting & DCR generation</li>
+                <li>Jenkins MCP integration</li>
+              </ul>
+            </div>
+            <a href="lab.html?track=sre" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
+          </div>
+        </div>
+
+        <!-- App Track Card -->
+        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
+          <div class="bx--tile bx--tile--clickable track-card">
+            <div class="track-icon">💻</div>
+            <h3 class="bx--type-productive-heading-04">App Track</h3>
+            <p class="bx--type-body-long-01">Experience Bob as an always-on partner for application development in regulated environments.</p>
+            <div class="tags">
+              <span class="bx--tag bx--tag--purple">Intermediate</span>
+              <span class="bx--tag bx--tag--outline">1 hour</span>
+            </div>
+            <div class="track-features">
+              <ul class="bx--list--unordered bx--list--unordered--nested">
+                <li>PCI compliance analysis</li>
+                <li>Automated code review</li>
+                <li>Security-focused review modes</li>
+              </ul>
+            </div>
+            <a href="lab.html?track=app" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
+          </div>
+        </div>
+
+        <!-- Handoff Labs Card -->
+        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
+          <div class="bx--tile bx--tile--clickable track-card">
+            <div class="track-icon">🚀</div>
+            <h3 class="bx--type-productive-heading-04">Handoff Labs</h3>
+            <p class="bx--type-body-long-01">Advanced labs for specialized use cases and extending Bob's capabilities.</p>
+            <div class="tags">
+              <span class="bx--tag bx--tag--red">Advanced</span>
+              <span class="bx--tag bx--tag--outline">30min - 3+ hours</span>
+            </div>
+            <div class="track-features">
+              <ul class="bx--list--unordered bx--list--unordered--nested">
+                <li>Auto-recovery & self-healing</li>
+                <li>OpenShift deployment</li>
+                <li>Custom mode builder</li>
+                <li>Example MCP servers</li>
+              </ul>
+            </div>
+            <a href="lab.html?track=handoff-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prerequisites Section -->
+    <section class="prerequisites-section">
+      <div class="bx--row">
+        <div class="bx--col-lg-8 bx--offset-lg-2">
+          <h2 class="bx--type-expressive-heading-05 section-title">Prerequisites</h2>
+          <div class="bx--tile prerequisites-tile">
+            <h3 class="bx--type-productive-heading-03">Universal (Everyone)</h3>
+            <ul class="bx--list--unordered">
+              <li>Bob IDE installed and configured</li>
+              <li>Git and terminal access</li>
+              <li>Modern web browser</li>
+              <li>Node.js (for BobShell)</li>
+            </ul>
+            
+            <h3 class="bx--type-productive-heading-03">Afternoon Labs (Both Teams)</h3>
+            <ul class="bx--list--unordered">
+              <li>Java 17</li>
+              <li>Maven</li>
+            </ul>
+            
+            <h3 class="bx--type-productive-heading-03">Credentials (From Instructor)</h3>
+            <ul class="bx--list--unordered">
+              <li><strong>Everyone:</strong> Jira URL, username, API token</li>
+              <li><strong>SRE team:</strong> Jenkins URL, credentials, repo URL, GitHub PAT</li>
+            </ul>
+            
+            <a href="lab.html?page=PREREQUISITES" class="bx--btn bx--btn--primary">View Full Prerequisites →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="stats-section">
+      <div class="bx--row">
+        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
+          <div class="stat-card">
+            <div class="stat-number">14+</div>
+            <div class="stat-label">Hands-on Labs</div>
+          </div>
+        </div>
+        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
+          <div class="stat-card">
+            <div class="stat-number">4</div>
+            <div class="stat-label">Learning Tracks</div>
+          </div>
+        </div>
+        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
+          <div class="stat-card">
+            <div class="stat-number">1-8+</div>
+            <div class="stat-label">Hours Duration</div>
+          </div>
+        </div>
+        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
+          <div class="stat-card">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Difficulty Levels</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="bx--row">
+        <div class="bx--col-lg-12">
+          <p class="bx--type-body-short-01">
+            © 2024 IBM Corporation. Bob is a product of IBM.
+          </p>
+          <p class="bx--type-body-short-01">
+            <a href="https://bob.ibm.com/docs" target="_blank" rel="noopener">Bob Documentation</a> •
+            <a href="https://github.com" target="_blank" rel="noopener">GitHub Repository</a>
+          </p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/theme-toggle.js"></script>
+</body>
+</html>
