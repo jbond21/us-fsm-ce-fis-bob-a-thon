@@ -159,11 +159,11 @@ EOF
 # Explain code in a file
 bob "Explain what calculator.py does"
 
+# Try again with --hide-intermediary-output
+bob "Explain what calculator.py does" --hide-intermediary-output
+
 # Review code
 bob "Review calculator.py and suggest improvements"
-
-# Generate new code with YOLO mode.
-bob "Create a Python function that calculates factorial" --yolo --hide-intermediary-output > factorial.py
 
 # Quick questions
 bob "What is the difference between a list and a tuple in Python?"
