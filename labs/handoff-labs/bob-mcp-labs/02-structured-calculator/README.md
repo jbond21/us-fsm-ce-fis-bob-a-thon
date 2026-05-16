@@ -27,7 +27,21 @@ graph TD
     style F fill:#9C27B0
 ```
 
-## Features
+### Project Structure
+
+```text
+02-structured-calculator/
+├── main.py              # Entry point
+├── mcp_server/
+│   ├── __init__.py      # Package exports
+│   ├── config.py        # Configuration
+│   ├── server.py        # Server factory
+│   └── tools/
+│       ├── __init__.py  # Tool registration
+│       └── calculator.py
+```
+
+### Features
 
 - Python package structure
 - Separation of concerns
@@ -35,6 +49,13 @@ graph TD
 - Modular tool registration
 - Configuration management
 - Health check endpoints
+
+### Available Tools
+
+- `add(a: int, b: int) -> int`
+- `subtract(a: int, b: int) -> int`
+- `multiply(a: int, b: int) -> int`
+- `divide(a: int, b: int) -> float`
 
 ## Installation
 
@@ -56,7 +77,7 @@ uv pip install -r requirements.txt
 
 ## Usage
 
-### With MCP Client (Bob)
+### Configure MCP Server in Bob
 
 1. **Navigate to Bob Settings**
    - Open Bob's settings/preferences
@@ -65,12 +86,11 @@ uv pip install -r requirements.txt
    - Find the MCP Servers section in settings
 
 3. **Open Configuration File**
-   - Choose either Local (project-specific) or Global configuration
-   - Click to open the configuration file
+   - Click to open the Local (project-specific) configuration file
 
 4. **Add Server Configuration**
-   
-   **For Local Configuration** (project-specific `.bob/mcp.json`):
+   - Add the following configuration to the `.bob/mcp.json` file:
+
    ```json
    {
      "mcpServers": {
@@ -81,20 +101,9 @@ uv pip install -r requirements.txt
      }
    }
    ```
-   
-   **For Global Configuration** (`~/Library/Application Support/IBM Bob/User/globalStorage/ibm.bob-code/settings/mcp_settings.json` on macOS):
-   ```json
-   {
-     "mcpServers": {
-       "structured-calculator": {
-         "command": "/absolute/path/to/example-mcp-servers/02-structured-calculator/.venv/bin/python",
-         "args": ["/absolute/path/to/example-mcp-servers/02-structured-calculator/main.py"]
-       }
-     }
-   }
-   ```
-   
+
    **For Windows users**, use the Windows path format:
+
    ```json
    {
      "mcpServers": {
@@ -105,79 +114,61 @@ uv pip install -r requirements.txt
      }
    }
    ```
-   
+
    > **Note:** Replace `/absolute/path/to/example-mcp-servers` with the actual path to this repository on your system. The `command` should point to the Python executable inside the virtual environment (`.venv/bin/python` on macOS/Linux or `.venv\Scripts\python.exe` on Windows) to ensure all dependencies are available.
 
-5. **Restart Bob**
-   - Restart Bob to load the new MCP server configuration
-
-6. **Verify Server Status**
+5. **Verify Server Status**
    - Check that the MCP server shows a green indicator light
-   - The server should appear in Bob's MCP servers list
-   
+   - Click on the `structured-calculator` server in Bob's MCP servers list and click the **Restart server** icon.
+
    > **Note:** If you see import errors for `fastmcp` or `starlette` in your editor, this is normal. The server uses the virtual environment where these packages are installed, so as long as the MCP server indicator light is green, everything is working correctly.
 
 ### How to Use This Server
 
 Once configured, switch to **Advanced mode** (or any mode with MCP capabilities) and try:
 
-```
+```text
 "Use the structured calculator to multiply 15 by 4"
 ```
 
 Bob will use the appropriate tool from this MCP server to perform the calculation.
 
-### Extra Abilities
+#### Extra Abilities
 
-This server includes additional operations beyond the simple calculator:
+This server includes additional operations beyond the simple calculator, feel free to test any of the following operations:
+
 - Subtraction
 - Multiplication
 - Division with error handling for division by zero
 
-### Standalone Server (Optional)
+### Extending
 
-```bash
-python main.py
-```
+Explore further by adding new tools:
 
-Server runs with stdio transport for MCP protocol communication (same as when launched by Bob).
-
-## Available Tools
-
-- `add(a: int, b: int) -> int`
-- `subtract(a: int, b: int) -> int`
-- `multiply(a: int, b: int) -> int`
-- `divide(a: int, b: int) -> float`
-
-## Testing
-
-```bash
-# Server status
-curl http://127.0.0.1:8080/
-
-# Health check
-curl http://127.0.0.1:8080/health
-```
-
-## Project Structure
-
-```
-02-structured-calculator/
-├── main.py              # Entry point
-├── mcp_server/
-│   ├── __init__.py      # Package exports
-│   ├── config.py        # Configuration
-│   ├── server.py        # Server factory
-│   └── tools/
-│       ├── __init__.py  # Tool registration
-│       └── calculator.py
-```
-
-## Extending
-
-Add new tools:
 1. Create tool file in `mcp_server/tools/`
 2. Define tools with `@mcp.tool()` decorator
 3. Register in `tools/__init__.py`
 
 Configuration changes go in `config.py`.
+
+## Cleanup
+
+When you're done with this lab and want to clean up:
+
+1. Deactivate Virtual Environment
+
+  ```bash
+  # Deactivate the virtual environment
+  deactivate
+  ```
+
+1. Remove MCP Server Configuration
+
+    - Open `.bob/mcp.json` and remove the `structured-calculator` server entry:
+
+1. [Optionally] Remove the virtual environment if you want to free up disk space:
+
+    ```bash
+    # From the lab directory
+    rm -rf .venv
+    ```
