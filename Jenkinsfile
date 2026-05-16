@@ -139,6 +139,42 @@ spec:
             }
         }
 
+        stage('PR Review') {
+            steps {
+                script {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo '════════════════════════════════════════════════════════'
+                        echo '  Bob PR Review Analysis'
+                        echo '════════════════════════════════════════════════════════'
+
+                        sh '''
+                            git config --global --add safe.directory "$WORKSPACE"
+                            git diff origin/main...HEAD > git-diff.txt || : > git-diff.txt
+                        '''
+
+                        def prompt = """
+Read git-diff.txt and produce a concise PR overview with:
+- Summary
+- Risk
+- Watch for
+"""
+
+                        def analysis = askBob(prompt, 'pipeline-git-diff-overview')
+
+                        echo analysis
+                        echo '════════════════════════════════════════════════════════'
+
+                        writeFile file: 'bob-pr-review.md', text: analysis
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-pr-review.md', allowEmptyArchive: true
+                }
+            }
+        }
+
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
         //    Add a stage here that runs Bob in a "senior developer"
         //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
