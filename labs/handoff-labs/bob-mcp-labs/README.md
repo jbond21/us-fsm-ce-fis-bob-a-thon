@@ -10,8 +10,9 @@ Before you begin, ensure you have the following installed:
 - **Python 3.8 or higher** - [Download Python](https://www.python.org/downloads/)
   - Check your version: `python --version` or `python3 --version`
   - On macOS/Linux, you may need to use `python3` instead of `python`
-- **pip** (Python package installer) - Usually comes with Python
-  - Check if installed: `pip --version` or `pip3 --version`
+- **uv** (Fast Python package installer) - [Installation Guide](https://docs.astral.sh/uv/getting-started/installation/)
+  - Check if installed: `uv --version`
+  - uv is 10-100x faster than pip and provides better dependency resolution
 
 ### Optional (for specific examples)
 - **Podman** - Required for Lab 07 (Code Sandbox)
@@ -62,7 +63,7 @@ example-mcp-servers/
 ## Requirements
 
 - Python 3.8+
-- pip
+- uv
 
 ## Resources
 

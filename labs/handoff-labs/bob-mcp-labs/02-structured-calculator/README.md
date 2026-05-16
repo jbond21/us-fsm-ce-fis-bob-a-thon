@@ -41,17 +41,17 @@ graph TD
 ```bash
 cd 02-structured-calculator
 
-# Create virtual environment
-python -m venv venv
+# Create virtual environment with uv
+uv venv
 
 # Activate virtual environment
 # On macOS/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 # On Windows:
-# venv\Scripts\activate
+# .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 ## Usage
@@ -75,7 +75,7 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "structured-calculator": {
-         "command": "/absolute/path/to/example-mcp-servers/02-structured-calculator/venv/bin/python",
+         "command": "/absolute/path/to/example-mcp-servers/02-structured-calculator/.venv/bin/python",
          "args": ["/absolute/path/to/example-mcp-servers/02-structured-calculator/main.py"]
        }
      }
@@ -87,7 +87,7 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "structured-calculator": {
-         "command": "/absolute/path/to/example-mcp-servers/02-structured-calculator/venv/bin/python",
+         "command": "/absolute/path/to/example-mcp-servers/02-structured-calculator/.venv/bin/python",
          "args": ["/absolute/path/to/example-mcp-servers/02-structured-calculator/main.py"]
        }
      }
@@ -99,14 +99,14 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "structured-calculator": {
-         "command": "C:\\absolute\\path\\to\\example-mcp-servers\\02-structured-calculator\\venv\\Scripts\\python.exe",
+         "command": "C:\\absolute\\path\\to\\example-mcp-servers\\02-structured-calculator\\.venv\\Scripts\\python.exe",
          "args": ["C:\\absolute\\path\\to\\example-mcp-servers\\02-structured-calculator\\main.py"]
        }
      }
    }
    ```
    
-   > **Note:** Replace `/absolute/path/to/example-mcp-servers` with the actual path to this repository on your system. The `command` should point to the Python executable inside the virtual environment (`venv/bin/python` on macOS/Linux or `venv\Scripts\python.exe` on Windows) to ensure all dependencies are available.
+   > **Note:** Replace `/absolute/path/to/example-mcp-servers` with the actual path to this repository on your system. The `command` should point to the Python executable inside the virtual environment (`.venv/bin/python` on macOS/Linux or `.venv\Scripts\python.exe` on Windows) to ensure all dependencies are available.
 
 5. **Restart Bob**
    - Restart Bob to load the new MCP server configuration

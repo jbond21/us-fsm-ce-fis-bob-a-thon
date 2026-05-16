@@ -50,17 +50,17 @@ MCP server for web content extraction and HTML parsing.
 ```bash
 cd 04-web-scraping
 
-# Create virtual environment
-python -m venv venv
+# Create virtual environment with uv
+uv venv
 
 # Activate virtual environment
 # On macOS/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 # On Windows:
-# venv\Scripts\activate
+# .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 ## Usage
@@ -84,7 +84,7 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "web-scraper": {
-         "command": "/absolute/path/to/example-mcp-servers/04-web-scraping/venv/bin/python",
+         "command": "/absolute/path/to/example-mcp-servers/04-web-scraping/.venv/bin/python",
          "args": ["/absolute/path/to/example-mcp-servers/04-web-scraping/main.py"],
          "env": {
            "SCRAPER_TIMEOUT": "30"
@@ -99,7 +99,7 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "web-scraper": {
-         "command": "/absolute/path/to/example-mcp-servers/04-web-scraping/venv/bin/python",
+         "command": "/absolute/path/to/example-mcp-servers/04-web-scraping/.venv/bin/python",
          "args": ["/absolute/path/to/example-mcp-servers/04-web-scraping/main.py"]
        }
      }
@@ -111,14 +111,14 @@ pip install -r requirements.txt
    {
      "mcpServers": {
        "web-scraper": {
-         "command": "C:\\absolute\\path\\to\\example-mcp-servers\\04-web-scraping\\venv\\Scripts\\python.exe",
+         "command": "C:\\absolute\\path\\to\\example-mcp-servers\\04-web-scraping\\.venv\\Scripts\\python.exe",
          "args": ["C:\\absolute\\path\\to\\example-mcp-servers\\04-web-scraping\\main.py"]
        }
      }
    }
    ```
    
-   > **Note:** Replace `/absolute/path/to/example-mcp-servers` with the actual path to this repository on your system. The `command` should point to the Python executable inside the virtual environment (`venv/bin/python` on macOS/Linux or `venv\Scripts\python.exe` on Windows) to ensure all dependencies are available.
+   > **Note:** Replace `/absolute/path/to/example-mcp-servers` with the actual path to this repository on your system. The `command` should point to the Python executable inside the virtual environment (`.venv/bin/python` on macOS/Linux or `.venv\Scripts\python.exe` on Windows) to ensure all dependencies are available.
 
 5. **Restart Bob**
    - Restart Bob to load the new MCP server configuration
