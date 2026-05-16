@@ -148,7 +148,7 @@ This is the agentic-development loop: write the mode, run it, observe drift, tig
 
 ---
 
-## Part 4 — Swap `.bob/mcp.json` to the cluster-friendly form
+## Part 4 — Add a cluter-friendly form of the JIRA MCP to `.bob/mcp.json`
 
 Now that your mode is validated in the IDE, we are going to add a new JIRA MCP declaration that Bob can use on the pipeline. Rename your existing `atlassian` MCP server to `atlassianIDE`, then add the new declaration below. The bash launcher works fine in your local IDE because `.env` sits next to the repo on your machine; it does **not** work in the pipeline pod — there's no `.env` file inside the `bob-cli` container, and we don't want one. Secrets in CI come from Kubernetes.
 
