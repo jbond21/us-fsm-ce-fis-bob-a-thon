@@ -231,6 +231,445 @@ Provide:
             }
         }
 
+        stage('Security Analysis') {
+            options {
+                timeout(time: 15, unit: 'MINUTES')
+            }
+            environment {
+                SONAR_TOKEN = credentials('sonarqube-token')
+                SONAR_HOST_URL = 'https://sonarqube-sonarqube.apps.itz-8ggai0.infra01-lb.wdc04.techzone.ibm.com'
+                PROJECT_KEY = "order-service-${env.USER}-${env.BUILD_NUMBER}"
+            }
+            steps {
+                script {
+                    // Initialize serializable results map with String primitives only
+                    def securityResults = [
+                        sonarqube: [:],
+                        grype: [:],
+                        riskLevel: '',
+                        riskScore: 0,
+                        deploymentDecision: ''
+                    ]
+
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  🔒 Security Analysis - Multi-Phase Scanning'
+                    echo '════════════════════════════════════════════════════════'
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 1: SonarQube Security Scanning
+                    // ═══════════════════════════════════════════════════════
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '📊 Phase 1: SonarQube Security Scanning'
+                        echo '─────────────────────────────────────────────────────'
+
+                        container('build-tools') {
+                            sh """
+                                cd order-service
+                                mvn clean test-compile sonar:sonar \
+                                    -Dsonar.projectKey=${PROJECT_KEY} \
+                                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                                    -Dsonar.token=${SONAR_TOKEN}
+                            """
+                        }
+
+                        echo '⏳ Waiting for SonarQube analysis to complete...'
+
+                        // Phase 1a: Wait for task completion
+                        def taskStatus = ''
+                        def maxRetries = 12
+                        def retryDelay = 10
+
+                        for (int i = 0; i < maxRetries; i++) {
+                            try {
+                                sleep(retryDelay)
+                                
+                                container('build-tools') {
+                                    taskStatus = sh(
+                                        script: """
+                                            curl -s -u ${SONAR_TOKEN}: \
+                                                "${SONAR_HOST_URL}/api/ce/component?component=${PROJECT_KEY}" \
+                                                | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4
+                                        """,
+                                        returnStdout: true
+                                    ).trim()
+                                }
+
+                                echo "  Attempt ${i+1}/${maxRetries}: Task status = ${taskStatus}"
+
+                                if (taskStatus == 'SUCCESS') {
+                                    echo '✅ SonarQube analysis completed successfully'
+                                    break
+                                } else if (taskStatus == 'FAILED') {
+                                    echo '❌ SonarQube analysis failed'
+                                    error('SonarQube task failed')
+                                }
+                            } catch (Exception e) {
+                                echo "  Warning: Task status check failed: ${e.message}"
+                                if (i == maxRetries - 1) {
+                                    throw e
+                                }
+                            }
+                        }
+
+                        if (taskStatus != 'SUCCESS') {
+                            error('SonarQube analysis did not complete in time')
+                        }
+
+                        // Phase 1b: Fetch metrics after task completion
+                        echo '📈 Fetching SonarQube metrics...'
+                        
+                        def metricsJson = null
+                        def sonarData = null
+                        maxRetries = 6
+                        retryDelay = 5
+
+                        for (int i = 0; i < maxRetries; i++) {
+                            try {
+                                sleep(retryDelay)
+                                
+                                container('build-tools') {
+                                    metricsJson = sh(
+                                        script: """
+                                            curl -s -u ${SONAR_TOKEN}: \
+                                                "${SONAR_HOST_URL}/api/measures/component?component=${PROJECT_KEY}&metricKeys=bugs,vulnerabilities,code_smells,security_hotspots,security_rating,reliability_rating,security_review_rating"
+                                        """,
+                                        returnStdout: true
+                                    ).trim()
+                                }
+
+                                // Parse JSON using Groovy JsonSlurper
+                                sonarData = readJSON text: metricsJson
+
+                                if (sonarData?.component?.measures && sonarData.component.measures.size() > 0) {
+                                    echo "✅ Successfully fetched ${sonarData.component.measures.size()} metrics"
+                                    break
+                                } else {
+                                    echo "  Attempt ${i+1}/${maxRetries}: Metrics not ready yet"
+                                }
+                            } catch (Exception e) {
+                                echo "  Warning: Metrics fetch failed: ${e.message}"
+                                if (i == maxRetries - 1) {
+                                    throw e
+                                }
+                            }
+                        }
+
+                        // Store metrics as String primitives
+                        if (sonarData?.component?.measures) {
+                            sonarData.component.measures.each { measure ->
+                                securityResults.sonarqube[measure.metric] = measure.value ?: '0'
+                            }
+                        }
+
+                        // Clear JSON object to avoid serialization issues
+                        sonarData = null
+
+                        echo ''
+                        echo '📊 SonarQube Results:'
+                        echo "  Bugs: ${securityResults.sonarqube.bugs ?: '0'}"
+                        echo "  Vulnerabilities: ${securityResults.sonarqube.vulnerabilities ?: '0'}"
+                        echo "  Code Smells: ${securityResults.sonarqube.code_smells ?: '0'}"
+                        echo "  Security Hotspots: ${securityResults.sonarqube.security_hotspots ?: '0'}"
+                        echo "  Security Rating: ${securityResults.sonarqube.security_rating ?: 'N/A'}"
+                    }
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 2: Grype Vulnerability Scanning
+                    // ═══════════════════════════════════════════════════════
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '🔍 Phase 2: Grype Vulnerability Scanning'
+                        echo '─────────────────────────────────────────────────────'
+
+                        container('build-tools') {
+                            // Install Grype on-demand
+                            echo '📦 Installing Grype...'
+                            sh '''
+                                curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+                                grype version
+                            '''
+
+                            // Run Grype scan
+                            echo '🔎 Scanning for vulnerabilities...'
+                            sh '''
+                                cd order-service
+                                grype dir:. --scope all-layers -o json > grype-report.json || true
+                            '''
+
+                            // Parse results using grep and wc (no jq dependency)
+                            def criticalCount = sh(
+                                script: '''
+                                    cd order-service
+                                    grep -o '"severity":"Critical"' grype-report.json | wc -l || echo "0"
+                                ''',
+                                returnStdout: true
+                            ).trim().toInteger()
+
+                            def highCount = sh(
+                                script: '''
+                                    cd order-service
+                                    grep -o '"severity":"High"' grype-report.json | wc -l || echo "0"
+                                ''',
+                                returnStdout: true
+                            ).trim().toInteger()
+
+                            def mediumCount = sh(
+                                script: '''
+                                    cd order-service
+                                    grep -o '"severity":"Medium"' grype-report.json | wc -l || echo "0"
+                                ''',
+                                returnStdout: true
+                            ).trim().toInteger()
+
+                            // Store as Integer primitives
+                            securityResults.grype.critical = criticalCount
+                            securityResults.grype.high = highCount
+                            securityResults.grype.medium = mediumCount
+                            securityResults.grype.total = criticalCount + highCount + mediumCount
+
+                            echo ''
+                            echo '🔍 Grype Results:'
+                            echo "  Critical: ${criticalCount}"
+                            echo "  High: ${highCount}"
+                            echo "  Medium: ${mediumCount}"
+                            echo "  Total: ${securityResults.grype.total}"
+                        }
+                    }
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 3: CVE Analysis with Bob (conditional)
+                    // ═══════════════════════════════════════════════════════
+                    def bobAnalysis = ''
+                    def deploymentRecommendation = 'PROCEED'
+
+                    if (securityResults.grype.total > 0) {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            echo ''
+                            echo '🤖 Phase 3: Bob CVE Analysis'
+                            echo '─────────────────────────────────────────────────────'
+
+                            def prompt = """
+Perform comprehensive CVE and security analysis based on the following results:
+
+=== SONARQUBE RESULTS ===
+Bugs: ${securityResults.sonarqube.bugs ?: '0'}
+Vulnerabilities: ${securityResults.sonarqube.vulnerabilities ?: '0'}
+Code Smells: ${securityResults.sonarqube.code_smells ?: '0'}
+Security Hotspots: ${securityResults.sonarqube.security_hotspots ?: '0'}
+Security Rating: ${securityResults.sonarqube.security_rating ?: 'N/A'}
+
+=== GRYPE VULNERABILITY SCAN ===
+Critical CVEs: ${securityResults.grype.critical}
+High CVEs: ${securityResults.grype.high}
+Medium CVEs: ${securityResults.grype.medium}
+Total Vulnerabilities: ${securityResults.grype.total}
+
+Please provide:
+1. **Risk Assessment**: Overall security posture evaluation
+2. **Top 3 Vulnerabilities**: Most critical issues requiring immediate attention
+3. **Remediation Steps**: Specific actions to address vulnerabilities
+4. **Deployment Recommendation**: One of:
+   - BLOCK: Critical issues prevent deployment
+   - WARN: Issues present but deployment possible with caution
+   - PROCEED: Safe to deploy
+
+Format your response with clear sections and end with:
+DEPLOYMENT RECOMMENDATION: [BLOCK|WARN|PROCEED]
+"""
+
+                            bobAnalysis = askBob(prompt, null)  // Use default 'code' mode
+
+                            echo bobAnalysis
+                            writeFile file: 'bob-cve-analysis.txt', text: bobAnalysis
+
+                            // Extract deployment recommendation
+                            if (bobAnalysis.contains('DEPLOYMENT RECOMMENDATION: BLOCK')) {
+                                deploymentRecommendation = 'BLOCK'
+                            } else if (bobAnalysis.contains('DEPLOYMENT RECOMMENDATION: WARN')) {
+                                deploymentRecommendation = 'WARN'
+                            } else if (bobAnalysis.contains('DEPLOYMENT RECOMMENDATION: PROCEED')) {
+                                deploymentRecommendation = 'PROCEED'
+                            }
+
+                            echo ''
+                            echo "🎯 Bob Recommendation: ${deploymentRecommendation}"
+                        }
+                    } else {
+                        echo ''
+                        echo '✅ Phase 3: Skipped (no vulnerabilities detected)'
+                        bobAnalysis = 'No vulnerabilities detected by Grype scan.'
+                        writeFile file: 'bob-cve-analysis.txt', text: bobAnalysis
+                    }
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 4: Risk Level Calculation
+                    // ═══════════════════════════════════════════════════════
+                    echo ''
+                    echo '📊 Phase 4: Risk Level Calculation'
+                    echo '─────────────────────────────────────────────────────'
+
+                    // Parse SonarQube String values to Integer safely
+                    def bugs = 0
+                    def vulnerabilities = 0
+                    def hotspots = 0
+
+                    try {
+                        bugs = Integer.parseInt(securityResults.sonarqube.bugs ?: '0')
+                    } catch (Exception e) {
+                        echo "Warning: Could not parse bugs count: ${e.message}"
+                    }
+
+                    try {
+                        vulnerabilities = Integer.parseInt(securityResults.sonarqube.vulnerabilities ?: '0')
+                    } catch (Exception e) {
+                        echo "Warning: Could not parse vulnerabilities count: ${e.message}"
+                    }
+
+                    try {
+                        hotspots = Integer.parseInt(securityResults.sonarqube.security_hotspots ?: '0')
+                    } catch (Exception e) {
+                        echo "Warning: Could not parse hotspots count: ${e.message}"
+                    }
+
+                    // Calculate risk score
+                    def riskScore = (vulnerabilities * 10) +
+                                   (hotspots * 5) +
+                                   (bugs * 2) +
+                                   (securityResults.grype.critical * 20) +
+                                   (securityResults.grype.high * 10)
+
+                    securityResults.riskScore = riskScore
+
+                    // Determine risk level
+                    def riskLevel = 'LOW'
+                    if (riskScore >= 50) {
+                        riskLevel = 'CRITICAL'
+                    } else if (riskScore >= 30) {
+                        riskLevel = 'HIGH'
+                    } else if (riskScore >= 10) {
+                        riskLevel = 'MEDIUM'
+                    }
+
+                    securityResults.riskLevel = riskLevel
+
+                    echo "  Risk Score: ${riskScore}"
+                    echo "  Risk Level: ${riskLevel}"
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 5: Deployment Decision
+                    // ═══════════════════════════════════════════════════════
+                    echo ''
+                    echo '🚦 Phase 5: Deployment Decision'
+                    echo '─────────────────────────────────────────────────────'
+
+                    if (riskLevel == 'CRITICAL') {
+                        securityResults.deploymentDecision = 'BLOCK'
+                        echo '🔴 BLOCK: Critical security issues detected'
+                        echo '   Deployment is blocked until issues are resolved'
+                        currentBuild.result = 'UNSTABLE'
+                    } else if (riskLevel == 'HIGH') {
+                        securityResults.deploymentDecision = 'WARN'
+                        echo '🟡 WARN: High-risk issues detected'
+                        echo '   Manual review recommended before deployment'
+                    } else {
+                        securityResults.deploymentDecision = 'PROCEED'
+                        echo '🟢 PROCEED: Security posture acceptable'
+                        echo '   Deployment approved'
+                    }
+
+                    // Override with Bob's recommendation if more restrictive
+                    if (deploymentRecommendation == 'BLOCK' && securityResults.deploymentDecision != 'BLOCK') {
+                        securityResults.deploymentDecision = 'BLOCK'
+                        echo ''
+                        echo '⚠️  Bob analysis recommends BLOCK - overriding decision'
+                        currentBuild.result = 'UNSTABLE'
+                    }
+
+                    // ═══════════════════════════════════════════════════════
+                    // Phase 6: Consolidated Report Generation
+                    // ═══════════════════════════════════════════════════════
+                    echo ''
+                    echo '📝 Phase 6: Generating Consolidated Report'
+                    echo '─────────────────────────────────────────────────────'
+
+                    def report = """# Security Analysis Report
+
+## Executive Summary
+
+**Build**: ${env.BUILD_NUMBER}
+**Date**: ${new Date()}
+**Risk Level**: ${securityResults.riskLevel}
+**Risk Score**: ${securityResults.riskScore}
+**Deployment Decision**: ${securityResults.deploymentDecision}
+
+---
+
+## SonarQube Analysis
+
+| Metric | Value |
+|--------|-------|
+| Bugs | ${securityResults.sonarqube.bugs ?: '0'} |
+| Vulnerabilities | ${securityResults.sonarqube.vulnerabilities ?: '0'} |
+| Code Smells | ${securityResults.sonarqube.code_smells ?: '0'} |
+| Security Hotspots | ${securityResults.sonarqube.security_hotspots ?: '0'} |
+| Security Rating | ${securityResults.sonarqube.security_rating ?: 'N/A'} |
+| Reliability Rating | ${securityResults.sonarqube.reliability_rating ?: 'N/A'} |
+
+**SonarQube Dashboard**: ${SONAR_HOST_URL}/dashboard?id=${PROJECT_KEY}
+
+---
+
+## Grype Vulnerability Scan
+
+| Severity | Count |
+|----------|-------|
+| Critical | ${securityResults.grype.critical} |
+| High | ${securityResults.grype.high} |
+| Medium | ${securityResults.grype.medium} |
+| **Total** | **${securityResults.grype.total}** |
+
+---
+
+## Bob CVE Analysis
+
+${bobAnalysis}
+
+---
+
+## Deployment Recommendation
+
+**Decision**: ${securityResults.deploymentDecision}
+
+${securityResults.deploymentDecision == 'BLOCK' ? '🔴 **BLOCKED**: Critical security issues must be resolved before deployment.' : ''}
+${securityResults.deploymentDecision == 'WARN' ? '🟡 **WARNING**: Manual security review recommended before proceeding with deployment.' : ''}
+${securityResults.deploymentDecision == 'PROCEED' ? '🟢 **APPROVED**: Security posture is acceptable for deployment.' : ''}
+
+---
+
+*Generated by Jenkins Security Analysis Pipeline*
+"""
+
+                    writeFile file: 'security-analysis-report.md', text: report
+
+                    echo '✅ Report generated: security-analysis-report.md'
+                    echo ''
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Security Analysis Complete'
+                    echo "  Risk Level: ${securityResults.riskLevel}"
+                    echo "  Decision: ${securityResults.deploymentDecision}"
+                    echo '════════════════════════════════════════════════════════'
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'security-analysis-report.md,bob-cve-analysis.txt,order-service/grype-report.json',
+                                   allowEmptyArchive: true,
+                                   fingerprint: true
+                }
+            }
+        }
+
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
         //    Add a stage here that runs Bob in a "senior developer"
         //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
