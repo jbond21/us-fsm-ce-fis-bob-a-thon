@@ -670,6 +670,199 @@ ${securityResults.deploymentDecision == 'PROCEED' ? '🟢 **APPROVED**: Security
             }
         }
 
+        stage('Run Linters') {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  🔍 Running Linters'
+                    echo '════════════════════════════════════════════════════════'
+
+                    // Create lint-results directory
+                    sh 'mkdir -p lint-results'
+
+                    // Run Checkstyle
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '📋 Running Checkstyle...'
+                        sh '''
+                            mvn -f order-service/pom.xml checkstyle:check || true
+                            if [ -f order-service/target/checkstyle-result.xml ]; then
+                                cp order-service/target/checkstyle-result.xml lint-results/checkstyle.xml
+                                echo "✅ Checkstyle report saved"
+                            else
+                                echo "⚠️  Checkstyle report not found"
+                            fi
+                        '''
+                    }
+
+                    // Run Hadolint
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '🐳 Running Hadolint...'
+                        container('lint-tools') {
+                            sh '''
+                                hadolint order-service/Dockerfile > lint-results/hadolint.txt 2>&1 || true
+                                if [ -s lint-results/hadolint.txt ]; then
+                                    echo "✅ Hadolint report saved"
+                                else
+                                    echo "✅ No Hadolint issues found" > lint-results/hadolint.txt
+                                fi
+                            '''
+                        }
+                    }
+
+                    // Run Checkov
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '☁️  Running Checkov...'
+                        container('lint-tools') {
+                            sh '''
+                                checkov -d order-service/deploy-flawed/ --compact --quiet > lint-results/checkov.txt 2>&1 || true
+                                if [ -s lint-results/checkov.txt ]; then
+                                    echo "✅ Checkov report saved"
+                                else
+                                    echo "✅ No Checkov issues found" > lint-results/checkov.txt
+                                fi
+                            '''
+                        }
+                    }
+
+                    // Run KubeLinter
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo ''
+                        echo '☸️  Running KubeLinter...'
+                        container('lint-tools') {
+                            sh '''
+                                kube-linter lint order-service/deploy-flawed/ > lint-results/kubelinter.txt 2>&1 || true
+                                if [ -s lint-results/kubelinter.txt ]; then
+                                    echo "✅ KubeLinter report saved"
+                                else
+                                    echo "✅ No KubeLinter issues found" > lint-results/kubelinter.txt
+                                fi
+                            '''
+                        }
+                    }
+
+                    echo ''
+                    echo '════════════════════════════════════════════════════════'
+                    echo '  Linting Complete'
+                    echo '════════════════════════════════════════════════════════'
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'lint-results/*',
+                                   allowEmptyArchive: true,
+                                   fingerprint: true
+                }
+            }
+        }
+
+        stage('Bob Lint Analysis') {
+            when {
+                expression {
+                    return fileExists('lint-results/checkstyle.xml') ||
+                           fileExists('lint-results/hadolint.txt') ||
+                           fileExists('lint-results/checkov.txt') ||
+                           fileExists('lint-results/kubelinter.txt')
+                }
+            }
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                script {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo '════════════════════════════════════════════════════════'
+                        echo '  🤖 Bob Lint Analysis'
+                        echo '════════════════════════════════════════════════════════'
+
+                        def prompt = """
+Analyze the linting results from multiple tools and provide a consolidated report.
+
+Read and analyze the following files:
+- lint-results/checkstyle.xml
+- lint-results/hadolint.txt
+- lint-results/checkov.txt
+- lint-results/kubelinter.txt
+
+Also review the source files for context:
+- order-service/src/
+- order-service/Dockerfile
+- order-service/deploy-flawed/
+
+Provide:
+1. **Findings by Severity**: Group all findings by severity (Critical, High, Medium, Low)
+2. **De-duplication**: Identify and consolidate overlapping findings from different tools
+3. **Top Priority Issues**: List the 3-5 highest-priority issues that should be fixed first
+4. **Concrete Fixes**: For each top priority issue, provide specific remediation steps with code examples
+5. **Summary Statistics**: Count of issues by tool and severity
+
+Format the output in markdown with clear sections.
+"""
+
+                        def analysis = askBob(prompt, 'pipeline-lint-analyzer')
+
+                        echo analysis
+                        writeFile file: 'bob-lint-report.md', text: analysis
+
+                        echo ''
+                        echo '────────────────────────────────────────────────────────'
+                        echo '  Generating PR Comment'
+                        echo '────────────────────────────────────────────────────────'
+
+                        def prCommentPrompt = """
+Read bob-lint-report.md and create a concise PR comment summary.
+
+The comment should:
+- Be brief (max 15 lines)
+- Highlight only the most critical findings
+- Use emoji for visual clarity
+- Include a quick stats summary
+- End with a link reference to the full report
+
+Format as markdown suitable for a GitHub PR comment.
+"""
+
+                        def prComment = askBob(prCommentPrompt, 'pipeline-lint-analyzer')
+
+                        echo prComment
+                        writeFile file: 'bob-lint-pr-comment.md', text: prComment
+
+                        echo ''
+                        echo '════════════════════════════════════════════════════════'
+                        echo '  📊 Lint Analysis Summary'
+                        echo '════════════════════════════════════════════════════════'
+
+                        // Print short summary
+                        def summaryLines = analysis.split('\n').findAll { line ->
+                            line.contains('Critical') || line.contains('High') ||
+                            line.contains('Total') || line.contains('Priority')
+                        }.take(5)
+
+                        summaryLines.each { line ->
+                            echo "  ${line.trim()}"
+                        }
+
+                        echo ''
+                        echo '  📄 Full report: bob-lint-report.md (archived)'
+                        echo '  💬 PR comment: bob-lint-pr-comment.md (archived)'
+                        echo '════════════════════════════════════════════════════════'
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'bob-lint-report.md,bob-lint-pr-comment.md',
+                                   allowEmptyArchive: true,
+                                   fingerprint: true
+                }
+            }
+        }
+
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
         //    Add a stage here that runs Bob in a "senior developer"
         //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
