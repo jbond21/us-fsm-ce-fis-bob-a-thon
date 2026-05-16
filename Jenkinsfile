@@ -863,7 +863,7 @@ Provide:
 Format the output in markdown with clear sections.
 """
 
-                        def analysis = askBob(prompt, 'pipeline-lint-analyzer')
+                        def analysis = askBob(prompt, 'solution-pipeline-lint-analyzer')
 
                         echo analysis
                         writeFile file: 'bob-lint-report.md', text: analysis
@@ -886,7 +886,7 @@ The comment should:
 Format as markdown suitable for a GitHub PR comment.
 """
 
-                        def prComment = askBob(prCommentPrompt, 'pipeline-lint-analyzer')
+                        def prComment = askBob(prCommentPrompt, 'solution-pipeline-lint-analyzer')
 
                         echo prComment
                         writeFile file: 'bob-lint-pr-comment.md', text: prComment
