@@ -147,7 +147,7 @@ body {
    ============================================ */
 
 .hero {
-  padding: 1.5rem 2rem 1rem 2rem;
+  padding: 1rem 2rem 0.75rem 2rem;
   text-align: center;
   background: var(--gradient-primary);
   color: white;
@@ -184,7 +184,7 @@ body {
 }
 
 .hero-banner {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   animation: fadeInDown 0.8s ease-out;
 }
 
@@ -196,7 +196,7 @@ body {
 }
 
 .hero h1 {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: white;
   animation: fadeInUp 0.8s ease-out 0.2s both;
   font-weight: 600;
@@ -209,10 +209,10 @@ body {
 
 .hero-description {
   max-width: 700px;
-  margin: 0 auto 0.5rem auto;
+  margin: 0 auto 0.25rem auto;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
 @keyframes fadeInUp {
@@ -243,19 +243,19 @@ body {
 
 @media (max-width: 768px) {
   .hero {
-    padding: 1rem 1rem 0.75rem 1rem;
+    padding: 0.75rem 1rem 0.5rem 1rem;
   }
   
   .hero h1 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
   
   .hero-description {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
   
   .hero-banner {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
   }
 }
 /* ============================================
