@@ -227,6 +227,13 @@
           const targetLab = parts.slice(3).join('/').replace('.md', '');
           link.setAttribute('href', `lab.html?track=${targetTrack}&lab=${targetLab}`);
         }
+      } else if (href.startsWith('../')) {
+        // Link going up one directory within same track (e.g., ../lab5/LAB5.md)
+        // Remove the ../ and use the rest as the target lab path
+        const targetLab = href.substring(3).replace('.md', '');
+        if (track) {
+          link.setAttribute('href', `lab.html?track=${track}&lab=${targetLab}`);
+        }
       } else if (href.startsWith('./')) {
         // Link within same track starting with ./
         const targetLab = href.substring(2).replace('.md', '');
