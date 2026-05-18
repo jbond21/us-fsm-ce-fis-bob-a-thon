@@ -12,8 +12,7 @@
       title: '🎓 Intro Labs',
       items: [
         { title: 'Lab 1: Fundamentals', path: 'bob-lab-1-fundamentals' },
-        { title: 'Lab 2: Advanced Features', path: 'bob-lab-2-advanced-features' },
-        { title: 'Bob Differentiators', path: 'bob-differentiators' }
+        { title: 'Lab 2: Advanced Features', path: 'bob-lab-2-advanced-features' }
       ]
     },
     'sre': {
@@ -31,16 +30,21 @@
     'app': {
       title: '💻 App Track',
       items: [
-        { title: 'Lab 1: Code Review', path: 'lab1/LAB1_CODE_REVIEW' }
+        { title: 'Overview', path: 'README' },
+        { title: 'Lab 1: Code Review', path: 'lab1/LAB1_CODE_REVIEW' },
+        { title: 'Lab 2: Semantic Versioning', path: 'lab2/LAB2_SEMANTIC_VERSIONING' }
       ]
     },
     'handoff-labs': {
       title: '🚀 Handoff Labs',
       items: [
-        { title: 'Auto-Recovery & Self-Healing', path: 'bob-auto-recovery-self-healing-lab' },
-        { title: 'OpenShift Deployment', path: 'bob-openshift-deployment-lab' },
-        { title: 'Bob Mode Builder', path: 'bob-mode-labs/README' },
-        { title: 'Example MCP Servers', path: 'ibm-bob-example-mcp-servers-main/README' }
+        { title: 'Overview', path: 'README' },
+        { title: '1. Bob Mode Builder', path: 'bob-mode-labs/README' },
+        { title: '2. Example MCP Servers', path: 'bob-mcp-labs/README' },
+        { title: '3. OpenShift Operations', path: 'openshift-with-bob/README' },
+        { title: '4. Python to JavaScript', path: 'python-to-javascript/README' },
+        { title: '5. Simple App Development', path: 'simple-app-development/README' },
+        { title: '6. Java Modernization', path: 'simple-java-modernization/README' }
       ]
     }
   };

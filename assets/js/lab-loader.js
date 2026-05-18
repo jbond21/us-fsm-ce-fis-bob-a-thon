@@ -248,8 +248,8 @@
     const firstLabMap = {
       'intro-labs': 'bob-lab-1-fundamentals',
       'sre': '00_SETUP',
-      'app': 'lab1/LAB1_CODE_REVIEW',
-      'handoff-labs': 'bob-auto-recovery-self-healing-lab'
+      'app': 'README',
+      'handoff-labs': 'README'
     };
     
     const firstLab = firstLabMap[track];
