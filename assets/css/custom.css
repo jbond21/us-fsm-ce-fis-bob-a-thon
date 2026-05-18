@@ -147,7 +147,7 @@ body {
    ============================================ */
 
 .hero {
-  padding: 3rem 2rem;
+  padding: 2rem 2rem 1.5rem 2rem;
   text-align: center;
   background: var(--gradient-primary);
   color: white;
@@ -184,19 +184,19 @@ body {
 }
 
 .hero-banner {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   animation: fadeInDown 0.8s ease-out;
 }
 
 .hero-banner img {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
-  box-shadow: var(--shadow-lg);
+  border-radius: 4px;
+  box-shadow: var(--shadow-md);
 }
 
 .hero h1 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: white;
   animation: fadeInUp 0.8s ease-out 0.2s both;
   font-weight: 600;
@@ -209,30 +209,10 @@ body {
 
 .hero-description {
   max-width: 700px;
-  margin: 1.5rem auto;
+  margin: 0 auto 1rem auto;
   color: rgba(255, 255, 255, 0.95);
-  font-size: 1.125rem;
-  line-height: 1.6;
-}
-
-.hero-actions {
-  margin-top: 2.5rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fadeInUp 0.8s ease-out 0.6s both;
-}
-
-.hero-actions .bx--btn {
-  min-width: 180px;
-  font-weight: 500;
-  transition: all var(--transition-fast);
-}
-
-.hero-actions .bx--btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 @keyframes fadeInUp {
@@ -263,124 +243,63 @@ body {
 
 @media (max-width: 768px) {
   .hero {
-    padding: 3rem 1rem;
+    padding: 1.5rem 1rem 1rem 1rem;
   }
   
   .hero h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
   
-  .hero-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .hero-actions .bx--btn {
-    min-width: auto;
+  .hero-description {
+    font-size: 0.9375rem;
   }
 }
 /* ============================================
-   TRACK CAROUSEL - NEW
+   TRACK HORIZONTAL SCROLL - SIMPLIFIED
    ============================================ */
 
-.track-carousel-container {
-  position: relative;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 3rem;
+.track-scroll-container {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cds-ui-04) transparent;
 }
 
-.track-carousel {
+.track-scroll-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.track-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.track-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--cds-ui-04);
+  border-radius: 4px;
+}
+
+.track-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--cds-ui-05);
+}
+
+.track-scroll {
   display: flex;
-  overflow: hidden;
-  transition: transform var(--transition-smooth);
   gap: 1.5rem;
+  padding: 0.5rem 0 1rem 0;
 }
 
 .track-card-wrapper {
-  flex: 0 0 calc(25% - 1.125rem);
-  min-width: 0;
+  flex: 0 0 300px;
+  min-width: 300px;
 }
 
-@media (max-width: 1055px) {
+@media (max-width: 768px) {
   .track-card-wrapper {
-    flex: 0 0 calc(50% - 0.75rem);
+    flex: 0 0 280px;
+    min-width: 280px;
   }
-}
-
-@media (max-width: 671px) {
-  .track-card-wrapper {
-    flex: 0 0 100%;
-  }
-  
-  .track-carousel-container {
-    padding: 0 2.5rem;
-  }
-}
-
-.carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--cds-ui-01);
-  border: 1px solid var(--cds-ui-04);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  z-index: 10;
-  box-shadow: var(--shadow-sm);
-}
-
-.carousel-btn:hover:not(:disabled) {
-  background: var(--cds-interactive-01);
-  color: white;
-  border-color: var(--cds-interactive-01);
-  box-shadow: var(--shadow-md);
-}
-
-.carousel-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.carousel-btn-prev {
-  left: 0;
-}
-
-.carousel-btn-next {
-  right: 0;
-}
-
-.carousel-dots {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 2rem;
-}
-
-.carousel-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--cds-ui-04);
-  background: transparent;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  padding: 0;
-}
-
-.carousel-dot:hover {
-  border-color: var(--cds-interactive-01);
-}
-
-.carousel-dot.active {
-  background: var(--cds-interactive-01);
-  border-color: var(--cds-interactive-01);
 }
 
 
@@ -420,11 +339,12 @@ body {
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--cds-ui-04);
+  border: 2px solid var(--cds-ui-04);
   background: var(--cds-ui-01);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 .track-card::before {
@@ -435,19 +355,18 @@ body {
   right: 0;
   height: 4px;
   background: var(--gradient-primary);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--transition-smooth);
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
 }
 
 .track-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   border-color: var(--cds-interactive-01);
 }
 
 .track-card:hover::before {
-  transform: scaleX(1);
+  opacity: 1;
 }
 
 .track-icon {

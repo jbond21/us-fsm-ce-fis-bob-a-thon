@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FIS Bob-a-thon Workshop 2</title>
+  <title>FIS Bob-a-thon Workshop 3</title>
   <meta name="description" content="Comprehensive workshop for IBM Bob integration into development workflows, CI/CD pipelines, and custom automation scenarios.">
   
   <!-- Carbon Design System -->
@@ -14,8 +14,7 @@
   <!-- Carbon UI Shell Header -->
   <header class="bx--header" role="banner">
     <a class="bx--header__name" href="index.html">
-      <span class="bx--header__name--prefix">IBM - </span>
-      FIS Bob-a-thon
+      <span class="bx--header__name--prefix">IBM - FIS Bob-a-thon</span>
     </a>
     <nav class="bx--header__nav" aria-label="Main navigation">
       <a href="lab.html?page=PREREQUISITES" class="bx--header__menu-item">Prerequisites</a>
@@ -42,42 +41,29 @@
       <div class="hero-content">
         <!-- Banner Image -->
         <div class="hero-banner">
-          <img src="./resources/banner.png" alt="FIS Bob-a-thon Workshop Banner" style="max-width: 100%; height: auto; margin-bottom: 2rem; border-radius: 4px;">
+          <img src="./resources/banner.png" alt="FIS Bob-a-thon Workshop Banner" style="max-width: 100%; height: auto;">
         </div>
         
-        <h1 class="bx--type-expressive-heading-06">FIS Bob-a-thon Workshop</h1>
-        <p class="bx--type-expressive-heading-03">
-          Master IBM Bob integration for DevOps and Development
-        </p>
+        <h1 class="bx--type-expressive-heading-05">FIS Bob-a-thon Workshop</h1>
         <p class="bx--type-body-long-02 hero-description">
           Comprehensive hands-on workshop demonstrating how to integrate IBM Bob into development workflows,
           CI/CD pipelines, and custom automation scenarios.
         </p>
-        <div class="hero-actions">
-          <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--primary bx--btn--lg">Get Started</a>
-          <a href="lab.html?page=PREREQUISITES" class="bx--btn bx--btn--secondary bx--btn--lg">View Prerequisites</a>
-        </div>
       </div>
     </section>
 
-    <!-- Learning Tracks Carousel -->
+    <!-- Learning Tracks -->
     <section class="tracks">
       <h2 class="bx--type-expressive-heading-05 section-title">Choose Your Learning Track</h2>
       <p class="bx--type-body-long-02 section-description">
         Select a track based on your role and experience level. All participants should complete the Intro Labs first.
       </p>
       
-      <div class="track-carousel-container">
-        <button class="carousel-btn carousel-btn-prev" aria-label="Previous track">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M13 15l-5-5 5-5v10z"/>
-          </svg>
-        </button>
-        
-        <div class="track-carousel">
+      <div class="track-scroll-container">
+        <div class="track-scroll">
           <!-- Intro Labs Card -->
           <div class="track-card-wrapper">
-            <div class="bx--tile bx--tile--clickable track-card">
+            <div class="bx--tile track-card">
               <div class="track-icon">🎓</div>
               <h3 class="bx--type-productive-heading-04">Intro Labs</h3>
               <p class="bx--type-body-long-01">Bob fundamentals for all participants.</p>
@@ -99,7 +85,7 @@
 
           <!-- SRE Track Card -->
           <div class="track-card-wrapper">
-            <div class="bx--tile bx--tile--clickable track-card">
+            <div class="bx--tile track-card">
               <div class="track-icon">🏗️</div>
               <h3 class="bx--type-productive-heading-04">SRE Track</h3>
               <p class="bx--type-body-long-01">Build a complete Jenkins CI/CD pipeline with Bob.</p>
@@ -121,7 +107,7 @@
 
           <!-- App Track Card -->
           <div class="track-card-wrapper">
-            <div class="bx--tile bx--tile--clickable track-card">
+            <div class="bx--tile track-card">
               <div class="track-icon">💻</div>
               <h3 class="bx--type-productive-heading-04">App Track</h3>
               <p class="bx--type-body-long-01">Bob as an always-on partner for app development.</p>
@@ -143,7 +129,7 @@
 
           <!-- Handoff Labs Card -->
           <div class="track-card-wrapper">
-            <div class="bx--tile bx--tile--clickable track-card">
+            <div class="bx--tile track-card">
               <div class="track-icon">🚀</div>
               <h3 class="bx--type-productive-heading-04">Handoff Labs</h3>
               <p class="bx--type-body-long-01">Advanced labs for specialized use cases.</p>
@@ -164,19 +150,10 @@
             </div>
           </div>
         </div>
-        
-        <button class="carousel-btn carousel-btn-next" aria-label="Next track">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M7 5l5 5-5 5V5z"/>
-          </svg>
-        </button>
       </div>
       
-      <div class="carousel-dots">
-        <button class="carousel-dot active" data-index="0" aria-label="Go to track 1"></button>
-        <button class="carousel-dot" data-index="1" aria-label="Go to track 2"></button>
-        <button class="carousel-dot" data-index="2" aria-label="Go to track 3"></button>
-        <button class="carousel-dot" data-index="3" aria-label="Go to track 4"></button>
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--primary bx--btn--lg">Get Started</a>
       </div>
     </section>
 
@@ -243,6 +220,5 @@
 
   <!-- Scripts -->
   <script src="assets/js/theme-toggle.js"></script>
-  <script src="assets/js/carousel.js"></script>
 </body>
 </html>
