@@ -259,12 +259,13 @@ body {
    ============================================ */
 
 .track-scroll-container {
-  max-width: 100%;
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--cds-ui-04) transparent;
+  margin: 0 auto;
 }
 
 .track-scroll-container::-webkit-scrollbar {
@@ -286,18 +287,33 @@ body {
 
 .track-scroll {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 1.5rem;
   padding: 0.5rem 0 1rem 0;
+  min-width: min-content;
 }
 
 .track-card-wrapper {
-  flex: 0 0 300px;
-  min-width: 300px;
+  flex: 0 0 auto;
+  width: 320px;
+  min-width: 320px;
+}
+
+@media (min-width: 1400px) {
+  .track-scroll {
+    justify-content: center;
+  }
+  
+  .track-card-wrapper {
+    width: 300px;
+    min-width: 300px;
+  }
 }
 
 @media (max-width: 768px) {
   .track-card-wrapper {
-    flex: 0 0 280px;
+    width: 280px;
     min-width: 280px;
   }
 }
