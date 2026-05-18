@@ -72,7 +72,7 @@ body {
 /* Quick Navigation Section */
 .quick-nav-section {
   margin-bottom: 0;
-  padding: 1rem;
+  padding: 0;
   background: var(--cds-ui-02);
   border-radius: 4px;
   margin: 0 0 0 0;
@@ -81,15 +81,19 @@ body {
 .quick-nav-title {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--cds-text-02);
-  margin-bottom: 0.75rem;
+  color: var(--cds-text-04);
+  margin-bottom: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 0;
+  padding: 0.75rem 1rem;
+  background: var(--gradient-secondary);
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .quick-nav-list {
   margin: 0;
+  padding: 1rem;
 }
 
 .quick-nav-link {
@@ -102,34 +106,74 @@ body {
 
 .quick-nav-link.current-track {
   background: var(--cds-interactive-01);
-  color: white !important;
-  font-weight: 600;
+  color: var(--cds-text-04) !important;
+  font-weight: 700;
   border-left: none;
+  position: relative;
+}
+
+.quick-nav-link.current-track::before {
+  content: '▶';
+  position: absolute;
+  left: 0.25rem;
+  color: var(--cds-text-04);
+  font-size: 0.75rem;
+}
+
+.quick-nav-link.current-track::after {
+  content: '◀';
+  position: absolute;
+  right: 0.25rem;
+  color: var(--cds-text-04);
+  font-size: 0.75rem;
 }
 
 .quick-nav-link.current-track:hover {
   background: var(--cds-hover-primary);
-  color: white !important;
+  color: var(--cds-text-04) !important;
   transform: none;
 }
 
 .quick-nav-active .quick-nav-link {
   background: var(--cds-interactive-01);
-  color: white !important;
+  color: var(--cds-text-04) !important;
 }
 
 /* Divider between Quick Nav and Labs */
-.sidebar-nav > div:first-child::after {
+.quick-nav-section {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.quick-nav-section::after {
   content: '';
   display: block;
   height: 2px;
-  background: var(--cds-ui-04);
-  margin: 1.5rem 0;
+  background: linear-gradient(90deg, var(--cds-interactive-01) 0%, transparent 100%);
+  margin-top: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Labs Section */
 .labs-section {
   padding-top: 0;
+  padding: 1rem;
+  background: var(--cds-ui-02);
+  border-radius: 4px;
+  margin-top: 1.5rem;
+}
+
+.labs-section .sidebar-title {
+  background: var(--gradient-primary);
+  color: var(--cds-text-04);
+  padding: 0.75rem 1rem;
+  margin: -1rem -1rem 1rem -1rem;
+  border-radius: 4px 4px 0 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-list {
