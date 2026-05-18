@@ -147,7 +147,7 @@ body {
    ============================================ */
 
 .hero {
-  padding: 2rem 2rem 1.5rem 2rem;
+  padding: 1.5rem 2rem 1rem 2rem;
   text-align: center;
   background: var(--gradient-primary);
   color: white;
@@ -184,7 +184,7 @@ body {
 }
 
 .hero-banner {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   animation: fadeInDown 0.8s ease-out;
 }
 
@@ -196,7 +196,7 @@ body {
 }
 
 .hero h1 {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   color: white;
   animation: fadeInUp 0.8s ease-out 0.2s both;
   font-weight: 600;
@@ -209,7 +209,7 @@ body {
 
 .hero-description {
   max-width: 700px;
-  margin: 0 auto 1rem auto;
+  margin: 0 auto 0.5rem auto;
   color: rgba(255, 255, 255, 0.95);
   font-size: 1rem;
   line-height: 1.5;
@@ -243,7 +243,7 @@ body {
 
 @media (max-width: 768px) {
   .hero {
-    padding: 1.5rem 1rem 1rem 1rem;
+    padding: 1rem 1rem 0.75rem 1rem;
   }
   
   .hero h1 {
@@ -252,6 +252,10 @@ body {
   
   .hero-description {
     font-size: 0.9375rem;
+  }
+  
+  .hero-banner {
+    margin-bottom: 0.5rem;
   }
 }
 /* ============================================
