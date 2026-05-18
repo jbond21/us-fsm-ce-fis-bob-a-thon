@@ -202,6 +202,42 @@ body {
   padding-left: calc(1rem - 4px);
 }
 
+/* Nested lab items */
+.sidebar-item.nested-item {
+  margin-left: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-link.nested-link {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--cds-text-02);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.sidebar-link.nested-link::before {
+  content: '└';
+  position: absolute;
+  left: 0.5rem;
+  color: var(--cds-text-03);
+  font-size: 0.75rem;
+}
+
+.sidebar-link.nested-link:hover {
+  background: var(--cds-hover-ui);
+  color: var(--cds-text-01);
+  transform: translateX(2px);
+}
+
+.sidebar-item.nested-item.active .sidebar-link {
+  background: var(--cds-ui-03);
+  color: var(--cds-interactive-01);
+  font-weight: 600;
+  border-left: 3px solid var(--cds-interactive-01);
+  padding-left: calc(1.5rem - 3px);
+}
+
 .sidebar-empty {
   padding: 1rem;
   color: var(--cds-text-02);

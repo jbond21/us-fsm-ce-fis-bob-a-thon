@@ -40,12 +40,25 @@
       items: [
         { title: 'Overview', path: 'README' },
         { title: '1. Bob Mode Builder', path: 'bob-mode-labs/README' },
-        { title: '2. Example MCP Servers', path: 'bob-mcp-labs/README' },
-        { title: '3. OpenShift Operations', path: 'openshift-with-bob/README' },
+        { title: '2. Example MCP Servers', path: 'bob-mcp-labs/README', nested: true },
+        { title: '3. OpenShift Operations', path: 'openshift-with-bob/README', nested: true },
         { title: '4. Python to JavaScript', path: 'python-to-javascript/README' },
         { title: '5. Simple App Development', path: 'simple-app-development/README' },
         { title: '6. Java Modernization', path: 'simple-java-modernization/README' }
-      ]
+      ],
+      nestedLabs: {
+        'bob-mcp-labs': [
+          { title: '2.1 Simple Calculator', path: 'bob-mcp-labs/01-simple-calculator/README' },
+          { title: '2.2 Structured Calculator', path: 'bob-mcp-labs/02-structured-calculator/README' },
+          { title: '2.3 File Operations', path: 'bob-mcp-labs/03-file-operations/README' },
+          { title: '2.4 Database Operations', path: 'bob-mcp-labs/04-database-operations/README' },
+          { title: '2.5 API to MCP', path: 'bob-mcp-labs/05-api-to-mcp/README' }
+        ],
+        'openshift-with-bob': [
+          { title: '3.1 Basics with OCP MCP', path: 'openshift-with-bob/basics-with-ocp-mcp/README' },
+          { title: '3.2 Custom OpenShift Modes', path: 'openshift-with-bob/openshift-custom-modes/README' }
+        ]
+      }
     }
   };
   
@@ -145,6 +158,22 @@
           </a>
         </li>
       `;
+      
+      // If this item has nested labs, add them as indented sub-items
+      if (item.nested && config.nestedLabs && config.nestedLabs[item.path.split('/')[0]]) {
+        const nestedItems = config.nestedLabs[item.path.split('/')[0]];
+        nestedItems.forEach(function(nestedItem) {
+          const isNestedActive = currentLab === nestedItem.path;
+          const nestedActiveClass = isNestedActive ? 'active' : '';
+          html += `
+            <li class="sidebar-item nested-item ${nestedActiveClass}">
+              <a href="lab.html?track=${currentTrack}&lab=${nestedItem.path}" class="sidebar-link nested-link">
+                ${nestedItem.title}
+              </a>
+            </li>
+          `;
+        });
+      }
     });
     
     html += `
