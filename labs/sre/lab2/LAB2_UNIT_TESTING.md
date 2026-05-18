@@ -41,8 +41,10 @@ By the end, a failing test won't just turn the build yellow — Bob will explain
 
 ## Before you start
 
-- [ ] Lab 1 complete (your Jenkinsfile already has a PR Review stage and the askBob helper)
+- [ ] Lab 1 complete (askBob helper added to your Jenkinsfile)
 - [ ] You're on your working branch (e.g. `user1-labs`)
+
+**Reset your Jenkinsfile first.** Remove the stages you added in previous labs, keeping only the `Checkout` stage and the `askBob` helper at the bottom. Stacking every lab's stages stretches a single build past 15 minutes — clearing them keeps iteration fast and the logs readable. Use [`solution/Jenkinsfile.start`](../../../solution/Jenkinsfile.start) as the reference shape.
 
 ---
 
@@ -67,7 +69,7 @@ Tool groups:
 
 Notice the prompt above tells the **Mode Writer** mode to write Markdown files instead of XML this time. Both are acceptable practice with Bob. 
 
-Feel free to explore the XML files and see what Bob decided to generate.
+Feel free to explore the Markdown files and see what Bob decided to generate.
 
 Once Bob finishes, **restart Bob IDE** so the new mode appears in your mode dropdown — IDE modes are loaded at IDE startup.
 

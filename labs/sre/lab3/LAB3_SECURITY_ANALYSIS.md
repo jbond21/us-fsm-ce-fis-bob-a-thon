@@ -60,8 +60,10 @@ By the end, every push triggers automated security scanning in your Jenkins pipe
 
 ## Before you start
 
-- [ ] Lab 2 complete (your Jenkinsfile already has a PR Review stage and the askBob helper)
+- [ ] Lab 1 complete (askBob helper added to your Jenkinsfile)
 - [ ] You're on your working branch (e.g. `user1-labs`)
+
+**Reset your Jenkinsfile first.** Remove any stages you added in previous labs, keeping only the `Checkout` stage and the `askBob` helper at the bottom. Stacking every lab's stages stretches a single build past 15 minutes — clearing them keeps iteration fast and the logs readable. Use [`solution/Jenkinsfile.start`](../../../solution/Jenkinsfile.start) as the reference shape.
 
 
 ## Part 1: Inject Security Vulnerabilities
@@ -536,7 +538,7 @@ Instead of asking "Add security scanning," provide a complete technical specific
 
 **Result:** Production-ready code in minutes, not hours of manual coding and testing.
 
-#### Prompt to Bob:
+
 
 **Prompt to Bob:**
 ```
@@ -860,10 +862,17 @@ In Jenkins, click **Build Now** on your pipeline and watch the console.
   - Configuration security checks validate K8s/Docker configs
   - Risk assessment calculates overall security posture
 - Security reports are generated and archived as build artifacts:
-  - `Security_Analysis_Report.md` - Bob's comprehensive security analysis
-  - `SonarQube_Analysis_Report.md` - SonarQube findings
-  - `CVE_ANALYSIS_REPORT.md` - CVE analysis (if vulnerabilities detected)
-  - `SECURITY_REPORT.txt` - Pipeline security summary
+  - `security-analysis-report.md` - Consolidated security analysis report
+  - `bob-cve-analysis.txt` - Bob's CVE analysis (if vulnerabilities detected)
+  - `order-service/grype-report.json` - Raw Grype vulnerability scan results
+  
+  > **Note:** In an ideal production environment, you would generate separate reports for each tool (SonarQube_Analysis_Report.md, CVE_ANALYSIS_REPORT.md, SECURITY_REPORT.txt). However, for demo purposes, this lab consolidates all findings into a single `security-analysis-report.md` that includes:
+  > - Executive summary with risk level and deployment decision
+  > - SonarQube analysis results (bugs, vulnerabilities, security hotspots, code smells)
+  > - Grype vulnerability scan results (Critical, High, Medium severity counts)
+  > - Risk assessment calculation and thresholds
+  > - Deployment recommendation (BLOCK/WARN/PROCEED)
+  > - Next steps based on risk level
 - Pipeline may turn **UNSTABLE (yellow)** or **FAILURE (red)** depending on severity of findings
 - Build page lists all security reports under **Build Artifacts**
 
@@ -874,19 +883,19 @@ Open the archived artifacts from the build page to review:
 
 **Note:** The security stage is designed to block deployment if CRITICAL issues are detected. Review the console output and security reports to understand what needs to be fixed before the next deployment.
 
-For detailed pipeline execution and troubleshooting, refer to `labs/sre/lab3/PIPELINE_EXECUTION_GUIDE.md`.
+
 
 **Recommended workflow after finishing this lab:**
 ```bash
 # Commit the lab outputs
-git add Jenkinsfile Security_Analysis_Report.md SonarQube_Analysis_Report.md pipeline/cve-analysis-prompt.txt
+git add Jenkinsfile security-analysis-report.md bob-cve-analysis.txt order-service/grype-report.json
 git commit -m "lab: add comprehensive security analysis"
 
 # Push changes so Jenkins can build the updated pipeline
 git push origin main
 ```
 
-Then follow `labs/lab3/PIPELINE_EXECUTION_GUIDE.md` step by step to test the pipeline in Jenkins.
+
 
 **Expected Pipeline Behavior with injected vulnerabilities:**
 1. Checkout stage passes
