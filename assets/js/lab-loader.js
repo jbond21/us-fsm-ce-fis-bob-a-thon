@@ -195,19 +195,8 @@
     });
     
     // Fix internal anchor links (table of contents)
-    labContent.querySelectorAll('a[href^="#"]').forEach(function(link) {
-      // These links work automatically, but ensure they scroll smoothly
-      link.addEventListener('click', function(e) {
-        const targetId = this.getAttribute('href').substring(1);
-        const targetElement = document.getElementById(targetId);
-        if (targetElement) {
-          e.preventDefault();
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // Update URL hash without jumping
-          history.pushState(null, null, '#' + targetId);
-        }
-      });
-    });
+    // Add smooth scrolling behavior via CSS instead of JavaScript
+    document.documentElement.style.scrollBehavior = 'smooth';
     
     // Fix links to other markdown files
     labContent.querySelectorAll('a[href$=".md"]').forEach(function(link) {

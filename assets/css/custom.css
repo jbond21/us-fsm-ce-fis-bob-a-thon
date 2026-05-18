@@ -1099,91 +1099,23 @@ html {
 
 #lab-content pre {
   background: #1e1e1e;
-  padding: 0;
+  padding: 1.5rem;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
   margin: 2rem 0;
   position: relative;
   border: 1px solid var(--cds-ui-04);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-#lab-content pre::before {
-  content: attr(data-language);
-  display: block;
-  background: linear-gradient(135deg, rgba(15, 98, 254, 0.15) 0%, rgba(138, 63, 252, 0.15) 100%);
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--cds-text-01);
-  border-bottom: 1px solid var(--cds-ui-04);
-  font-family: 'IBM Plex Sans', sans-serif;
-}
-
 #lab-content pre code {
   display: block;
   background: none;
-  padding: 1.5rem;
+  padding: 0;
   color: #d4d4d4;
   font-size: 0.875rem;
   line-height: 1.6;
   font-family: 'IBM Plex Mono', 'Courier New', monospace;
-  overflow-x: auto;
-}
-
-/* Add language label dynamically via JavaScript */
-#lab-content pre[class*="language-"]::before {
-  content: attr(class);
-}
-
-#lab-content pre.language-bash::before {
-  content: 'BASH';
-}
-
-#lab-content pre.language-javascript::before,
-#lab-content pre.language-js::before {
-  content: 'JAVASCRIPT';
-}
-
-#lab-content pre.language-python::before {
-  content: 'PYTHON';
-}
-
-#lab-content pre.language-java::before {
-  content: 'JAVA';
-}
-
-#lab-content pre.language-yaml::before,
-#lab-content pre.language-yml::before {
-  content: 'YAML';
-}
-
-#lab-content pre.language-json::before {
-  content: 'JSON';
-}
-
-#lab-content pre.language-xml::before {
-  content: 'XML';
-}
-
-#lab-content pre.language-markdown::before,
-#lab-content pre.language-md::before {
-  content: 'MARKDOWN';
-}
-
-#lab-content pre.language-groovy::before {
-  content: 'GROOVY';
-}
-
-#lab-content pre.language-sql::before {
-  content: 'SQL';
-}
-
-/* Default for unlabeled code blocks */
-#lab-content pre:not([class*="language-"])::before {
-  content: 'CODE';
 }
 
 /* Copy button for code blocks */
