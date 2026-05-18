@@ -1015,21 +1015,66 @@ html {
 }
 
 #lab-content p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+  color: var(--cds-text-01);
+  font-size: 1rem;
+}
+
+#lab-content p:first-of-type {
+  font-size: 1.125rem;
+  line-height: 1.8;
   color: var(--cds-text-01);
 }
 
 #lab-content ul,
 #lab-content ol {
-  margin-bottom: 1rem;
-  padding-left: 2rem;
+  margin-bottom: 1.5rem;
+  padding-left: 2.5rem;
+}
+
+#lab-content ul {
+  list-style-type: none;
+}
+
+#lab-content ul > li {
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+#lab-content ul > li::before {
+  content: '▸';
+  position: absolute;
+  left: -1.5rem;
+  color: var(--cds-interactive-01);
+  font-weight: bold;
+}
+
+#lab-content ol {
+  counter-reset: item;
+}
+
+#lab-content ol > li {
+  counter-increment: item;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+#lab-content ol > li::marker {
+  color: var(--cds-interactive-01);
+  font-weight: 700;
 }
 
 #lab-content li {
-  margin-bottom: 0.5rem;
-  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  line-height: 1.7;
   color: var(--cds-text-01);
+}
+
+#lab-content li > ul,
+#lab-content li > ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 #lab-content a {
@@ -1086,45 +1131,87 @@ pre:hover .copy-btn {
 
 #lab-content blockquote {
   border-left: 4px solid var(--cds-interactive-01);
-  padding-left: 1rem;
-  margin: 1.5rem 0;
-  color: var(--cds-text-02);
-  font-style: italic;
-  background: var(--cds-ui-02);
-  padding: 1rem 1rem 1rem 1.5rem;
-  border-radius: 0 4px 4px 0;
+  margin: 2rem 0;
+  color: var(--cds-text-01);
+  background: linear-gradient(90deg, rgba(15, 98, 254, 0.05) 0%, transparent 100%);
+  padding: 1.25rem 1.5rem 1.25rem 2rem;
+  border-radius: 0 8px 8px 0;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#lab-content blockquote::before {
+  content: '"';
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  font-size: 3rem;
+  color: var(--cds-interactive-01);
+  opacity: 0.2;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+#lab-content blockquote p {
+  margin-bottom: 0.5rem;
+}
+
+#lab-content blockquote p:last-child {
+  margin-bottom: 0;
 }
 
 #lab-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5rem 0;
-  box-shadow: var(--shadow-sm);
+  margin: 2rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 #lab-content th,
 #lab-content td {
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   text-align: left;
-  border-bottom: 1px solid var(--cds-ui-03);
+  border-bottom: 1px solid var(--cds-ui-04);
 }
 
 #lab-content th {
-  background: var(--cds-ui-03);
-  font-weight: 600;
+  background: linear-gradient(135deg, rgba(15, 98, 254, 0.1) 0%, rgba(138, 63, 252, 0.1) 100%);
+  font-weight: 700;
   color: var(--cds-text-01);
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--cds-interactive-01);
 }
 
-#lab-content tr:hover {
+#lab-content tbody tr {
+  transition: all 0.2s ease;
+}
+
+#lab-content tbody tr:hover {
   background: var(--cds-hover-ui);
+  transform: scale(1.01);
+}
+
+#lab-content tbody tr:last-child td {
+  border-bottom: none;
 }
 
 #lab-content img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
-  margin: 1.5rem 0;
-  box-shadow: var(--shadow-sm);
+  border-radius: 8px;
+  margin: 2rem 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--cds-ui-04);
+  transition: all 0.3s ease;
+}
+
+#lab-content img:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
 }
 
 .table-wrapper {

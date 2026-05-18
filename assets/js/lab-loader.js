@@ -170,10 +170,22 @@
         newSrc = `./${src.substring(3)}`;
       } else if (src.startsWith('./')) {
         // Path relative to current lab (e.g., ./assets/image.png)
-        newSrc = `./labs/${track}/${src.substring(2)}`;
+        // Need to get the directory of the current lab
+        const labDir = lab.substring(0, lab.lastIndexOf('/'));
+        if (labDir) {
+          newSrc = `./labs/${track}/${labDir}/${src.substring(2)}`;
+        } else {
+          newSrc = `./labs/${track}/${src.substring(2)}`;
+        }
       } else if (!src.startsWith('/')) {
         // Relative path without prefix (e.g., assets/image.png)
-        newSrc = `./labs/${track}/${src}`;
+        // Need to get the directory of the current lab
+        const labDir = lab.substring(0, lab.lastIndexOf('/'));
+        if (labDir) {
+          newSrc = `./labs/${track}/${labDir}/${src}`;
+        } else {
+          newSrc = `./labs/${track}/${src}`;
+        }
       }
       
       if (newSrc) {
