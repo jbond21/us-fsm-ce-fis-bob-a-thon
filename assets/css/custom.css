@@ -45,7 +45,7 @@ body {
    ============================================ */
 
 .sidebar {
-  width: var(--sidebar-width);
+  width: 240px;
   background: var(--cds-ui-01);
   border-right: 1px solid var(--cds-ui-03);
   overflow-y: auto;
@@ -57,15 +57,69 @@ body {
 }
 
 .sidebar-nav {
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 0.75rem;
 }
 
 .sidebar-title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--cds-text-01);
   padding: 0 0.5rem;
+}
+
+/* Quick Navigation Section */
+.quick-nav-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--cds-ui-04);
+  background: var(--cds-ui-02);
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 0 0 1.5rem 0;
+}
+
+.quick-nav-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cds-text-02);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0;
+}
+
+.quick-nav-list {
+  margin: 0;
+}
+
+.quick-nav-link {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.quick-nav-link.current-track {
+  background: var(--cds-interactive-01);
+  color: white;
+  font-weight: 600;
+  border-left: none;
+}
+
+.quick-nav-link.current-track:hover {
+  background: var(--cds-hover-primary);
+  color: white;
+}
+
+.quick-nav-active .quick-nav-link {
+  background: var(--cds-interactive-01);
+  color: white;
+}
+
+/* Labs Section */
+.labs-section {
+  padding-top: 0.5rem;
 }
 
 .sidebar-list {
@@ -96,10 +150,10 @@ body {
 
 .sidebar-item.active .sidebar-link {
   background: var(--cds-ui-03);
-  color: var(--cds-link-01);
+  color: var(--cds-interactive-01);
   font-weight: 600;
-  border-left: 3px solid var(--cds-interactive-01);
-  padding-left: calc(1rem - 3px);
+  border-left: 4px solid var(--cds-interactive-01);
+  padding-left: calc(1rem - 4px);
 }
 
 .sidebar-empty {
@@ -563,6 +617,149 @@ body {
 /* ============================================
    STATS SECTION - MODERNIZED
    ============================================ */
+/* ============================================
+   LAB PAGE MODERN ENHANCEMENTS
+   ============================================ */
+
+/* Breadcrumb navigation */
+.lab-breadcrumb {
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cds-ui-03);
+  font-size: 0.875rem;
+}
+
+.lab-breadcrumb a {
+  color: var(--cds-link-01);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.lab-breadcrumb a:hover {
+  color: var(--cds-link-02);
+  text-decoration: underline;
+}
+
+/* Enhanced lab content container */
+.lab-content-tile {
+  background: var(--cds-ui-01);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow var(--transition-smooth);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Table of contents styling */
+.toc {
+  background: var(--cds-ui-02);
+  border-left: 4px solid var(--cds-interactive-01);
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.toc h2, .toc h3 {
+  margin-top: 0;
+  padding-left: 0 !important;
+  border-left: none !important;
+}
+
+/* Code block enhancements */
+#lab-content pre {
+  position: relative;
+  margin: 1.5rem 0;
+}
+
+#lab-content pre:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Inline code enhancement */
+#lab-content code {
+  font-weight: 500;
+}
+
+/* Link styling in content */
+#lab-content a {
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+#lab-content a:hover {
+  text-decoration: underline;
+}
+
+/* Alert/Note boxes */
+#lab-content blockquote {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+#lab-content blockquote::before {
+  content: 'ℹ️';
+  position: absolute;
+  left: 0.5rem;
+  top: 1rem;
+  font-size: 1.25rem;
+}
+
+/* List styling improvements */
+#lab-content ul, #lab-content ol {
+  line-height: 1.7;
+}
+
+#lab-content li {
+  margin-bottom: 0.75rem;
+}
+
+#lab-content li:last-child {
+  margin-bottom: 0;
+}
+
+/* Image captions */
+#lab-content img + em {
+  display: block;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--cds-text-02);
+  margin-top: 0.5rem;
+}
+
+/* Horizontal rule styling */
+#lab-content hr {
+  border: none;
+  border-top: 2px solid var(--cds-ui-03);
+  margin: 2rem 0;
+}
+
+/* Task/Step numbers */
+#lab-content h2[id^="step-"],
+#lab-content h2[id^="task-"] {
+  counter-increment: step;
+}
+
+/* Progress indicator for long labs */
+.lab-progress-indicator {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cds-ui-03);
+  z-index: 999;
+}
+
+.lab-progress-bar {
+  height: 100%;
+  background: var(--gradient-primary);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
 
 .stats-section {
   padding: 4rem 2rem;
@@ -636,18 +833,9 @@ body {
   color: var(--cds-interactive-01);
   font-weight: 600;
   position: relative;
+  padding-left: 0;
+  border-left: 4px solid var(--cds-interactive-01);
   padding-left: 1rem;
-}
-
-#lab-content h2::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.25rem;
-  bottom: 0.25rem;
-  width: 4px;
-  background: var(--cds-interactive-01);
-  border-radius: 2px;
 }
 
 #lab-content h3 {
@@ -655,6 +843,15 @@ body {
   margin-bottom: 0.75rem;
   color: var(--cds-text-01);
   font-weight: 600;
+  padding-left: 0;
+}
+
+#lab-content h4 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--cds-text-01);
+  font-weight: 600;
+  padding-left: 0;
 }
 
 #lab-content p {
