@@ -920,50 +920,98 @@ html {
 }
 
 #lab-content h1 {
-  border-bottom: 3px solid var(--cds-interactive-01);
-  padding-bottom: 0.75rem;
+  margin-top: 0;
   margin-bottom: 2rem;
   color: var(--cds-text-01);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  font-size: 2.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  position: relative;
+  display: inline-block;
+}
+
+#lab-content h1::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cds-interactive-01) 0%, transparent 100%);
+  border-radius: 2px;
 }
 
 #lab-content h2 {
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-  margin-left: 0;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
   color: var(--cds-interactive-01);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   position: relative;
-  padding-left: 1rem;
-  border-left: 4px solid var(--cds-interactive-01);
+  border-bottom: 2px solid var(--cds-ui-04);
+  padding-bottom: 0.5rem;
+}
+
+#lab-content h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 60px;
+  height: 2px;
+  background: var(--cds-interactive-01);
 }
 
 #lab-content h3 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  margin-left: 0;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
   color: var(--cds-text-01);
   font-weight: 600;
-  padding-left: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  position: relative;
+}
+
+#lab-content h3::before {
+  content: '▸';
+  color: var(--cds-interactive-01);
+  margin-right: 0.5rem;
+  font-weight: 700;
 }
 
 #lab-content h4 {
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-  margin-left: 0;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
   color: var(--cds-text-01);
   font-weight: 600;
-  padding-left: 0;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  font-style: italic;
 }
 
-#lab-content h5, #lab-content h6 {
+#lab-content h5 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--cds-text-02);
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+}
+
+#lab-content h6 {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
-  margin-left: 0;
-  color: var(--cds-text-01);
+  color: var(--cds-text-02);
   font-weight: 600;
-  padding-left: 0;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 #lab-content p {

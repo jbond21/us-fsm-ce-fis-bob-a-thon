@@ -182,6 +182,21 @@
       }
     });
     
+    // Fix internal anchor links (table of contents)
+    labContent.querySelectorAll('a[href^="#"]').forEach(function(link) {
+      // These links work automatically, but ensure they scroll smoothly
+      link.addEventListener('click', function(e) {
+        const targetId = this.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          e.preventDefault();
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Update URL hash without jumping
+          history.pushState(null, null, '#' + targetId);
+        }
+      });
+    });
+    
     // Fix links to other markdown files
     labContent.querySelectorAll('a[href$=".md"]').forEach(function(link) {
       const href = link.getAttribute('href');
@@ -200,9 +215,15 @@
           const targetLab = parts.slice(3).join('/').replace('.md', '');
           link.setAttribute('href', `lab.html?track=${targetTrack}&lab=${targetLab}`);
         }
-      } else if (href.startsWith('./') || !href.startsWith('/')) {
-        // Link within same track
-        const targetLab = href.replace('./', '').replace('.md', '');
+      } else if (href.startsWith('./')) {
+        // Link within same track starting with ./
+        const targetLab = href.substring(2).replace('.md', '');
+        if (track) {
+          link.setAttribute('href', `lab.html?track=${track}&lab=${targetLab}`);
+        }
+      } else if (!href.startsWith('/') && !href.startsWith('#')) {
+        // Relative link without prefix (e.g., lab2/LAB2.md)
+        const targetLab = href.replace('.md', '');
         if (track) {
           link.setAttribute('href', `lab.html?track=${track}&lab=${targetLab}`);
         }
