@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FIS Bob-a-thon Workshop</title>
+  <title>FIS Bob-a-thon Workshop 2</title>
   <meta name="description" content="Comprehensive workshop for IBM Bob integration into development workflows, CI/CD pipelines, and custom automation scenarios.">
   
   <!-- Carbon Design System -->
@@ -14,12 +14,12 @@
   <!-- Carbon UI Shell Header -->
   <header class="bx--header" role="banner">
     <a class="bx--header__name" href="index.html">
-      <span class="bx--header__name--prefix">IBM </span>
+      <span class="bx--header__name--prefix">IBM - </span>
       FIS Bob-a-thon
     </a>
     <nav class="bx--header__nav" aria-label="Main navigation">
-      <a href="lab.html?track=intro-labs" class="bx--header__menu-item">Labs</a>
       <a href="lab.html?page=PREREQUISITES" class="bx--header__menu-item">Prerequisites</a>
+      <a href="lab.html?track=intro-labs" class="bx--header__menu-item">Labs</a>
     </nav>
     <div class="bx--header__global">
       <!-- Theme Toggle Button -->
@@ -60,162 +60,169 @@
       </div>
     </section>
 
-    <!-- Learning Tracks Grid -->
+    <!-- Learning Tracks Carousel -->
     <section class="tracks">
       <h2 class="bx--type-expressive-heading-05 section-title">Choose Your Learning Track</h2>
       <p class="bx--type-body-long-02 section-description">
         Select a track based on your role and experience level. All participants should complete the Intro Labs first.
       </p>
       
-      <div class="bx--row">
-        <!-- Intro Labs Card -->
-        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
-          <div class="bx--tile bx--tile--clickable track-card">
-            <div class="track-icon">🎓</div>
-            <h3 class="bx--type-productive-heading-04">Intro Labs</h3>
-            <p class="bx--type-body-long-01">Bob fundamentals for all participants. Learn core capabilities through hands-on exercises.</p>
-            <div class="tags">
-              <span class="bx--tag bx--tag--blue">Beginner</span>
-              <span class="bx--tag bx--tag--outline">1-2 hours</span>
-              <span class="bx--tag bx--tag--red">Required</span>
+      <div class="track-carousel-container">
+        <button class="carousel-btn carousel-btn-prev" aria-label="Previous track">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13 15l-5-5 5-5v10z"/>
+          </svg>
+        </button>
+        
+        <div class="track-carousel">
+          <!-- Intro Labs Card -->
+          <div class="track-card-wrapper">
+            <div class="bx--tile bx--tile--clickable track-card">
+              <div class="track-icon">🎓</div>
+              <h3 class="bx--type-productive-heading-04">Intro Labs</h3>
+              <p class="bx--type-body-long-01">Bob fundamentals for all participants.</p>
+              <div class="tags">
+                <span class="bx--tag bx--tag--blue">Beginner</span>
+                <span class="bx--tag bx--tag--outline">1-2 hours</span>
+                <span class="bx--tag bx--tag--red">Required</span>
+              </div>
+              <div class="track-features">
+                <ul class="bx--list--unordered">
+                  <li>Bob's interface and modes</li>
+                  <li>Approval workflows</li>
+                  <li>Custom modes & MCP</li>
+                </ul>
+              </div>
+              <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
             </div>
-            <div class="track-features">
-              <ul class="bx--list--unordered bx--list--unordered--nested">
-                <li>Master Bob's interface and modes</li>
-                <li>Approval workflows</li>
-                <li>Custom modes and MCP servers</li>
-              </ul>
-            </div>
-            <a href="lab.html?track=intro-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
           </div>
-        </div>
 
-        <!-- SRE Track Card -->
-        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
-          <div class="bx--tile bx--tile--clickable track-card">
-            <div class="track-icon">🏗️</div>
-            <h3 class="bx--type-productive-heading-04">SRE Track</h3>
-            <p class="bx--type-body-long-01">Build a complete Jenkins CI/CD pipeline with Bob integration across 6 progressive labs.</p>
-            <div class="tags">
-              <span class="bx--tag bx--tag--green">Intermediate</span>
-              <span class="bx--tag bx--tag--outline">3-5 hours</span>
+          <!-- SRE Track Card -->
+          <div class="track-card-wrapper">
+            <div class="bx--tile bx--tile--clickable track-card">
+              <div class="track-icon">🏗️</div>
+              <h3 class="bx--type-productive-heading-04">SRE Track</h3>
+              <p class="bx--type-body-long-01">Build a complete Jenkins CI/CD pipeline with Bob.</p>
+              <div class="tags">
+                <span class="bx--tag bx--tag--green">Intermediate</span>
+                <span class="bx--tag bx--tag--outline">3-5 hours</span>
+              </div>
+              <div class="track-features">
+                <ul class="bx--list--unordered">
+                  <li>PR/Git diff review</li>
+                  <li>Unit testing & security</li>
+                  <li>Linting & DCR generation</li>
+                  <li>Jenkins MCP integration</li>
+                </ul>
+              </div>
+              <a href="lab.html?track=sre" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
             </div>
-            <div class="track-features">
-              <ul class="bx--list--unordered bx--list--unordered--nested">
-                <li>PR/Git diff review</li>
-                <li>Unit testing & security scanning</li>
-                <li>Linting & DCR generation</li>
-                <li>Jenkins MCP integration</li>
-              </ul>
-            </div>
-            <a href="lab.html?track=sre" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
           </div>
-        </div>
 
-        <!-- App Track Card -->
-        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
-          <div class="bx--tile bx--tile--clickable track-card">
-            <div class="track-icon">💻</div>
-            <h3 class="bx--type-productive-heading-04">App Track</h3>
-            <p class="bx--type-body-long-01">Experience Bob as an always-on partner for application development in regulated environments.</p>
-            <div class="tags">
-              <span class="bx--tag bx--tag--purple">Intermediate</span>
-              <span class="bx--tag bx--tag--outline">1-2 hours</span>
+          <!-- App Track Card -->
+          <div class="track-card-wrapper">
+            <div class="bx--tile bx--tile--clickable track-card">
+              <div class="track-icon">💻</div>
+              <h3 class="bx--type-productive-heading-04">App Track</h3>
+              <p class="bx--type-body-long-01">Bob as an always-on partner for app development.</p>
+              <div class="tags">
+                <span class="bx--tag bx--tag--purple">Intermediate</span>
+                <span class="bx--tag bx--tag--outline">1-2 hours</span>
+              </div>
+              <div class="track-features">
+                <ul class="bx--list--unordered">
+                  <li>PCI compliance review</li>
+                  <li>Semantic versioning</li>
+                  <li>Breaking change detection</li>
+                  <li>Release communication</li>
+                </ul>
+              </div>
+              <a href="lab.html?track=app" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
             </div>
-            <div class="track-features">
-              <ul class="bx--list--unordered bx--list--unordered--nested">
-                <li>Code review with PCI compliance</li>
-                <li>Semantic versioning automation</li>
-                <li>Breaking change detection</li>
-                <li>Release communication drafting</li>
-              </ul>
-            </div>
-            <a href="lab.html?track=app" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
           </div>
-        </div>
 
-        <!-- Handoff Labs Card -->
-        <div class="bx--col-lg-6 bx--col-md-6 bx--col-sm-4">
-          <div class="bx--tile bx--tile--clickable track-card">
-            <div class="track-icon">🚀</div>
-            <h3 class="bx--type-productive-heading-04">Handoff Labs</h3>
-            <p class="bx--type-body-long-01">Advanced labs for specialized use cases and extending Bob's capabilities.</p>
-            <div class="tags">
-              <span class="bx--tag bx--tag--red">Advanced</span>
-              <span class="bx--tag bx--tag--outline">20min - 3+ hours</span>
+          <!-- Handoff Labs Card -->
+          <div class="track-card-wrapper">
+            <div class="bx--tile bx--tile--clickable track-card">
+              <div class="track-icon">🚀</div>
+              <h3 class="bx--type-productive-heading-04">Handoff Labs</h3>
+              <p class="bx--type-body-long-01">Advanced labs for specialized use cases.</p>
+              <div class="tags">
+                <span class="bx--tag bx--tag--red">Advanced</span>
+                <span class="bx--tag bx--tag--outline">20min - 3+ hours</span>
+              </div>
+              <div class="track-features">
+                <ul class="bx--list--unordered">
+                  <li>Custom modes & MCP</li>
+                  <li>OpenShift operations</li>
+                  <li>Code translation</li>
+                  <li>Full-stack development</li>
+                  <li>Java modernization</li>
+                </ul>
+              </div>
+              <a href="lab.html?track=handoff-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
             </div>
-            <div class="track-features">
-              <ul class="bx--list--unordered bx--list--unordered--nested">
-                <li>Custom Bob modes & MCP servers</li>
-                <li>OpenShift operations</li>
-                <li>Code translation (Python→JS)</li>
-                <li>Full-stack app development</li>
-                <li>Java modernization (8→17/21)</li>
-              </ul>
-            </div>
-            <a href="lab.html?track=handoff-labs" class="bx--btn bx--btn--ghost track-btn">Start Track →</a>
           </div>
         </div>
+        
+        <button class="carousel-btn carousel-btn-next" aria-label="Next track">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M7 5l5 5-5 5V5z"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="carousel-dots">
+        <button class="carousel-dot active" data-index="0" aria-label="Go to track 1"></button>
+        <button class="carousel-dot" data-index="1" aria-label="Go to track 2"></button>
+        <button class="carousel-dot" data-index="2" aria-label="Go to track 3"></button>
+        <button class="carousel-dot" data-index="3" aria-label="Go to track 4"></button>
       </div>
     </section>
 
     <!-- Prerequisites Section -->
     <section class="prerequisites-section">
       <div class="bx--row">
-        <div class="bx--col-lg-8 bx--offset-lg-2">
-          <h2 class="bx--type-expressive-heading-05 section-title">Prerequisites</h2>
-          <div class="bx--tile prerequisites-tile">
-            <h3 class="bx--type-productive-heading-03">Universal (Everyone)</h3>
-            <ul class="bx--list--unordered">
-              <li>Bob IDE installed and configured</li>
-              <li>Git and terminal access</li>
-              <li>Modern web browser</li>
-              <li>Node.js (for BobShell)</li>
-            </ul>
+        <div class="bx--col-lg-10 bx--offset-lg-1">
+          <h2 class="bx--type-expressive-heading-05 section-title">Before You Begin</h2>
+          <p class="bx--type-body-long-02 section-description">
+            Ensure you have the following requirements before starting the workshop.
+          </p>
+          
+          <div class="prerequisites-grid">
+            <div class="prereq-card">
+              <div class="prereq-icon">💻</div>
+              <h3 class="bx--type-productive-heading-03">Universal Requirements</h3>
+              <ul class="bx--list--unordered">
+                <li>Bob IDE installed and configured</li>
+                <li>Git and terminal access</li>
+                <li>Modern web browser</li>
+                <li>Node.js (for BobShell)</li>
+              </ul>
+            </div>
             
-            <h3 class="bx--type-productive-heading-03">Afternoon Labs (Both Teams)</h3>
-            <ul class="bx--list--unordered">
-              <li>Java 17</li>
-              <li>Maven</li>
-            </ul>
+            <div class="prereq-card">
+              <div class="prereq-icon">☕</div>
+              <h3 class="bx--type-productive-heading-03">Development Tools</h3>
+              <ul class="bx--list--unordered">
+                <li>Java 17 or higher</li>
+                <li>Maven 3.6+</li>
+                <li>Docker (optional)</li>
+              </ul>
+            </div>
             
-            <h3 class="bx--type-productive-heading-03">Credentials (From Instructor)</h3>
-            <ul class="bx--list--unordered">
-              <li><strong>Everyone:</strong> Jira URL, username, API token</li>
-              <li><strong>SRE team:</strong> Jenkins URL, credentials, repo URL, GitHub PAT</li>
-            </ul>
-            
+            <div class="prereq-card">
+              <div class="prereq-icon">🔑</div>
+              <h3 class="bx--type-productive-heading-03">Credentials</h3>
+              <ul class="bx--list--unordered">
+                <li><strong>Everyone:</strong> Jira credentials</li>
+                <li><strong>SRE:</strong> Jenkins & GitHub access</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 2rem;">
             <a href="lab.html?page=PREREQUISITES" class="bx--btn bx--btn--primary">View Full Prerequisites →</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Quick Stats -->
-    <section class="stats-section">
-      <div class="bx--row">
-        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
-          <div class="stat-card">
-            <div class="stat-number">18+</div>
-            <div class="stat-label">Hands-on Labs</div>
-          </div>
-        </div>
-        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
-          <div class="stat-card">
-            <div class="stat-number">4</div>
-            <div class="stat-label">Learning Tracks</div>
-          </div>
-        </div>
-        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
-          <div class="stat-card">
-            <div class="stat-number">1-8+</div>
-            <div class="stat-label">Hours Duration</div>
-          </div>
-        </div>
-        <div class="bx--col-lg-3 bx--col-md-6 bx--col-sm-4">
-          <div class="stat-card">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Difficulty Levels</div>
           </div>
         </div>
       </div>
@@ -223,20 +230,19 @@
 
     <!-- Footer -->
     <footer class="site-footer">
-      <div class="bx--row">
-        <div class="bx--col-lg-12">
-          <p class="bx--type-body-short-01">
-            © 2026 IBM Corporation.
-          </p>
-          <p class="bx--type-body-short-01">
-            <a href="https://bob.ibm.com/docs" target="_blank" rel="noopener">Bob Documentation</a> •
-          </p>
-        </div>
+      <div class="footer-content">
+        <p class="bx--type-body-short-01">
+          © 2026 IBM Corporation
+        </p>
+        <p class="bx--type-body-short-01">
+          <a href="https://bob.ibm.com/docs" target="_blank" rel="noopener">Bob Documentation</a>
+        </p>
       </div>
     </footer>
   </div>
 
   <!-- Scripts -->
   <script src="assets/js/theme-toggle.js"></script>
+  <script src="assets/js/carousel.js"></script>
 </body>
 </html>

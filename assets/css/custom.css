@@ -147,7 +147,7 @@ body {
    ============================================ */
 
 .hero {
-  padding: 5rem 2rem;
+  padding: 3rem 2rem;
   text-align: center;
   background: var(--gradient-primary);
   color: white;
@@ -279,6 +279,110 @@ body {
     min-width: auto;
   }
 }
+/* ============================================
+   TRACK CAROUSEL - NEW
+   ============================================ */
+
+.track-carousel-container {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.track-carousel {
+  display: flex;
+  overflow: hidden;
+  transition: transform var(--transition-smooth);
+  gap: 1.5rem;
+}
+
+.track-card-wrapper {
+  flex: 0 0 calc(25% - 1.125rem);
+  min-width: 0;
+}
+
+@media (max-width: 1055px) {
+  .track-card-wrapper {
+    flex: 0 0 calc(50% - 0.75rem);
+  }
+}
+
+@media (max-width: 671px) {
+  .track-card-wrapper {
+    flex: 0 0 100%;
+  }
+  
+  .track-carousel-container {
+    padding: 0 2.5rem;
+  }
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--cds-ui-01);
+  border: 1px solid var(--cds-ui-04);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
+
+.carousel-btn:hover:not(:disabled) {
+  background: var(--cds-interactive-01);
+  color: white;
+  border-color: var(--cds-interactive-01);
+  box-shadow: var(--shadow-md);
+}
+
+.carousel-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.carousel-btn-prev {
+  left: 0;
+}
+
+.carousel-btn-next {
+  right: 0;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--cds-ui-04);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+}
+
+.carousel-dot:hover {
+  border-color: var(--cds-interactive-01);
+}
+
+.carousel-dot.active {
+  background: var(--cds-interactive-01);
+  border-color: var(--cds-interactive-01);
+}
+
 
 /* ============================================
    TRACK CARDS - MODERNIZED
@@ -310,16 +414,17 @@ body {
 
 .track-card {
   height: 100%;
-  padding: 2rem;
-  margin-bottom: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 0;
   transition: all var(--transition-smooth);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--cds-ui-03);
+  border: 1px solid var(--cds-ui-04);
   background: var(--cds-ui-01);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .track-card::before {
@@ -459,6 +564,62 @@ body {
   margin-bottom: 0.5rem;
   line-height: 1.5;
 }
+
+/* ============================================
+   PREREQUISITES GRID - NEW
+   ============================================ */
+
+.prerequisites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.prereq-card {
+  background: var(--cds-ui-01);
+  padding: 2rem;
+  border-radius: 4px;
+  border: 1px solid var(--cds-ui-04);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-smooth);
+}
+
+.prereq-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--cds-interactive-01);
+}
+
+.prereq-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.prereq-card h3 {
+  color: var(--cds-text-01);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.prereq-card ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.prereq-card li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+  color: var(--cds-text-02);
+}
+
+@media (max-width: 768px) {
+  .prerequisites-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* ============================================
    STATS SECTION - MODERNIZED
@@ -1024,6 +1185,51 @@ pre:hover .copy-btn {
   .lab-meta {
     flex-direction: column;
     gap: 0.75rem;
+  }
+}
+
+/* ============================================
+   FOOTER - NEW
+   ============================================ */
+
+.site-footer {
+  background: var(--cds-ui-02);
+  border-top: 1px solid var(--cds-ui-03);
+  padding: 2rem 0;
+  margin-top: 4rem;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-content p {
+  margin: 0;
+  color: var(--cds-text-02);
+}
+
+.footer-content a {
+  color: var(--cds-link-01);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.footer-content a:hover {
+  color: var(--cds-link-02);
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
   }
 }
 
