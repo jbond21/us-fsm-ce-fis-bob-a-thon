@@ -105,38 +105,31 @@ body {
 }
 
 .quick-nav-link.current-track {
-  background: var(--cds-interactive-01);
-  color: var(--cds-text-04) !important;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--cds-text-01) !important;
   font-weight: 700;
   border-left: none;
   position: relative;
-}
-
-.quick-nav-link.current-track::before {
-  content: '▶';
-  position: absolute;
-  left: 0.25rem;
-  color: var(--cds-text-04);
-  font-size: 0.75rem;
+  padding-right: 2rem;
 }
 
 .quick-nav-link.current-track::after {
   content: '◀';
   position: absolute;
-  right: 0.25rem;
-  color: var(--cds-text-04);
+  right: 0.75rem;
+  color: var(--cds-interactive-01);
   font-size: 0.75rem;
 }
 
 .quick-nav-link.current-track:hover {
-  background: var(--cds-hover-primary);
-  color: var(--cds-text-04) !important;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--cds-text-01) !important;
   transform: none;
 }
 
 .quick-nav-active .quick-nav-link {
-  background: var(--cds-interactive-01);
-  color: var(--cds-text-04) !important;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--cds-text-01) !important;
 }
 
 /* Divider between Quick Nav and Labs */
