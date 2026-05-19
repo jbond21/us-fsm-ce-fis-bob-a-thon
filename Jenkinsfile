@@ -140,8 +140,35 @@ spec:
         }
 
         // ── Lab 1: PR / Git Diff Review ──────────────────────────
-        //    Add a stage here that runs Bob in a "senior developer"
-        //    mode against the git diff. See labs/LAB1_PR_REVIEW.md.
+        stage('PR Review') {
+            steps {
+                script {
+                    echo "════════════════════════════════════════════════════════"
+                    echo "Bob — PR Review"
+                    echo "════════════════════════════════════════════════════════"
+                    
+                    // Compute the git diff against main and save to file
+                    sh '''
+                        git fetch origin main:main || true
+                        git diff main...HEAD > git-diff.txt || echo "No diff found" > git-diff.txt
+                    '''
+                    
+                    // Call Bob with the pipeline-git-diff-overview mode
+                    def prompt = """Please read git-diff.txt and provide a senior developer's quick risk-oriented overview of this PR's changes."""
+                    
+                    def analysis = askBob(prompt, 'pipeline-git-diff-overview')
+                    
+                    // Display the analysis in the console
+                    echo analysis
+                    
+                    // Save the analysis to a file and archive it
+                    writeFile file: 'bob-pr-review.md', text: analysis
+                    archiveArtifacts artifacts: 'bob-pr-review.md', fingerprint: true
+                    
+                    echo "════════════════════════════════════════════════════════"
+                }
+            }
+        }
 
         // ── Lab 2: Unit Testing ──────────────────────────────────
         //    Add a mvn test stage + Bob test-failure analysis.
@@ -168,5 +195,27 @@ spec:
             echo "=== Pipeline Complete ==="
             echo "Result: ${currentBuild.result ?: 'SUCCESS'}"
         }
+    }
+}
+
+// ── Helper: ask Bob, optionally with a specific custom mode ───────────────────
+// Writes the prompt to a tempfile in the shared workspace and runs `bob` in
+// the bob container, adding `--chat-mode <slug>` only when a mode is provided.
+// Returns the analysis as a string. Using a tempfile (instead of inlining the
+// prompt on the command line) avoids shell-escaping issues when the prompt
+// contains quotes, backticks, or newlines — common with diffs.
+def askBob(String prompt, String mode = null) {
+    container('bob') {
+        def promptFile = ".bob-prompt-${System.currentTimeMillis()}.txt"
+        writeFile file: promptFile, text: prompt
+
+        def modeFlag = mode ? "--chat-mode ${mode}" : ""
+        def analysis = sh(
+            script: """bob ${modeFlag} -p "\$(cat ${promptFile})" --hide-intermediary-output""",
+            returnStdout: true
+        ).trim()
+
+        sh "rm -f ${promptFile}"
+        return analysis
     }
 }
