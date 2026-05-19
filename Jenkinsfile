@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════==
 // FIS Bob-a-thon — Base Pipeline (Jenkinsfile)
 //
 // Starting point for the 5-lab workshop. Provisions a Kubernetes
